@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>ฟอร์มแจ้งซ่อม</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #f8f9fa;
+      padding: 2rem;
+    }
+    form {
+      max-width: 960px;
+      margin: auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      grid-column: span 2;
+      text-align: center;
+    }
+    label {
+      font-weight: bold;
+    }
+    input, textarea, select {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      grid-column: span 2;
+      padding: 0.75rem;
+      font-size: 1rem;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+  </style>
+</head>
+<body>
+
+<form id="repairForm">
+  <h2>ฟอร์มแจ้งซ่อมเครื่องจักร</h2>
+
+  <div>
+    <label>เลขที่ใบแจ้งซ่อม *</label>
+    <input type="text" name="เลขที่ใบแจ้งซ่อม" required />
+  </div>
+  <div>
+    <label>แผนก</label>
+    <select name="หน่่วยงาน"></select>
+  </div>
+
+  <div>
+    <label>รายชื่อเครื่องจักร</label>
+    <select name="รายชื่อเครื่องจักร"></select>
+  </div>
+
+  <div>
+    <label>ชนิดงาน</label>
+    <input type="text" name="ชนิดงาน" />
+  </div>
+
+  <div>
+    <label>รายละเอียด อาการเสีย</label>
+    <textarea name="รายละเอียด อาการเสีย"></textarea>
+  </div>
+
+  <div>
+    <label>วิเคราะห์สาเหตุ (MT)</label>
+    <textarea name="วิเคราะห์สาเหตุ (MT)"></textarea>
+  </div>
+
+  <div>
+    <label>การแก้ไข ความคิดเห็น (MT)</label>
+    <textarea name="การแก้ไข ความคิดเห็น (MT)"></textarea>
+  </div>
+
+  <div>
+    <label>รายการอะไหล่ที่ใช้</label>
+    <textarea name="รายการอะไหล่ที่ใช้"></textarea>
+  </div>
+
+  <div>
+    <label>จำนวน</label>
+    <input type="number" name="จำนวน" />
+  </div>
+
+  <div>
+    <label>มอบหมายงานให้ช่าง</label>
+    <input type="text" name="มอบหมายงานให้ช่าง" />
+  </div>
+
+  <div>
+    <label>พนักงาน(ช่าง)</label>
+    <input type="text" name="พนักงาน(ช่าง)" />
+  </div>
+
+  <div>
+    <label>ผู้แจ้งซ่อม</label>
+    <input type="text" name="ผู้แจ้งซ่อม" />
+  </div>
+
+  <div>
+    <label>สถานะเครื่อง</label>
+    <select name="สถานะเครื่อง">
+      <option value="">-- เลือก --</option>
+      <option value="Running">Running</option>
+      <option value="Down">Down</option>
+      <option value="Wait Part">Wait Part</option>
+    </select>
+  </div>
+
+  <div>
+    <label>วันที่แจ้งซ่อม</label>
+    <input type="date" name="วันที่แจ้งซ่อม" />
+  </div>
+
+  <div>
+    <label>วันที่ซ่อมเสร็จ</label>
+    <input type="date" name="วันที่ซ่อมเสร็จ" />
+  </div>
+
+  <button type="submit">บันทึกข้อมูล</button>
+</form>
+
+<script>
+  const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
+  const apiKey = "V2-lYSFh-KY1tr-q5RUR-qjGNg-NhTsA-0IlEz-x52kD-Zw9Qb";
+
+  async function fetchFromTable(table, filter = {}) {
+    const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/${table}/Find`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "ApplicationAccessKey": apiKey
+      },
+      body: JSON.stringify({ filter })
+    });
+    const data = await res.json();
+    return data;
+  }
+
+  async function loadDepartments() {
+    const list = await fetchFromTable("Department");
+    const select = document.querySelector("[name='หน่่วยงาน']");
+    select.innerHTML = '<option value="">-- เลือกแผนก --</option>';
+    list.forEach(item => {
+      select.innerHTML += `<option value="${item.DeptCode}">${item.DeptName}</option>`;
+    });
+  }
+
+  async function loadMachines(deptCode) {
+    const list = await fetchFromTable("MachineMaster", { DeptCode: deptCode });
+    const select = document.querySelector("[name='รายชื่อเครื่องจักร']");
+    select.innerHTML = '<option value="">-- เลือกเครื่องจักร --</option>';
+    list.forEach(item => {
+      select.innerHTML += `<option value="${item['รายชื่อเครื่องจักร']}">${item['รายชื่อเครื่องจักร']}</option>`;
+    });
+  }
+
+  document.querySelector("[name='หน่่วยงาน']").addEventListener("change", (e) => {
+    const deptCode = e.target.value;
+    loadMachines(deptCode);
+  });
+
+  document.getElementById("repairForm").addEventListener("submit", async function(event) {
+    event.preventDefault();
+    const form = event.target;
+    const data = Object.fromEntries(new FormData(form).entries());
+    const requestNumber = data["เลขที่ใบแจ้งซ่อม"];
+
+    const existing = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/Machinesymptom/Find?filter={"เลขที่ใบแจ้งซ่อม":"${requestNumber}"}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "ApplicationAccessKey": apiKey,
+      }
+    });
+
+    let action = "Add";
+    if (existing.ok) {
+      const resData = await existing.json();
+      if (resData.length > 0) action = "Edit";
+    }
+
+    const payload = {
+      Action: action,
+      Properties: { Locale: "th-TH" },
+      Rows: [data]
+    };
+
+    try {
+      const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/Machinesymptom/Action`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "ApplicationAccessKey": apiKey,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await res.json();
+      console.log("API result:", result);
+
+      if (res.ok && (!result.Failures || result.Failures.length === 0)) {
+        alert("✅ บันทึกสำเร็จ!");
+        form.reset();
+      } else {
+        alert("❌ บันทึกไม่สำเร็จ: " + JSON.stringify(result.Failures));
+      }
+    } catch (error) {
+      alert("❌ Error: " + error.message);
+    }
+  });
+
+  loadDepartments();
+</script>
+
+</body>
+</html>
