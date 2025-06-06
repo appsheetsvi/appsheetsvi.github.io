@@ -1,0 +1,74 @@
+body {
+  font-family: sans-serif;
+  background: #f8f9fa;
+  padding: 2rem;
+}
+form {
+  max-width: 960px;
+  margin: auto;
+  background: white;
+  padding: 2rem;
+  border-radius: 10px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+h2 {
+  grid-column: span 2;
+  text-align: center;
+}
+label {
+  font-weight: bold;
+}
+input, textarea, select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+input[readonly] {
+  background: #eee;
+  cursor: not-allowed;
+}
+button {
+  grid-column: span 2;
+  padding: 0.75rem;
+  font-size: 1rem;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+button:hover {
+  background: #0056b3;
+}
+input, select, textarea {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+}
+textarea {
+  min-height: 80px;
+}
+input[readonly] {
+  background-color: #f3f4f6;
+  color: #6b7280;
+}
+input, select, textarea {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+}
+textarea {
+  min-height: 80px;
+}
+input[readonly] {
+  background-color: #f3f4f6;
+  color: #6b7280;
+}
