@@ -24,15 +24,24 @@ async function loadDepartments() {
 }
 
 async function loadMachines(deptCode) {
+  const select = document.querySelector("[name='รหัสเครื่อง']");
   if (!deptCode) {
-    document.querySelector("[name='รหัสเครื่อง']").innerHTML = '<option value="">-- เลือกเครื่องจักร --</option>';
+    select.innerHTML = '<option value="">-- เลือกเครื่องจักร --</option>';
     return;
   }
   const list = await fetchFromTable("MachineMaster", { DeptCode: deptCode });
-  const select = document.querySelector("[name='รหัสเครื่อง']");
   select.innerHTML = '<option value="">-- เลือกเครื่องจักร --</option>';
   list.forEach(item => {
-    select.innerHTML += `<option value="${item['รหัสเครื่อง']}">${item['รายชื่อเครื่องจักร']}</option>`;
+    select.innerHTML += `<option value="${item['รหัสเครื่อง']}">${item['รายชื่อเครื่องจักร']} (${item['รหัสเครื่อง']})</option>`;
+  });
+}
+
+async function loadJobTypes() {
+  const list = await fetchFromTable("MachineJobType");
+  const select = document.querySelector("[name='ชนิดงาน']");
+  select.innerHTML = '<option value="">-- เลือกชนิดงาน --</option>';
+  list.forEach(item => {
+    select.innerHTML += `<option value="${item['รหัสงาน']}">${item['ชนิดงาน']}</option>`;
   });
 }
 
@@ -40,6 +49,7 @@ async function fetchAutoRequestNumber() {
   const rows = await fetchFromTable("Machinesymptom");
   if (rows.length > 0) {
     // สมมติเลขที่ใบแจ้งซ่อมรูปแบบ REQ-YYYYNNN
+    // หาเลขสูงสุดแบบตัวเลขล้วนจากเลขที่ใบแจ้งซ่อม
     const max = rows
       .map(r => r["เลขที่ใบแจ้งซ่อม"])
       .filter(Boolean)
@@ -55,8 +65,7 @@ async function fetchAutoRequestNumber() {
 }
 
 document.querySelector("[name='หน่วยงาน']").addEventListener("change", e => {
-  const deptCode = e.target.value;
-  loadMachines(deptCode);
+  loadMachines(e.target.value);
 });
 
 document.getElementById("repairForm").addEventListener("submit", async function (event) {
@@ -99,6 +108,8 @@ document.getElementById("repairForm").addEventListener("submit", async function 
       alert("✅ บันทึกสำเร็จ!");
       form.reset();
       fetchAutoRequestNumber();
+      // เคลียร์ dropdown เครื่องจักร ด้วย
+      document.querySelector("[name='รหัสเครื่อง']").innerHTML = '<option value="">-- เลือกเครื่องจักร --</option>';
     } else {
       alert("❌ บันทึกไม่สำเร็จ: " + (result ? JSON.stringify(result.Failures) : "ไม่มีข้อมูลตอบกลับจาก API"));
     }
@@ -107,5 +118,7 @@ document.getElementById("repairForm").addEventListener("submit", async function 
   }
 });
 
+// โหลดข้อมูลเริ่มต้น
 loadDepartments();
+loadJobTypes();
 fetchAutoRequestNumber();

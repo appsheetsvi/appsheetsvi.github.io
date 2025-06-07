@@ -1,101 +1,105 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ฟอร์มแจ้งซ่อม</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ฟอร์มแจ้งซ่อมเครื่องจักร</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body class="bg-gray-100 p-6">
-  <form id="repairForm" class="max-w-5xl mx-auto bg-white p-8 rounded-xl shadow-md grid grid-cols-1 md:grid-cols-2 gap-6">
-    <h2 class="col-span-full text-2xl font-bold text-center">ฟอร์มแจ้งซ่อมเครื่องจักร</h2>
+<body>
 
-    <div>
-      <label class="font-medium">เลขที่ใบแจ้งซ่อม *</label>
-      <input type="text" name="เลขที่ใบแจ้งซ่อม" readonly class="mt-1 input-disabled" />
-    </div>
+<form id="repairForm">
+  <h2>ฟอร์มแจ้งซ่อมเครื่องจักร</h2>
 
-    <div>
-      <label class="font-medium">แผนก</label>
-      <select name="หน่วยงาน" class="mt-1"></select>
-    </div>
+  <div>
+    <label for="reqNumber">เลขที่ใบแจ้งซ่อม *</label>
+    <input id="reqNumber" name="เลขที่ใบแจ้งซ่อม" readonly />
+  </div>
 
-    <div>
-      <label class="font-medium">รหัสเครื่อง</label>
-      <select name="รหัสเครื่อง" class="mt-1"></select>
-    </div>
+  <div>
+    <label for="department">แผนก</label>
+    <select id="department" name="หน่วยงาน">
+      <option value="">-- เลือกแผนก --</option>
+    </select>
+  </div>
 
-    <div>
-      <label class="font-medium">ชนิดงาน</label>
-      <input type="text" name="ชนิดงาน" class="mt-1" />
-    </div>
+  <div>
+    <label for="machineCode">รหัสเครื่อง</label>
+    <select id="machineCode" name="รหัสเครื่อง">
+      <option value="">-- เลือกเครื่องจักร --</option>
+    </select>
+  </div>
 
-    <div>
-      <label class="font-medium">รายละเอียดอาการเสีย</label>
-      <textarea name="รายละเอียดอาการเสีย" class="mt-1"></textarea>
-    </div>
+  <div>
+    <label for="jobType">ชนิดงาน</label>
+    <select id="JobType" name="ชนิดงาน">
+      <option value="">-- เลือกเครื่องจักร --</option>
+    </select>
+  </div>
 
-    <div>
-      <label class="font-medium">วิเคราะห์สาเหตุ</label>
-      <textarea name="วิเคราะห์สาเหตุ" class="mt-1"></textarea>
-    </div>
+  <div>
+    <label for="problemDetail">รายละเอียดอาการเสีย</label>
+    <textarea id="problemDetail" name="รายละเอียดอาการเสีย"></textarea>
+  </div>
 
-    <div>
-      <label class="font-medium">การแก้ไขความคิดเห็น</label>
-      <textarea name="การแก้ไขความคิดเห็น" class="mt-1"></textarea>
-    </div>
+  <div>
+    <label for="causeAnalysis">วิเคราะห์สาเหตุ</label>
+    <textarea id="causeAnalysis" name="วิเคราะห์สาเหตุ"></textarea>
+  </div>
 
-    <div>
-      <label class="font-medium">รายการอะไหล่ที่ใช้</label>
-      <textarea name="รายการอะไหล่ที่ใช้" class="mt-1"></textarea>
-    </div>
+  <div>
+    <label for="fixComments">การแก้ไขความคิดเห็น</label>
+    <textarea id="fixComments" name="การแก้ไขความคิดเห็น"></textarea>
+  </div>
 
-    <div>
-      <label class="font-medium">จำนวน</label>
-      <input type="number" name="จำนวน" class="mt-1" />
-    </div>
+  <div>
+    <label for="partsList">รายการอะไหล่ที่ใช้</label>
+    <textarea id="partsList" name="รายการอะไหล่ที่ใช้"></textarea>
+  </div>
 
-    <div>
-      <label class="font-medium">มอบหมายงานให้ช่าง</label>
-      <input type="text" name="มอบหมายงานให้ช่าง" class="mt-1" />
-    </div>
+  <div>
+    <label for="quantity">จำนวน</label>
+    <input id="quantity" name="จำนวน" type="number" min="0" />
+  </div>
 
-    <div>
-      <label class="font-medium">พนักงาน(ช่าง)</label>
-      <input type="text" name="พนักงาน(ช่าง)" class="mt-1" />
-    </div>
+  <div>
+    <label for="assignedTech">มอบหมายงานให้ช่าง</label>
+    <input id="assignedTech" name="มอบหมายงานให้ช่าง" type="text" />
+  </div>
 
-    <div>
-      <label class="font-medium">ผู้แจ้งซ่อม</label>
-      <input type="text" name="ผู้แจ้งซ่อม" class="mt-1" />
-    </div>
+  <div>
+    <label for="technician">พนักงาน(ช่าง)</label>
+    <input id="technician" name="พนักงาน(ช่าง)" type="text" />
+  </div>
 
-    <div>
-      <label class="font-medium">สถานะเครื่อง</label>
-      <select name="สถานะเครื่อง" class="mt-1">
-        <option value="">-- เลือก --</option>
-        <option value="Running">Running</option>
-        <option value="Down">Down</option>
-        <option value="Wait Part">Wait Part</option>
-      </select>
-    </div>
+  <div>
+    <label for="requester">ผู้แจ้งซ่อม</label>
+    <input id="requester" name="ผู้แจ้งซ่อม" type="text" />
+  </div>
 
-    <div>
-      <label class="font-medium">วันที่แจ้งซ่อม</label>
-      <input type="date" name="วันที่แจ้งซ่อม" class="mt-1" />
-    </div>
+  <div>
+    <label for="machineStatus">สถานะเครื่อง</label>
+    <select id="machineStatus" name="สถานะเครื่อง">
+      <option value="">-- เลือก --</option>
+      <option value="Running">Running</option>
+      <option value="Down">Down</option>
+      <option value="Wait Part">Wait Part</option>
+    </select>
+  </div>
 
-    <div>
-      <label class="font-medium">วันที่ซ่อมเสร็จ</label>
-      <input type="date" name="วันที่ซ่อมเสร็จ" class="mt-1" />
-    </div>
+  <div>
+    <label for="dateReported">วันที่แจ้งซ่อม</label>
+    <input id="dateReported" name="วันที่แจ้งซ่อม" type="date" />
+  </div>
 
-    <div class="col-span-full">
-      <button type="submit" class="w-full bg-blue-600 hover:bg-blue-800 text-white py-2 px-4 rounded-md">บันทึกข้อมูล</button>
-    </div>
-  </form>
+  <div>
+    <label for="dateCompleted">วันที่ซ่อมเสร็จ</label>
+    <input id="dateCompleted" name="วันที่ซ่อมเสร็จ" type="date" />
+  </div>
 
-  <script src="script.js"></script>
+  <button type="submit">บันทึกข้อมูล</button>
+</form>
+
+<script src="script.js"></script>
 </body>
 </html>
