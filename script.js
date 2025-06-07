@@ -1,8 +1,9 @@
 const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
 const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
 
+// 🔄 ดึงข้อมูลจากตาราง
 async function fetchFromTable(table, filter = {}) {
-  const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/${table}/Find`, {
+  const response = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/${table}/Find`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -10,10 +11,12 @@ async function fetchFromTable(table, filter = {}) {
     },
     body: JSON.stringify({ filter })
   });
-  const data = await res.json();
+
+  const data = await response.json();
   return data;
 }
 
+// 📌 โหลดแผนก
 async function loadDepartments() {
   const list = await fetchFromTable("Department");
   const select = document.querySelector("[name='หน่วยงาน']");
@@ -23,12 +26,16 @@ async function loadDepartments() {
   });
 }
 
+// 📌 โหลดเครื่องจักรตามแผนก
 async function loadMachines(deptCode) {
   const select = document.querySelector("[name='รหัสเครื่อง']");
+  select.innerHTML = '<option value="">⏳ กำลังโหลด...</option>';
+
   if (!deptCode) {
     select.innerHTML = '<option value="">-- เลือกเครื่องจักร --</option>';
     return;
   }
+
   const list = await fetchFromTable("MachineMaster", { DeptCode: deptCode });
   select.innerHTML = '<option value="">-- เลือกเครื่องจักร --</option>';
   list.forEach(item => {
@@ -36,6 +43,7 @@ async function loadMachines(deptCode) {
   });
 }
 
+// 📌 โหลดชนิดงาน
 async function loadJobTypes() {
   const list = await fetchFromTable("MachineJobType");
   const select = document.querySelector("[name='ชนิดงาน']");
@@ -45,11 +53,12 @@ async function loadJobTypes() {
   });
 }
 
+// 📌 สร้างเลขที่ใบแจ้งซ่อมอัตโนมัติ
 async function fetchAutoRequestNumber() {
   const rows = await fetchFromTable("Machinesymptom");
+  const input = document.querySelector("[name='เลขที่ใบแจ้งซ่อม']");
+
   if (rows.length > 0) {
-    // สมมติเลขที่ใบแจ้งซ่อมรูปแบบ REQ-YYYYNNN
-    // หาเลขสูงสุดแบบตัวเลขล้วนจากเลขที่ใบแจ้งซ่อม
     const max = rows
       .map(r => r["เลขที่ใบแจ้งซ่อม"])
       .filter(Boolean)
@@ -57,23 +66,27 @@ async function fetchAutoRequestNumber() {
       .pop();
 
     const nextNum = max ? parseInt(max.replace(/[^\d]/g, ""), 10) + 1 : 1;
-    const requestNumber = "" + String(nextNum).padStart(7, "0");
-    document.querySelector("[name='เลขที่ใบแจ้งซ่อม']").value = requestNumber;
+    input.value = String(nextNum).padStart(7, "0");
   } else {
-    document.querySelector("[name='เลขที่ใบแจ้งซ่อม']").value = "0000001";
+    input.value = "0000001";
   }
 }
 
+// 📥 เมื่อเปลี่ยนแผนก
 document.querySelector("[name='หน่วยงาน']").addEventListener("change", e => {
   loadMachines(e.target.value);
 });
 
+// ✅ ส่งฟอร์ม
 document.getElementById("repairForm").addEventListener("submit", async function (event) {
   event.preventDefault();
-  const form = event.target;
-  const data = Object.fromEntries(new FormData(form).entries());
 
-  console.log("Data to submit:", data);
+  const form = event.target;
+  const submitBtn = form.querySelector("button[type='submit']");
+  submitBtn.disabled = true;
+  submitBtn.textContent = "🔄 กำลังบันทึก...";
+
+  const data = Object.fromEntries(new FormData(form).entries());
 
   const payload = {
     Action: "Add",
@@ -81,44 +94,36 @@ document.getElementById("repairForm").addEventListener("submit", async function 
     Rows: [data]
   };
 
-  console.log("Payload to API:", JSON.stringify(payload, null, 2));
-
   try {
     const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/Machinesymptom/Action`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "ApplicationAccessKey": apiKey,
+        "ApplicationAccessKey": apiKey
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(payload)
     });
 
     const rawText = await res.text();
-    console.log("Raw response text:", rawText);
+    const result = rawText ? JSON.parse(rawText) : null;
 
-    let result = null;
-    if (rawText) {
-      result = JSON.parse(rawText);
-      console.log("Parsed JSON:", result);
-    } else {
-      console.log("Empty response from API");
-    }
-
-    if (res.ok && (!result || !result.Failures || result.Failures.length === 0)) {
+    if (res.ok && (!result?.Failures?.length)) {
       alert("✅ บันทึกสำเร็จ!");
       form.reset();
       fetchAutoRequestNumber();
-      // เคลียร์ dropdown เครื่องจักร ด้วย
       document.querySelector("[name='รหัสเครื่อง']").innerHTML = '<option value="">-- เลือกเครื่องจักร --</option>';
     } else {
       alert("❌ บันทึกไม่สำเร็จ: " + (result ? JSON.stringify(result.Failures) : "ไม่มีข้อมูลตอบกลับจาก API"));
     }
   } catch (error) {
-    alert("❌ Error: " + error.message);
+    alert("❌ เกิดข้อผิดพลาด: " + error.message);
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = "บันทึกข้อมูล";
   }
 });
 
-// โหลดข้อมูลเริ่มต้น
+// 🔄 โหลดข้อมูลเมื่อเริ่มต้น
 loadDepartments();
 loadJobTypes();
 fetchAutoRequestNumber();

@@ -10,91 +10,92 @@
 
 <form id="repairForm">
   <h2>ฟอร์มแจ้งซ่อมเครื่องจักร</h2>
+  <div class="form-grid">
+    <div>
+      <label for="reqNumber">เลขที่ใบแจ้งซ่อม *</label>
+      <input id="reqNumber" name="เลขที่ใบแจ้งซ่อม" readonly />
+    </div>
 
-  <div>
-    <label for="reqNumber">เลขที่ใบแจ้งซ่อม *</label>
-    <input id="reqNumber" name="เลขที่ใบแจ้งซ่อม" readonly />
-  </div>
+    <div>
+      <label for="department">แผนก</label>
+      <select id="department" name="หน่วยงาน">
+        <option value="">-- เลือกแผนก --</option>
+      </select>
+    </div>
 
-  <div>
-    <label for="department">แผนก</label>
-    <select id="department" name="หน่วยงาน">
-      <option value="">-- เลือกแผนก --</option>
-    </select>
-  </div>
+    <div>
+      <label for="machineCode">รหัสเครื่อง</label>
+      <select id="machineCode" name="รหัสเครื่อง">
+        <option value="">-- เลือกเครื่องจักร --</option>
+      </select>
+    </div>
 
-  <div>
-    <label for="machineCode">รหัสเครื่อง</label>
-    <select id="machineCode" name="รหัสเครื่อง">
-      <option value="">-- เลือกเครื่องจักร --</option>
-    </select>
-  </div>
+    <div>
+      <label for="JobType">ชนิดงาน</label>
+      <select id="JobType" name="ชนิดงาน">
+        <option value="">-- เลือกชนิดงาน --</option>
+      </select>
+    </div>
 
-  <div>
-    <label for="jobType">ชนิดงาน</label>
-    <select id="JobType" name="ชนิดงาน">
-      <option value="">-- เลือกเครื่องจักร --</option>
-    </select>
-  </div>
+    <div class="full-width">
+      <label for="problemDetail">รายละเอียดอาการเสีย</label>
+      <textarea id="problemDetail" name="รายละเอียดอาการเสีย"></textarea>
+    </div>
 
-  <div>
-    <label for="problemDetail">รายละเอียดอาการเสีย</label>
-    <textarea id="problemDetail" name="รายละเอียดอาการเสีย"></textarea>
-  </div>
+    <div class="full-width">
+      <label for="causeAnalysis">วิเคราะห์สาเหตุ</label>
+      <textarea id="causeAnalysis" name="วิเคราะห์สาเหตุ"></textarea>
+    </div>
 
-  <div>
-    <label for="causeAnalysis">วิเคราะห์สาเหตุ</label>
-    <textarea id="causeAnalysis" name="วิเคราะห์สาเหตุ"></textarea>
-  </div>
+    <div class="full-width">
+      <label for="fixComments">การแก้ไขความคิดเห็น</label>
+      <textarea id="fixComments" name="การแก้ไขความคิดเห็น"></textarea>
+    </div>
 
-  <div>
-    <label for="fixComments">การแก้ไขความคิดเห็น</label>
-    <textarea id="fixComments" name="การแก้ไขความคิดเห็น"></textarea>
-  </div>
+    <div class="full-width">
+      <label for="partsList">รายการอะไหล่ที่ใช้</label>
+      <textarea id="partsList" name="รายการอะไหล่ที่ใช้"></textarea>
+    </div>
 
-  <div>
-    <label for="partsList">รายการอะไหล่ที่ใช้</label>
-    <textarea id="partsList" name="รายการอะไหล่ที่ใช้"></textarea>
-  </div>
+    <div>
+      <label for="quantity">จำนวน</label>
+      <input id="quantity" name="จำนวน" type="number" min="0" />
+    </div>
 
-  <div>
-    <label for="quantity">จำนวน</label>
-    <input id="quantity" name="จำนวน" type="number" min="0" />
-  </div>
+    <div>
+      <label for="assignedTech">มอบหมายงานให้ช่าง</label>
+      <input id="assignedTech" name="มอบหมายงานให้ช่าง" type="text" />
+    </div>
 
-  <div>
-    <label for="assignedTech">มอบหมายงานให้ช่าง</label>
-    <input id="assignedTech" name="มอบหมายงานให้ช่าง" type="text" />
-  </div>
+    <div>
+      <label for="technician">พนักงาน(ช่าง)</label>
+      <input id="technician" name="พนักงาน(ช่าง)" type="text" />
+    </div>
 
-  <div>
-    <label for="technician">พนักงาน(ช่าง)</label>
-    <input id="technician" name="พนักงาน(ช่าง)" type="text" />
-  </div>
+    <div>
+      <label for="requester">ผู้แจ้งซ่อม</label>
+      <input id="requester" name="ผู้แจ้งซ่อม" type="text" />
+    </div>
 
-  <div>
-    <label for="requester">ผู้แจ้งซ่อม</label>
-    <input id="requester" name="ผู้แจ้งซ่อม" type="text" />
-  </div>
+    <div>
+      <label for="machineStatus">สถานะเครื่อง</label>
+      <select id="machineStatus" name="สถานะเครื่อง">
+        <option value="">-- เลือก --</option>
+        <option value="Running">Running</option>
+        <option value="Down">Down</option>
+        <option value="Wait Part">Wait Part</option>
+      </select>
+    </div>
 
-  <div>
-    <label for="machineStatus">สถานะเครื่อง</label>
-    <select id="machineStatus" name="สถานะเครื่อง">
-      <option value="">-- เลือก --</option>
-      <option value="Running">Running</option>
-      <option value="Down">Down</option>
-      <option value="Wait Part">Wait Part</option>
-    </select>
-  </div>
+    <div>
+      <label for="dateReported">วันที่แจ้งซ่อม</label>
+      <input id="dateReported" name="วันที่แจ้งซ่อม" type="date" />
+    </div>
 
-  <div>
-    <label for="dateReported">วันที่แจ้งซ่อม</label>
-    <input id="dateReported" name="วันที่แจ้งซ่อม" type="date" />
-  </div>
-
-  <div>
-    <label for="dateCompleted">วันที่ซ่อมเสร็จ</label>
-    <input id="dateCompleted" name="วันที่ซ่อมเสร็จ" type="date" />
+    <div>
+      <label for="dateCompleted">วันที่ซ่อมเสร็จ</label>
+      <input id="dateCompleted" name="วันที่ซ่อมเสร็จ" type="date" />
+    </div>
   </div>
 
   <button type="submit">บันทึกข้อมูล</button>
