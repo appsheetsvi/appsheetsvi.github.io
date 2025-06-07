@@ -72,6 +72,39 @@ async function fetchAutoRequestNumber() {
   }
 }
 
+async function fetchAutoRequestNumber() {
+  const rows = await fetchFromTable("Machinesymptom");
+  const input = document.querySelector("[name='เลขที่ใบแจ้งซ่อม']");
+
+  let newCode = "0000001";
+  if (rows.length > 0) {
+    const max = rows
+      .map(r => r["เลขที่ใบแจ้งซ่อม"])
+      .filter(Boolean)
+      .sort()
+      .pop();
+
+    const nextNum = max ? parseInt(max.replace(/[^\d]/g, ""), 10) + 1 : 1;
+    newCode = String(nextNum).padStart(7, "0");
+  }
+
+  input.value = newCode;
+  generateQRCode(newCode); // 🔄 สร้าง QR Code
+}
+function generateQRCode(text) {
+  const container = document.getElementById("qrcode");
+  container.innerHTML = ""; // ล้างของเดิมก่อน
+  new QRCode(container, {
+    text: text,
+    width: 128,
+    height: 128,
+    colorDark: "#000000",
+    colorLight: "#ffffff",
+    correctLevel: QRCode.CorrectLevel.H
+  });
+}
+
+
 // 📥 เมื่อเปลี่ยนแผนก
 document.querySelector("[name='หน่วยงาน']").addEventListener("change", e => {
   loadMachines(e.target.value);

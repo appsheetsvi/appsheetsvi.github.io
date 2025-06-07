@@ -79,3 +79,6 @@ button[type="submit"]:hover {
     grid-column: span 1;
   }
 }
+#qrcode {
+  margin-top: 10px;
+}
