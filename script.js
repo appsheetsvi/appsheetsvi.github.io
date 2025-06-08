@@ -164,14 +164,6 @@ document.getElementById("repairForm").addEventListener("submit", async function 
   }
 });
 
-<script>
-  document.getElementById('menuToggle').addEventListener('click', () => {
-    const menu = document.getElementById('mobileMenu');
-    menu.classList.toggle('hidden');
-  });
-</script>
-
-
 // 🔄 โหลดข้อมูลเมื่อเริ่มต้น
 loadDepartments();
 loadJobTypes();
