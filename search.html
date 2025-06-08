@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ค้นหาแจ้งซ่อมเครื่องจักร</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Noto Sans Thai', sans-serif;
+      background-color: #f9fafb;
+      padding: 20px;
+      color: #1f2937;
+      max-width: 900px;
+      margin: auto;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #2563eb;
+    }
+    form {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 10px 14px;
+      font-size: 1rem;
+      border: 1.8px solid #d1d5db;
+      border-radius: 8px;
+      transition: border-color 0.3s ease;
+    }
+    input[type="text"]:focus {
+      border-color: #3b82f6;
+      outline: none;
+      box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+    }
+    button {
+      background-color: #3b82f6;
+      border: none;
+      color: white;
+      padding: 10px 18px;
+      font-size: 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #2563eb;
+    }
+    button:disabled {
+      background-color: #93c5fd;
+      cursor: not-allowed;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 12px 15px;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 0.95rem;
+      color: #374151;
+    }
+    th {
+      background-color: #3b82f6;
+      color: white;
+      font-weight: 600;
+    }
+    tr:hover {
+      background-color: #f3f4f6;
+    }
+    .no-data {
+      text-align: center;
+      padding: 20px;
+      color: #6b7280;
+      font-style: italic;
+    }
+    #loading {
+      text-align: center;
+      margin-bottom: 15px;
+      color: #3b82f6;
+      font-weight: 600;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>ค้นหาแจ้งซ่อมเครื่องจักร</h2>
+
+  <form id="searchForm">
+    <input type="text" id="searchInput" placeholder="กรอกเลขที่ใบแจ้งซ่อมหรือรหัสเครื่อง" />
+    <button type="submit">🔍 ค้นหา</button>
+  </form>
+
+  <div id="loading">กำลังโหลดข้อมูล...</div>
+
+  <table id="resultTable" style="display:none;">
+    <thead>
+      <tr>
+        <th>เลขที่ใบแจ้งซ่อม</th>
+        <th>รหัสเครื่อง</th>
+        <th>รายชื่อเครื่องจักร</th>
+        <th>ชนิดงาน</th>
+        <th>หน่วยงาน</th>
+        <th>วันที่แจ้งซ่อม</th>
+        <th>สถานะเครื่อง</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div id="noData" class="no-data" style="display:none;">
+    ไม่พบข้อมูลที่ค้นหา
+  </div>
+
+  <script>
+    const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
+    const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
+
+    async function fetchFromTable(table, filter = {}) {
+      const response = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/${table}/Find`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "ApplicationAccessKey": apiKey
+        },
+        body: JSON.stringify({ filter })
+      });
+
+      if (!response.ok) {
+        throw new Error("ไม่สามารถเชื่อมต่อ API ได้");
+      }
+
+      const data = await response.json();
+      return data;
+    }
+
+    function createRow(item) {
+      return `
+        <tr>
+          <td>${item["เลขที่ใบแจ้งซ่อม"] || "-"}</td>
+          <td>${item["รหัสเครื่อง"] || "-"}</td>
+          <td>${item["รายชื่อเครื่องจักร"] || "-"}</td>
+          <td>${item["ชนิดงาน"] || "-"}</td>
+          <td>${item["หน่วยงาน"] || "-"}</td>
+          <td>${item["วันที่แจ้งซ่อม"] || "-"}</td>
+          <td>${item["สถานะเครื่อง"] || "-"}</td>
+        </tr>
+      `;
+    }
+
+    async function searchRepair(term) {
+      document.getElementById("loading").style.display = "block";
+      document.getElementById("resultTable").style.display = "none";
+      document.getElementById("noData").style.display = "none";
+
+      let filter = {};
+      if (term) {
+        // ทำ filter ให้ค้นหาเลขที่ใบแจ้งซ่อม หรือ รหัสเครื่อง แบบ contains
+        // AppSheet API filter support basic key/value equality
+        // ดังนั้นเราต้องส่งเป็น OR condition ซับซ้อนไม่ได้ตรง ๆ 
+        // workaround: หาแบบเลขที่ใบแจ้งซ่อม == term หรือ รหัสเครื่อง == term
+        filter = {
+          OR: [
+            { "เลขที่ใบแจ้งซ่อม": term },
+            { "รหัสเครื่อง": term }
+          ]
+        };
+      }
+
+      try {
+        const data = await fetchFromTable("Machinesymptom", filter);
+
+        document.getElementById("loading").style.display = "none";
+
+        if (data.length === 0) {
+          document.getElementById("noData").style.display = "block";
+          return;
+        }
+
+        const tbody = document.querySelector("#resultTable tbody");
+        tbody.innerHTML = data.map(createRow).join("");
+        document.getElementById("resultTable").style.display = "table";
+      } catch (error) {
+        document.getElementById("loading").style.display = "none";
+        alert("❌ เกิดข้อผิดพลาดในการค้นหา: " + error.message);
+      }
+    }
+
+    document.getElementById("searchForm").addEventListener("submit", e => {
+      e.preventDefault();
+      const term = document.getElementById("searchInput").value.trim();
+      searchRepair(term);
+    });
+
+    // โหลดรายการทั้งหมดแรกเข้า (แสดง 10 รายการล่าสุด)
+    async function loadLatest() {
+      document.getElementById("loading").style.display = "block";
+      document.getElementById("resultTable").style.display = "none";
+      document.getElementById("noData").style.display = "none";
+
+      try {
+        // ดึง 10 รายการล่าสุดโดยเรียงวันที่แจ้งซ่อมจากมากไปน้อย
+        const data = await fetchFromTable("Machinesymptom");
+
+        document.getElementById("loading").style.display = "none";
+
+        if (data.length === 0) {
+          document.getElementById("noData").style.display = "block";
+          return;
+        }
+
+        // เรียงวันที่ใหม่ล่าสุดก่อน
+        data.sort((a,b) => new Date(b["วันที่แจ้งซ่อม"]) - new Date(a["วันที่แจ้งซ่อม"]));
+
+        // ตัดแค่ 10 รายการล่าสุด
+        const latest = data.slice(0, 10);
+
+        const tbody = document.querySelector("#resultTable tbody");
+        tbody.innerHTML = latest.map(createRow).join("");
+        document.getElementById("resultTable").style.display = "table";
+
+      } catch (error) {
+        document.getElementById("loading").style.display = "none";
+        alert("❌ เกิดข้อผิดพลาดในการโหลดข้อมูล: " + error.message);
+      }
+    }
+
+    // โหลดข้อมูลล่าสุดตอนเริ่มต้น
+    loadLatest();
+
+  </script>
+</body>
+</html>

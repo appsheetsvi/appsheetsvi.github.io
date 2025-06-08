@@ -3,149 +3,152 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ฟอร์มแจ้งซ่อมเครื่องจักร</title>
+  <title>ระบบแจ้งซ่อม</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-    }
-    nav {
-      background-color: #1E3A8A;
-      padding: 1rem 2rem;
-      color: white;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    nav .logo {
-      font-size: 1.2rem;
-      font-weight: bold;
-    }
-    nav .menu a {
-      margin-left: 1rem;
-      color: white;
-      text-decoration: none;
-      font-weight: 500;
-    }
-    nav .menu a:hover {
-      text-decoration: underline;
-    }
-    h2 {
-      margin-top: 2rem;
-    }
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1rem;
-    }
-    .full-width {
-      grid-column: 1 / -1;
-    }
-    form {
-      padding: 2rem;
-    }
-  </style>
+  <script defer src="script.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
-<body>
+<body class="bg-gray-50">
 
-<!-- ✅ Navbar -->
-<nav>
-  <div class="logo">ระบบแจ้งซ่อม</div>
-  <div class="menu">
-    <a href="index.html">หน้าแรก</a>
-    <a href="create.html">แจ้งซ่อม</a>
-    <a href="search.html">ค้นหา</a>
+  <!-- Navbar -->
+  <nav class="bg-blue-900 text-white fixed top-0 left-0 w-full z-50 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
+      <div class="text-xl font-bold">ระบบแจ้งซ่อม</div>
+      <div class="hidden md:flex space-x-6">
+        <a href="index.html" class="">🔍 ใบแจ้งซ่อม</a>
+        <a href="search.html" class="">🔍 ค้นหา</a>
+      </div>
+      <div class="md:hidden">
+        <button id="mobileMenuButton" class="focus:outline-none">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div id="mobileMenu" class="hidden md:hidden px-4 pb-4 bg-blue-900">
+      <button id="nav-form-mobile" class="block py-2 hover:underline text-white w-full text-left">📋 แจ้งซ่อม</button>
+      <button id="nav-search-mobile" class="block py-2 hover:underline text-white w-full text-left">🔍 ค้นหา</button>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="pt-20 max-w-4xl mx-auto px-4">
+
+    <!-- ฟอร์มแจ้งซ่อม -->
+    <div id="formPage" class="page space-y-6">
+      <h2 class="text-xl font-semibold text-blue-700">📋 ฟอร์มแจ้งซ่อมเครื่องจักร</h2>
+      <form id="repairForm" class="bg-white p-6 rounded shadow space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label for="reqNumber" class="block text-sm font-medium text-gray-700">เลขที่ใบแจ้งซ่อม *</label>
+            <input id="reqNumber" name="เลขที่ใบแจ้งซ่อม" readonly
+              class="mt-1 w-full border rounded px-3 py-2 bg-gray-100 cursor-not-allowed" />
+          </div>
+          <div>
+            <label for="department" class="block text-sm font-medium text-gray-700">แผนก</label>
+            <select id="department" name="หน่วยงาน" class="mt-1 w-full border rounded px-3 py-2">
+              <option value="">-- เลือกแผนก --</option>
+            </select>
+          </div>
+          <div>
+            <label for="machineCode" class="block text-sm font-medium text-gray-700">รหัสเครื่อง</label>
+            <select id="machineCode" name="รหัสเครื่อง" class="mt-1 w-full border rounded px-3 py-2">
+              <option value="">-- เลือกเครื่องจักร --</option>
+            </select>
+          </div>
+          <div>
+            <label for="JobType" class="block text-sm font-medium text-gray-700">ชนิดงาน</label>
+            <select id="JobType" name="ชนิดงาน" class="mt-1 w-full border rounded px-3 py-2">
+              <option value="">-- เลือกชนิดงาน --</option>
+            </select>
+          </div>
+          <div>
+          <label for="problemDetail" class="block text-sm font-medium text-gray-700">รายละเอียดอาการเสีย</label>
+          <textarea id="problemDetail" name="รายละเอียดอาการเสีย" rows="3"
+            class="mt-1 w-full border rounded px-3 py-2"></textarea>
+        </div>
+        <div>
+          <label for="causeAnalysis" class="block text-sm font-medium text-gray-700">วิเคราะห์สาเหตุ</label>
+          <textarea id="causeAnalysis" name="วิเคราะห์สาเหตุ" rows="3"
+            class="mt-1 w-full border rounded px-3 py-2"></textarea>
+        </div>
+        <div>
+          <label for="fixComments" class="block text-sm font-medium text-gray-700">การแก้ไขความคิดเห็น</label>
+          <textarea id="fixComments" name="การแก้ไขความคิดเห็น" rows="3"
+            class="mt-1 w-full border rounded px-3 py-2"></textarea>
+        </div>
+        <div>
+          <label for="partsList" class="block text-sm font-medium text-gray-700">รายการอะไหล่ที่ใช้</label>
+          <textarea id="partsList" name="รายการอะไหล่ที่ใช้" rows="3"
+            class="mt-1 w-full border rounded px-3 py-2"></textarea>
+        </div>
+          <div>
+            <label for="quantity" class="block text-sm font-medium text-gray-700">จำนวน</label>
+            <input id="quantity" name="จำนวน" type="number" min="0"
+              class="mt-1 w-full border rounded px-3 py-2" />
+          </div>
+          <div>
+            <label for="assignedTech" class="block text-sm font-medium text-gray-700">มอบหมายงานให้ช่าง</label>
+            <input id="assignedTech" name="มอบหมายงานให้ช่าง" type="text"
+              class="mt-1 w-full border rounded px-3 py-2" />
+          </div>
+          <div>
+            <label for="technician" class="block text-sm font-medium text-gray-700">พนักงาน(ช่าง)</label>
+            <input id="technician" name="พนักงาน(ช่าง)" type="text"
+              class="mt-1 w-full border rounded px-3 py-2" />
+          </div>
+          <div>
+            <label for="requester" class="block text-sm font-medium text-gray-700">ผู้แจ้งซ่อม</label>
+            <input id="requester" name="ผู้แจ้งซ่อม" type="text"
+              class="mt-1 w-full border rounded px-3 py-2" />
+          </div>
+          <div>
+            <label for="machineStatus" class="block text-sm font-medium text-gray-700">สถานะเครื่อง</label>
+            <select id="machineStatus" name="สถานะเครื่อง" class="mt-1 w-full border rounded px-3 py-2">
+              <option value="">-- เลือก --</option>
+              <option value="Running">Running</option>
+              <option value="Down">Down</option>
+              <option value="Wait Part">Wait Part</option>
+            </select>
+          </div>
+          <div>
+            <label for="dateReported" class="block text-sm font-medium text-gray-700">วันที่แจ้งซ่อม</label>
+            <input id="dateReported" name="วันที่แจ้งซ่อม" type="date"
+              class="mt-1 w-full border rounded px-3 py-2" />
+          </div>
+          <div>
+            <label for="dateCompleted" class="block text-sm font-medium text-gray-700">วันที่ซ่อมเสร็จ</label>
+            <input id="dateCompleted" name="วันที่ซ่อมเสร็จ" type="date"
+              class="mt-1 w-full border rounded px-3 py-2" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700">QR Code สำหรับใบแจ้งซ่อม</label>
+          <div id="qrcode" class="border rounded p-4 bg-white inline-block"></div>
+        </div>
+
+        <button type="submit"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow">บันทึกข้อมูล</button>
+      </form>
+    </div>
+
+    <!-- ค้นหา -->
+    <div id="searchPage" class="page hidden space-y-4">
+      <h2 class="text-xl font-semibold text-green-700">🔍 ค้นหาใบแจ้งซ่อม</h2>
+      <div class="bg-white p-6 rounded shadow space-y-4">
+        <input type="text" id="searchInput" placeholder="🔍 ค้นหาเลขที่ใบแจ้งซ่อม..."
+          class="w-full border rounded px-3 py-2" />
+        <button id="btnSearch"
+          class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">ค้นหา</button>
+        <div id="searchResult" class="text-sm text-gray-700 mt-4"></div>
+      </div>
+    </div>
+
   </div>
-</nav>
-
-<!-- ✅ ฟอร์มแจ้งซ่อม -->
-<form id="repairForm">
-  <h2>ฟอร์มแจ้งซ่อมเครื่องจักร</h2>
-  <div class="form-grid">
-    <div>
-      <label for="reqNumber">เลขที่ใบแจ้งซ่อม *</label>
-      <input id="reqNumber" name="เลขที่ใบแจ้งซ่อม" readonly />
-    </div>
-    <div>
-      <label for="department">แผนก</label>
-      <select id="department" name="หน่วยงาน">
-        <option value="">-- เลือกแผนก --</option>
-      </select>
-    </div>
-    <div>
-      <label for="machineCode">รหัสเครื่อง</label>
-      <select id="machineCode" name="รหัสเครื่อง">
-        <option value="">-- เลือกเครื่องจักร --</option>
-      </select>
-    </div>
-    <div>
-      <label for="JobType">ชนิดงาน</label>
-      <select id="JobType" name="ชนิดงาน">
-        <option value="">-- เลือกชนิดงาน --</option>
-      </select>
-    </div>
-    <div class="full-width">
-      <label for="problemDetail">รายละเอียดอาการเสีย</label>
-      <textarea id="problemDetail" name="รายละเอียดอาการเสีย"></textarea>
-    </div>
-    <div class="full-width">
-      <label for="causeAnalysis">วิเคราะห์สาเหตุ</label>
-      <textarea id="causeAnalysis" name="วิเคราะห์สาเหตุ"></textarea>
-    </div>
-    <div class="full-width">
-      <label for="fixComments">การแก้ไขความคิดเห็น</label>
-      <textarea id="fixComments" name="การแก้ไขความคิดเห็น"></textarea>
-    </div>
-    <div class="full-width">
-      <label for="partsList">รายการอะไหล่ที่ใช้</label>
-      <textarea id="partsList" name="รายการอะไหล่ที่ใช้"></textarea>
-    </div>
-    <div>
-      <label for="quantity">จำนวน</label>
-      <input id="quantity" name="จำนวน" type="number" min="0" />
-    </div>
-    <div>
-      <label for="assignedTech">มอบหมายงานให้ช่าง</label>
-      <input id="assignedTech" name="มอบหมายงานให้ช่าง" type="text" />
-    </div>
-    <div>
-      <label for="technician">พนักงาน(ช่าง)</label>
-      <input id="technician" name="พนักงาน(ช่าง)" type="text" />
-    </div>
-    <div>
-      <label for="requester">ผู้แจ้งซ่อม</label>
-      <input id="requester" name="ผู้แจ้งซ่อม" type="text" />
-    </div>
-    <div>
-      <label for="machineStatus">สถานะเครื่อง</label>
-      <select id="machineStatus" name="สถานะเครื่อง">
-        <option value="">-- เลือก --</option>
-        <option value="Running">Running</option>
-        <option value="Down">Down</option>
-        <option value="Wait Part">Wait Part</option>
-      </select>
-    </div>
-    <div>
-      <label for="dateReported">วันที่แจ้งซ่อม</label>
-      <input id="dateReported" name="วันที่แจ้งซ่อม" type="date" />
-    </div>
-    <div>
-      <label for="dateCompleted">วันที่ซ่อมเสร็จ</label>
-      <input id="dateCompleted" name="วันที่ซ่อมเสร็จ" type="date" />
-    </div>
-  </div>
-
-  <button type="submit">บันทึกข้อมูล</button>
-
-  <div class="full-width">
-    <label>QR Code สำหรับใบแจ้งซ่อม</label>
-    <div id="qrcode"></div>
-  </div>
-</form>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="script.js"></script>
 
 </body>
 </html>
