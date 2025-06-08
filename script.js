@@ -37,11 +37,19 @@ async function loadMachines(deptCode) {
   }
 
   const list = await fetchFromTable("MachineMaster", { DeptCode: deptCode });
+
   select.innerHTML = '<option value="">-- เลือกเครื่องจักร --</option>';
   list.forEach(item => {
-    select.innerHTML += `<option value="${item['รหัสเครื่อง']}">${item['รายชื่อเครื่องจักร']} (${item['รหัสเครื่อง']})</option>`;
+    const code = item["รหัสเครื่อง"];
+    const name = item["รายชื่อเครื่องจักร"];
+    const option = document.createElement("option");
+
+    option.value = code; // ✅ ส่งเฉพาะรหัสเครื่องไปบันทึก
+    option.textContent = `${code} - ${name}`; // ✅ แสดงชื่อแบบเต็ม
+    select.appendChild(option);
   });
 }
+
 
 // 📌 โหลดชนิดงาน
 async function loadJobTypes() {
@@ -155,6 +163,14 @@ document.getElementById("repairForm").addEventListener("submit", async function 
     submitBtn.textContent = "บันทึกข้อมูล";
   }
 });
+
+<script>
+  document.getElementById('menuToggle').addEventListener('click', () => {
+    const menu = document.getElementById('mobileMenu');
+    menu.classList.toggle('hidden');
+  });
+</script>
+
 
 // 🔄 โหลดข้อมูลเมื่อเริ่มต้น
 loadDepartments();
