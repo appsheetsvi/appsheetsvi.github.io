@@ -8,63 +8,48 @@
     body {
       font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
       background: #f9fafb;
-      padding: 15px;
-      max-width: 720px;
+      padding: 20px;
+      max-width: 960px;
       margin: auto;
-      font-size: 14px;
+      font-size: 16px;
       color: #333;
     }
     h1 {
       text-align: center;
-      margin-bottom: 1rem;
+      margin-bottom: 1.2rem;
       font-weight: 600;
       color: #222;
-      font-size: 1.4rem;
+      font-size: 1.8rem;
     }
     .search-bar {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 10px;
       justify-content: center;
-      margin-bottom: 1rem;
+      margin-bottom: 1.5rem;
     }
     .search-bar input, .search-bar select {
-      padding: 7px 10px;
+      padding: 10px;
       border-radius: 6px;
       border: 1px solid #bbb;
-      font-size: 13px;
-      flex: 1 1 160px;
-      min-width: 140px;
-      transition: border-color 0.3s ease;
-    }
-    .search-bar input:focus, .search-bar select:focus {
-      border-color: #0d6efd;
-      outline: none;
-      box-shadow: 0 0 6px rgba(13, 110, 253, 0.3);
+      font-size: 15px;
+      flex: 1 1 180px;
+      min-width: 160px;
     }
     .search-bar button {
-      padding: 8px 14px;
+      padding: 10px 16px;
       border-radius: 6px;
       border: none;
-      font-size: 14px;
-      cursor: pointer;
-      color: #fff;
-      transition: background-color 0.3s ease;
-      min-width: 70px;
+      font-size: 15px;
       font-weight: 600;
+      color: #fff;
+      cursor: pointer;
     }
-    button#btnSearch {
-      background-color: #0d6efd;
-    }
-    button#btnSearch:hover {
-      background-color: #084298;
-    }
-    button#btnReset {
-      background-color: #6c757d;
-    }
-    button#btnReset:hover {
-      background-color: #565e64;
-    }
+    #btnSearch { background-color: #0d6efd; }
+    #btnSearch:hover { background-color: #084298; }
+    #btnReset { background-color: #6c757d; }
+    #btnReset:hover { background-color: #565e64; }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -72,13 +57,12 @@
       border-radius: 10px;
       overflow: hidden;
       box-shadow: 0 2px 7px rgba(0,0,0,0.1);
-      font-size: 13px;
+      font-size: 15px;
     }
     th, td {
-      padding: 9px 12px;
+      padding: 12px 14px;
       text-align: left;
       border-bottom: 1px solid #eee;
-      vertical-align: middle;
     }
     th {
       background: #f4f6f8;
@@ -89,35 +73,44 @@
       background-color: #f1f3f5;
     }
     .status {
-      padding: 4px 10px;
+      padding: 6px 12px;
       border-radius: 15px;
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 600;
       display: inline-block;
-      white-space: nowrap;
     }
-    .status-ซ่อมเสร็จ {
-      background-color: #d1e7dd;
-      color: #0f5132;
+    .status-ซ่อมเสร็จ { background-color: #d1e7dd; color: #0f5132; }
+    .status-รอดำเนินการ { background-color: #fff3cd; color: #664d03; }
+    .status-กำลังซ่อม { background-color: #cff4fc; color: #055160; }
+
+    .btn-qr {
+      background-color: #20c997;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 6px 10px;
+      font-size: 13px;
+      cursor: pointer;
     }
-    .status-รอดำเนินการ {
-      background-color: #fff3cd;
-      color: #664d03;
+    .btn-qr:hover {
+      background-color: #178d74;
     }
-    .status-กำลังซ่อม {
-      background-color: #cff4fc;
-      color: #055160;
-    }
+
     #resultContainer {
-      margin-top: 10px;
       overflow-x: auto;
+      margin-top: 15px;
     }
     .no-data {
       text-align: center;
       font-style: italic;
       color: #666;
       padding: 25px 0;
-      font-size: 13px;
+    }
+
+    @media (max-width: 600px) {
+      table, thead, tbody, th, td, tr {
+        font-size: 13px;
+      }
     }
   </style>
 </head>
@@ -147,6 +140,7 @@
           <th>หน่วยงาน</th>
           <th>วันที่แจ้ง</th>
           <th>สถานะ</th>
+          <th>QR Code</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -173,14 +167,10 @@
             body: JSON.stringify({})
           }
         );
-        if(!response.ok) {
-          alert("เกิดข้อผิดพลาดในการดึงข้อมูล");
-          return [];
-        }
-        const data = await response.json();
-        return data;
-      } catch(err) {
-        alert("เกิดข้อผิดพลาดในการเชื่อมต่อ");
+        if(!response.ok) throw new Error("ไม่สามารถดึงข้อมูลได้");
+        return await response.json();
+      } catch {
+        alert("เกิดข้อผิดพลาดในการเชื่อมต่อหรือโหลดข้อมูล");
         return [];
       }
     }
@@ -192,12 +182,10 @@
         const dept = (row["หน่วยงาน"] || "").toLowerCase();
         const status = (row["สถานะเครื่อง"] || "").toLowerCase();
 
-        const matchRequest = !filters.requestNumber || reqNum.includes(filters.requestNumber.toLowerCase());
-        const matchMachine = !filters.machineName || machine.includes(filters.machineName.toLowerCase());
-        const matchDept = !filters.department || dept.includes(filters.department.toLowerCase());
-        const matchStatus = !filters.status || status === filters.status.toLowerCase();
-
-        return matchRequest && matchMachine && matchDept && matchStatus;
+        return (!filters.requestNumber || reqNum.includes(filters.requestNumber.toLowerCase())) &&
+               (!filters.machineName || machine.includes(filters.machineName.toLowerCase())) &&
+               (!filters.department || dept.includes(filters.department.toLowerCase())) &&
+               (!filters.status || status === filters.status.toLowerCase());
       });
     }
 
@@ -210,13 +198,17 @@
       }
     }
 
+    function generateQR(requestNumber) {
+      const link = `https://yourdomain.com/form.html?requestNumber=${encodeURIComponent(requestNumber)}`;
+      window.open(`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(link)}`, "_blank");
+    }
+
     function displayResults(rows) {
       const table = document.getElementById("resultTable");
       const tbody = table.querySelector("tbody");
       const noDataMessage = document.getElementById("noDataMessage");
 
       tbody.innerHTML = "";
-
       if(rows.length === 0) {
         table.style.display = "none";
         noDataMessage.style.display = "block";
@@ -225,12 +217,14 @@
 
       rows.forEach(row => {
         const tr = document.createElement("tr");
+        const rq = row["เลขที่ใบแจ้งซ่อม"] || "-";
         tr.innerHTML = `
-          <td>${row["เลขที่ใบแจ้งซ่อม"] || "-"}</td>
+          <td>${rq}</td>
           <td>${row["รายชื่อเครื่องจักร"] || "-"}</td>
           <td>${row["หน่วยงาน"] || "-"}</td>
           <td>${row["วันที่แจ้งซ่อม"] || "-"}</td>
           <td><span class="${getStatusClass(row["สถานะเครื่อง"])}">${row["สถานะเครื่อง"] || "-"}</span></td>
+          <td><button class="btn-qr" onclick="generateQR('${rq}')">QR Code</button></td>
         `;
         tbody.appendChild(tr);
       });
@@ -251,15 +245,7 @@
       }
 
       const data = await fetchData();
-
-      const filters = {
-        requestNumber,
-        machineName,
-        department,
-        status
-      };
-
-      const filtered = filterData(data, filters);
+      const filtered = filterData(data, { requestNumber, machineName, department, status });
       displayResults(filtered);
     }
 
