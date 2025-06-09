@@ -118,6 +118,9 @@
               "ApplicationAccessKey": "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85",
               "Content-Type": "application/json",
             },
+              console.log("📤 กำลังส่งข้อมูลไปยัง AppSheet...");
+              console.log("Payload:", JSON.stringify(payload, null, 2));
+
             body: JSON.stringify({
               Action: "Add",
               Properties: {},
