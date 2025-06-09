@@ -1,153 +1,82 @@
+
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8" />
-  <title>สแกน QR และแบบประเมินช่างซ่อม</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/html5-qrcode@2.3.7/minified/html5-qrcode.min.js"></script>
+<meta charset="UTF-8" />
+<title>สแกน QR Code - เปิดกล้องด้วยปุ่ม</title>
+<script src="https://unpkg.com/html5-qrcode@2.3.7/minified/html5-qrcode.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 p-4">
-  <div class="max-w-xl mx-auto bg-white p-6 rounded-2xl shadow">
+<body class="bg-gray-50 min-h-screen flex flex-col items-center justify-center p-4">
 
-    <h2 class="text-2xl font-bold text-center mb-4">สแกน QR Code เพื่อประเมินช่างซ่อม</h2>
+  <h1 class="text-3xl font-bold mb-6">สแกน QR Code</h1>
 
-    <div id="qr-reader" class="mb-4"></div>
+  <button id="btnStart" class="mb-4 px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition duration-300">
+    เปิดกล้องสแกน QR Code
+  </button>
 
-    <div id="empCodeModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
-      <div class="bg-white p-6 rounded-xl shadow-lg w-80">
-        <h3 class="text-lg font-semibold mb-4">กรุณากรอกรหัสพนักงาน</h3>
-        <input type="text" id="empCodeInput" class="w-full border border-gray-300 rounded px-3 py-2 mb-4" placeholder="รหัสพนักงาน" />
-        <button id="empCodeSubmit" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">ยืนยัน</button>
-      </div>
-    </div>
+  <div id="status" class="mb-4 text-center text-gray-700">ยังไม่ได้เปิดกล้อง</div>
 
-    <div id="evaluateFormContainer" class="hidden">
-      <h2 class="text-2xl font-bold text-center mb-4">แบบประเมินช่างซ่อม</h2>
-      <p id="requestInfo" class="text-sm text-gray-600 mb-4"></p>
+  <div id="qr-reader" class="w-80 max-w-full rounded-lg overflow-hidden shadow-lg"></div>
 
-      <form id="feedbackForm" class="space-y-6">
-        <input type="hidden" name="เลขที่ใบแจ้งซ่อม" id="requestNumber" />
-        <input type="hidden" name="รหัสพนักงาน" id="empCode" />
+  <script>
+    const btnStart = document.getElementById('btnStart');
+    const status = document.getElementById('status');
+    const qrReaderId = "qr-reader";
 
-        <div>
-          <label class="font-semibold">1. คุณภาพงาน</label>
-          <div class="flex gap-4 mt-2">
-            <img src="https://i.imgur.com/f9vN3vt.png" alt="ยิ้ม" class="w-16 cursor-pointer" onclick="selectScore('1', 0)" title="พอใจ">
-            <img src="https://i.imgur.com/OjrQmwb.png" alt="ไม่พอใจ" class="w-16 cursor-pointer" onclick="selectScore('1', 1)" title="ไม่พอใจ">
-          </div>
-        </div>
+    let html5QrcodeScanner = null;
 
-        <div>
-          <label class="font-semibold">2. การให้บริการ</label>
-          <div class="flex gap-4 mt-2">
-            <img src="https://i.imgur.com/f9vN3vt.png" alt="ยิ้ม" class="w-16 cursor-pointer" onclick="selectScore('3', 0)" title="พอใจ">
-            <img src="https://i.imgur.com/OjrQmwb.png" alt="ไม่พอใจ" class="w-16 cursor-pointer" onclick="selectScore('3', 1)" title="ไม่พอใจ">
-          </div>
-        </div>
-
-        <div>
-          <label class="font-semibold">3. ความรวดเร็ว</label>
-          <div class="flex gap-4 mt-2">
-            <img src="https://i.imgur.com/f9vN3vt.png" alt="ยิ้ม" class="w-16 cursor-pointer" onclick="selectScore('2', 0)" title="พอใจ">
-            <img src="https://i.imgur.com/OjrQmwb.png" alt="ไม่พอใจ" class="w-16 cursor-pointer" onclick="selectScore('2', 1)" title="ไม่พอใจ">
-          </div>
-        </div>
-
-        <button type="submit" class="w-full mt-6 bg-blue-600 text-white py-2 rounded-xl hover:bg-blue-700">ส่งแบบประเมิน</button>
-      </form>
-    </div>
-
-  </div>
-
-<script>
-  let requestNumber = "";
-  let empCode = "";
-  const scoreData = {};
-
-  // เริ่มสแกน QR Code
-  function onScanSuccess(decodedText, decodedResult) {
-    // หยุดสแกนหลังเจอ QR
-    html5QrcodeScanner.clear().then(() => {
-      requestNumber = decodedText;
-      // ซ่อนตัวสแกน
-      document.getElementById('qr-reader').style.display = 'none';
-      // แสดง popup รหัสพนักงาน
-      document.getElementById('empCodeModal').classList.remove('hidden');
-    }).catch((error) => {
-      console.error('Failed to clear qr scanner.', error);
-    });
-  }
-
-  const html5QrcodeScanner = new Html5QrcodeScanner(
-    "qr-reader", { fps: 10, qrbox: 250 });
-
-  html5QrcodeScanner.render(onScanSuccess);
-
-  // รหัสพนักงานยืนยัน
-  document.getElementById('empCodeSubmit').addEventListener('click', () => {
-    const input = document.getElementById('empCodeInput').value.trim();
-    if (!input) {
-      alert("กรุณากรอกรหัสพนักงาน");
-      return;
-    }
-    empCode = input;
-    document.getElementById('empCode').value = empCode;
-    document.getElementById('requestNumber').value = requestNumber;
-    document.getElementById('requestInfo').innerText = "เลขที่ใบแจ้งซ่อม: " + requestNumber;
-
-    // ซ่อน popup และแสดงฟอร์มประเมิน
-    document.getElementById('empCodeModal').classList.add('hidden');
-    document.getElementById('evaluateFormContainer').classList.remove('hidden');
-  });
-
-  function selectScore(topicNo, score) {
-    scoreData[topicNo] = score;
-    // highlight เลือกให้ดูง่าย (optional)
-    // เราสามารถขยายให้เปลี่ยนสีภาพได้ แต่ขอตัดตอนง่าย ๆ
-  }
-
-  document.getElementById('feedbackForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    // ตรวจสอบว่ากรอกครบทุกหัวข้อ
-    if (![ '1', '2', '3' ].every(topic => topic in scoreData)) {
-      alert("กรุณาเลือกคะแนนให้ครบทุกหัวข้อ");
-      return;
-    }
-
-    const payloadRows = [
-      { "เลขที่ใบแจ้งซ่อม": requestNumber, "EmpCode": empCode, "TopicNo": 1, "Rating": scoreData['1'], "Timestamp": new Date().toISOString() },
-      { "เลขที่ใบแจ้งซ่อม": requestNumber, "EmpCode": empCode, "TopicNo": 2, "Rating": scoreData['2'], "Timestamp": new Date().toISOString() },
-      { "เลขที่ใบแจ้งซ่อม": requestNumber, "EmpCode": empCode, "TopicNo": 3, "Rating": scoreData['3'], "Timestamp": new Date().toISOString() }
-    ];
-
-    try {
-      const res = await fetch("https://api.appsheet.com/api/v2/apps/ae5d7dce-1c12-4c53-b201-5a2d7c5b5411/tables/RepairFeedback/Action", {
-        method: "POST",
-        headers: {
-          "ApplicationAccessKey": "V2-lYSFh-KY1tr-q5RUR-qjGNg-NhTsA-0IlEz-x52kD-Zw9Qb",
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          Action: "Add",
-          Properties: {},
-          Rows: payloadRows
-        })
-      });
-
-      if (res.ok) {
-        alert("ส่งแบบประเมินสำเร็จ ขอบคุณครับ");
-        // โหลดหน้าใหม่ให้สแกนใหม่ได้
-        window.location.reload();
+    btnStart.addEventListener('click', () => {
+      if (html5QrcodeScanner) {
+        // ถ้ากล้องเปิดอยู่แล้ว ปิดก่อนแล้วเปิดใหม่
+        html5QrcodeScanner.clear().then(() => {
+          startScanner();
+        }).catch(err => {
+          status.innerText = "ไม่สามารถปิดกล้องเดิมได้: " + err;
+          status.classList.add("text-red-600");
+        });
       } else {
-        alert("เกิดข้อผิดพลาดในการส่งข้อมูล กรุณาลองใหม่");
+        startScanner();
       }
-    } catch (error) {
-      alert("เกิดข้อผิดพลาดในการเชื่อมต่อ");
-      console.error(error);
+    });
+
+    function startScanner() {
+      status.innerText = "กำลังเปิดกล้อง...";
+      status.classList.remove("text-red-600");
+      status.classList.add("text-gray-700");
+
+      html5QrcodeScanner = new Html5Qrcode(qrReaderId);
+
+      html5QrcodeScanner.start(
+        { facingMode: "environment" }, 
+        { fps: 10, qrbox: 250 },
+        qrCodeMessage => {
+          status.innerText = "เจอ QR Code: " + qrCodeMessage;
+          status.classList.remove("text-gray-700");
+          status.classList.add("text-green-600");
+
+          html5QrcodeScanner.stop().then(() => {
+            // กล้องปิดแล้ว
+          }).catch(err => {
+            status.innerText = "เกิดข้อผิดพลาดในการปิดกล้อง: " + err;
+            status.classList.add("text-red-600");
+          });
+        },
+        errorMessage => {
+          // console.log(`Error scanning: ${errorMessage}`); // ใช้ debug ถ้าต้องการ
+        }
+      ).then(() => {
+        status.innerText = "กล้องพร้อมใช้งาน กรุณาสแกน QR Code";
+        status.classList.remove("text-gray-700");
+        status.classList.remove("text-red-600");
+        status.classList.add("text-blue-600");
+      }).catch(err => {
+        status.innerText = "ไม่สามารถเปิดกล้องได้: " + err;
+        status.classList.remove("text-blue-600");
+        status.classList.add("text-red-600");
+      });
     }
-  });
-</script>
+  </script>
 
 </body>
 </html>
