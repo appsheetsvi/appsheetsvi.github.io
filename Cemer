@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>ทดสอบกล้อง</title>
+</head>
+<body>
+  <h2>ทดสอบเปิดกล้อง</h2>
+  <video id="video" width="320" height="240" autoplay></video>
+  <p id="status"></p>
+
+  <script>
+    const video = document.getElementById('video');
+    const status = document.getElementById('status');
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        video.srcObject = stream;
+        status.textContent = "✅ กล้องเปิดแล้ว";
+      })
+      .catch(err => {
+        console.error(err);
+        status.textContent = "❌ ไม่สามารถเปิดกล้องได้: " + err.message;
+      });
+  </script>
+</body>
+</html>
