@@ -1,98 +1,75 @@
-/* styles.css */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai&display=swap');
+<label for="deptSelect">เลือกแผนก:</label>
+<select id="deptSelect">
+  <option value="">-- เลือกแผนก --</option>
+</select>
 
-body {
-  font-family: 'Noto Sans Thai', sans-serif;
-  background-color: #f9fafb;
-  color: #1f2937;
-  margin: 0;
-  padding: 20px;
-  line-height: 1.6;
+<label for="machineSelect">เลือกเครื่องจักร:</label>
+<select id="machineSelect">
+  <option value="">-- เลือกเครื่องจักร --</option>
+</select>
+
+<script>
+const apiBase = 'https://api.appsheet.com/api/v2/apps/ae5d7dce-1c12-4c53-b201-5a2d7c5b5411/tables/';
+const headers = {
+  'ApplicationAccessKey': 'V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85'
+};
+
+// โหลดแผนกจาก AppSheet
+async function loadDepartments() {
+  const res = await fetch(apiBase + 'department/Action', {
+    method: 'POST',
+    headers: {
+      ...headers,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ Action: "Find", Properties: {}, Rows: [] })
+  });
+
+  const data = await res.json();
+  const deptSelect = document.getElementById('deptSelect');
+  data.Rows.forEach(row => {
+    const opt = document.createElement('option');
+    opt.value = row["DeptCode"]; // ใช้รหัสแผนกเป็น value
+    opt.textContent = row["DeptName"]; // แสดงชื่อแผนก
+    deptSelect.appendChild(opt);
+  });
 }
 
-form {
-  max-width: 600px;
-  margin: 0 auto;
-  background: white;
-  padding: 30px 40px;
-  border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+// โหลดเครื่องจักรเฉพาะแผนก
+async function loadMachinesByDept(deptCode) {
+  const res = await fetch(apiBase + 'macchin/Action', {
+    method: 'POST',
+    headers: {
+      ...headers,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ Action: "Find", Properties: {}, Rows: [] })
+  });
+
+  const data = await res.json();
+  const machineSelect = document.getElementById('machineSelect');
+  machineSelect.innerHTML = '<option value="">-- เลือกเครื่องจักร --</option>';
+
+  data.Rows
+    .filter(row => row["DeptCode"] === deptCode)
+    .forEach(row => {
+      const opt = document.createElement('option');
+      opt.value = row["รหัสเครื่อง"]; // ใช้รหัสเครื่อง
+      opt.textContent = row["รายชื่อเครื่องจักร"]; // แสดงชื่อเครื่องจักร
+      machineSelect.appendChild(opt);
+    });
 }
 
-label {
-  display: block;
-  margin-bottom: 6px;
-  font-weight: 600;
-  color: #374151;
-  font-size: 1rem;
-}
+// Event เมื่อเลือกแผนก
+document.getElementById('deptSelect').addEventListener('change', e => {
+  const deptCode = e.target.value;
+  if (deptCode) {
+    loadMachinesByDept(deptCode);
+  } else {
+    document.getElementById('machineSelect').innerHTML = '<option value="">-- เลือกเครื่องจักร --</option>';
+  }
+});
 
-input[readonly] {
-  background-color: #e5e7eb; /* สีเทาอ่อน */
-  color: #6b7280;
-  cursor: not-allowed;
-}
-
-select, input, textarea {
-  width: 100%;
-  padding: 10px 14px;
-  font-size: 1rem;
-  border: 1.8px solid #d1d5db; /* สีเทาอ่อน */
-  border-radius: 8px;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  font-family: 'Noto Sans Thai', sans-serif;
-  box-sizing: border-box;
-}
-
-select:disabled, input:disabled, textarea:disabled {
-  background-color: #f9fafb;
-  color: #9ca3af;
-  cursor: not-allowed;
-}
-
-input:focus, select:focus, textarea:focus {
-  border-color: #3b82f6; /* ฟ้า */
-  outline: none;
-  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
-}
-
-button[type="submit"] {
-  background-color: #3b82f6;
-  color: white;
-  font-weight: 700;
-  border: none;
-  padding: 12px 20px;
-  font-size: 1.1rem;
-  border-radius: 10px;
-  cursor: pointer;
-  margin-top: 20px;
-  width: 100%;
-  transition: background-color 0.3s ease;
-}
-
-button[type="submit"]:hover:not(:disabled) {
-  background-color: #2563eb;
-}
-
-button[type="submit"]:disabled {
-  background-color: #93c5fd;
-  cursor: not-allowed;
-}
-
-option {
-  padding: 8px;
-}
-
-/* สำหรับ QR Code container */
-#qrcode {
-  margin: 20px auto;
-  width: 128px;
-  height: 128px;
-  border-radius: 12px;
-  box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
-}
-
-/* เพิ่มความห่างระหว่างฟิลด์ */
-.form-group {
-  margin-bottom: 18px;
-}
+// โหลดแผนกตอนเริ่มต้น
+loadDepartments();
+</script>
