@@ -81,7 +81,7 @@ async function loadJobTypes() {
 async function fetchAutoRequestNumber() {
   const rows = await fetchFromTable("Machinesymptom");
   const input = document.querySelector("[name='เลขที่ใบแจ้งซ่อม']");
-  let newCode = "0000001";
+  let newCode = "2506001";
 
   if (rows.length > 0) {
     const max = rows
