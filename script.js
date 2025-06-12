@@ -32,7 +32,7 @@ async function loadDepartments() {
   const select = document.querySelector("[name='หน่วยงาน']");
   select.innerHTML = '<option value="">-- เลือกแผนก --</option>';
   list.forEach((item) => {
-    select.innerHTML += `<option value="${item.DeptCode}">${item.DeptName}</option>`;
+    select.innerHTML += `<option value="${item.DeptCode}">${item.DeptNameEng}</option>`;
   });
 }
 
@@ -81,7 +81,7 @@ async function loadJobTypes() {
 async function fetchAutoRequestNumber() {
   const rows = await fetchFromTable("Machinesymptom");
   const input = document.querySelector("[name='เลขที่ใบแจ้งซ่อม']");
-  let newCode = "2506001";
+  let newCode = "0000001";
 
   if (rows.length > 0) {
     const max = rows
