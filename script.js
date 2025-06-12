@@ -32,7 +32,7 @@ async function loadDepartments() {
   const select = document.querySelector("[name='หน่วยงาน']");
   select.innerHTML = '<option value="">-- เลือกแผนก --</option>';
   list.forEach((item) => {
-    select.innerHTML += `<option value="${item.DeptCode}">${item.DeptNameEng}</option>`;
+    select.innerHTML += `<option value="${item.DeptCode}">${item.DeptName}</option>`;
   });
 }
 
