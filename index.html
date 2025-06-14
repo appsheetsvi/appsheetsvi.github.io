@@ -5,55 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ฟอร์มแจ้งซ่อม</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
-
-<nav class="bg-blue-900 text-white fixed top-0 left-0 w-full z-30 shadow-md">
-  <div class="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
-    
-    <!-- ซ้าย: ไอคอน + ชื่อโปรแกรม -->
-    <div class="flex items-center space-x-2">
-      <span class="text-2xl sm:text-3xl">🛠</span>
-      <span class="text-lg sm:text-xl font-semibold">โปรแกรมแจ้งซ่อม</span>
-    </div>
-
-    <!-- ขวา: ซ่อนไว้บนมือถือ -->
-    <div class="hidden sm:flex items-center space-x-4">
-      <!-- ผู้ใช้งาน -->
-      <div class="flex items-center space-x-1">
-        <span class="text-base">👤</span>
-        <span class="text-sm" id="username">ชื่อผู้ใช้</span>
-      </div>
-
-      <!-- ปุ่มค้นหา -->
-      <a href="search.html" class="hover:underline text-sm">🔍 ค้นหา</a>
-
-      <!-- ปุ่ม Logout -->
-      <a href="login.html" class="hover:underline text-sm">📤 Logout</a>
-    </div>
-
-  </div>
-</nav>
-
-<script>
-  // แสดงชื่อผู้ใช้จาก localStorage (หรือเปลี่ยนตามระบบคุณ)
-  document.getElementById("username").innerText = localStorage.getItem("username") || "ไม่ทราบชื่อ";
-</script>
-
-
   <style>
     body {
       font-family: "Segoe UI", sans-serif;
       background-color: #f9fafb;
       margin: 0;
       padding: 0;
-    }
-
-    nav {
-      background-color: #1e40af;
-      color: white;
-      padding: 1rem 2rem;
-      font-size: 1.25rem;
-      font-weight: bold;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      padding-top: 64px; /* เว้นพื้นที่สำหรับ Navbar */
     }
 
     .container {
@@ -66,23 +24,11 @@
     }
 
     .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      flex-wrap: wrap;
-      margin-bottom: 1.5rem;
-    }
-
-    .header h1 {
       font-size: 1.5rem;
       font-weight: bold;
       color: #1f2937;
-    }
-
-    .qrcode-box {
-      width: 96px;
-      height: 96px;
-      margin-top: 0.5rem;
+      margin-bottom: 1.5rem;
+      text-align: center;
     }
 
     form {
@@ -143,6 +89,14 @@
       background-color: #2563eb;
     }
 
+    .qrcode-box {
+      width: 96px;
+      height: 96px;
+      margin-top: 1.5rem;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
     @media (max-width: 640px) {
       form {
         flex-direction: column;
@@ -150,32 +104,32 @@
       .form-group, .form-group-small, button {
         flex: 1 1 100%;
       }
-      .header {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-      }
-      .qrcode-box {
-        margin-top: 1rem;
-      }
     }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
-  <nav>ระบบแจ้งซ่อม</nav>
-
-  <div class="container">
-    <div class="header">
-      <h1>📋 ฟอร์มแจ้งซ่อมเครื่องจักร</h1>
-      <div id="qrcode" class="qrcode-box"></div>
+  <!-- ✅ Navbar -->
+  <nav class="bg-blue-800 text-white fixed top-0 left-0 w-full z-50 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 py-2 flex flex-wrap items-center justify-between">
+      <div class="text-lg font-semibold">📋 ระบบแจ้งซ่อม</div>
+      <div class="flex items-center space-x-4 text-sm sm:text-base mt-2 sm:mt-0 w-full sm:w-auto justify-between sm:justify-end">
+        <span id="username" class="text-white font-medium truncate">👤 ไม่ทราบชื่อ</span>
+        <input type="text" id="searchInput" placeholder="ค้นหาใบแจ้งซ่อม..." class="rounded px-2 py-1 text-black focus:outline-none w-full sm:w-48">
+        <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">Logout</button>
+      </div>
     </div>
+  </nav>
+
+  <!-- ✅ Container -->
+  <div class="container">
+    <h1 class="header">📋 ฟอร์มแจ้งซ่อมเครื่องจักร</h1>
 
     <form id="repairForm">
       <div class="form-group full-width">
         <label>เลขที่ใบแจ้งซ่อม</label>
-        <input name="เลขที่ใบแจ้งซ่อม" readonly />
+        <input name="เลขที่ใบแจ้งซ่อม" readonly value="REQ20250614001" />
       </div>
 
       <div class="form-group">
@@ -262,10 +216,37 @@
 
       <button type="submit">บันทึกข้อมูล</button>
     </form>
+
+    <!-- QR Code -->
+    <div id="qrcode" class="qrcode-box"></div>
   </div>
 
+  <!-- ✅ Script -->
   <script>
     
+
+    // แสดงชื่อผู้ใช้จาก localStorage
+    document.getElementById("username").innerText = "👤 " + (localStorage.getItem("username") || "ไม่ทราบชื่อ");
+
+    // Logout
+    function logout() {
+      localStorage.removeItem("username");
+      alert("ออกจากระบบแล้ว");
+      window.location.href = "login.html"; // เปลี่ยนตามหน้า login ของคุณ
+    }
+
+    // ค้นหาเมื่อกด Enter
+    document.getElementById("searchInput").addEventListener("keypress", function (e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const keyword = this.value.trim();
+        if (keyword) {
+          alert("ค้นหาใบแจ้งซ่อม: " + keyword);
+          // สามารถใส่การ redirect หรือ API call ที่นี่ได้
+        }
+      }
+    });
+
     // สร้าง QR Code
     new QRCode(document.getElementById("qrcode"), {
       text: reqNo,
