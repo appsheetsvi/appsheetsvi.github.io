@@ -3,152 +3,276 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ระบบแจ้งซ่อม</title>
+  <title>ฟอร์มแจ้งซ่อม</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
-  <script defer src="script.js"></script>
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-</head>
-<body class="bg-gray-50">
 
-  <!-- Navbar -->
-  <nav class="bg-blue-900 text-white fixed top-0 left-0 w-full z-50 shadow-md">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
-      <div class="text-xl font-bold">ระบบแจ้งซ่อม</div>
-      <div class="hidden md:flex space-x-6">
-        <a href="index.html" class="">ใบแจ้งซ่อม</a>
-        <a href="search.html" class="">🔍 ค้นหา</a>
-      </div>
-      <div class="md:hidden">
-        <button id="mobileMenuButton" class="focus:outline-none">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-      </div>
-    </div>
-    <div id="mobileMenu" class="hidden md:hidden px-4 pb-4 bg-blue-900">
-      <button id="nav-form-mobile" class="block py-2 hover:underline text-white w-full text-left">📋 แจ้งซ่อม</button>
-      <button id="nav-search-mobile" class="block py-2 hover:underline text-white w-full text-left">🔍 ค้นหา</button>
-    </div>
-  </nav>
-
-  <!-- Main Content -->
-  <div class="pt-20 max-w-4xl mx-auto px-4">
-
-    <!-- ฟอร์มแจ้งซ่อม -->
-    <div id="formPage" class="page space-y-6">
-      <h2 class="text-xl font-semibold text-blue-700">📋 ฟอร์มแจ้งซ่อมเครื่องจักร</h2>
-      <form id="repairForm" class="bg-white p-6 rounded shadow space-y-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label for="reqNumber" class="block text-sm font-medium text-gray-700">เลขที่ใบแจ้งซ่อม *</label>
-            <input id="reqNumber" name="เลขที่ใบแจ้งซ่อม" readonly
-              class="mt-1 w-full border rounded px-3 py-2 bg-gray-100 cursor-not-allowed" />
-          </div>
-          <div>
-            <label for="department" class="block text-sm font-medium text-gray-700">แผนก</label>
-            <select id="department" name="หน่วยงาน" class="mt-1 w-full border rounded px-3 py-2">
-              <option value="">-- เลือกแผนก --</option>
-            </select>
-          </div>
-          <div>
-            <label for="machineCode" class="block text-sm font-medium text-gray-700">รหัสเครื่อง</label>
-            <select id="machineCode" name="รหัสเครื่อง" class="mt-1 w-full border rounded px-3 py-2">
-              <option value="">-- เลือกเครื่องจักร --</option>
-            </select>
-          </div>
-          <div>
-            <label for="JobType" class="block text-sm font-medium text-gray-700">ชนิดงาน</label>
-            <select id="JobType" name="ชนิดงาน" class="mt-1 w-full border rounded px-3 py-2">
-              <option value="">-- เลือกชนิดงาน --</option>
-            </select>
-          </div>
-          <div>
-          <label for="problemDetail" class="block text-sm font-medium text-gray-700">รายละเอียดอาการเสีย</label>
-          <textarea id="problemDetail" name="รายละเอียดอาการเสีย" rows="3"
-            class="mt-1 w-full border rounded px-3 py-2"></textarea>
-        </div>
-        <div>
-          <label for="causeAnalysis" class="block text-sm font-medium text-gray-700">วิเคราะห์สาเหตุ</label>
-          <textarea id="causeAnalysis" name="วิเคราะห์สาเหตุ" rows="3"
-            class="mt-1 w-full border rounded px-3 py-2"></textarea>
-        </div>
-        <div>
-          <label for="fixComments" class="block text-sm font-medium text-gray-700">การแก้ไขความคิดเห็น</label>
-          <textarea id="fixComments" name="การแก้ไขความคิดเห็น" rows="3"
-            class="mt-1 w-full border rounded px-3 py-2"></textarea>
-        </div>
-        <div>
-          <label for="partsList" class="block text-sm font-medium text-gray-700">รายการอะไหล่ที่ใช้</label>
-          <textarea id="partsList" name="รายการอะไหล่ที่ใช้" rows="3"
-            class="mt-1 w-full border rounded px-3 py-2"></textarea>
-        </div>
-          <div>
-            <label for="quantity" class="block text-sm font-medium text-gray-700">จำนวน</label>
-            <input id="quantity" name="จำนวน" type="number" min="0"
-              class="mt-1 w-full border rounded px-3 py-2" />
-          </div>
-          <div>
-            <label for="assignedTech" class="block text-sm font-medium text-gray-700">มอบหมายงานให้ช่าง</label>
-            <input id="assignedTech" name="มอบหมายงานให้ช่าง" type="text"
-              class="mt-1 w-full border rounded px-3 py-2" />
-          </div>
-          <div>
-            <label for="technician" class="block text-sm font-medium text-gray-700">พนักงาน(ช่าง)</label>
-            <input id="technician" name="พนักงาน(ช่าง)" type="text"
-              class="mt-1 w-full border rounded px-3 py-2" />
-          </div>
-          <div>
-            <label for="requester" class="block text-sm font-medium text-gray-700">ผู้แจ้งซ่อม</label>
-            <input id="requester" name="ผู้แจ้งซ่อม" type="text"
-              class="mt-1 w-full border rounded px-3 py-2" />
-          </div>
-          <div>
-            <label for="machineStatus" class="block text-sm font-medium text-gray-700">สถานะเครื่อง</label>
-            <select id="machineStatus" name="สถานะเครื่อง" class="mt-1 w-full border rounded px-3 py-2">
-              <option value="">-- เลือก --</option>
-              <option value="Running">Running</option>
-              <option value="Down">Down</option>
-              <option value="Wait Part">Wait Part</option>
-            </select>
-          </div>
-          <div>
-            <label for="dateReported" class="block text-sm font-medium text-gray-700">วันที่แจ้งซ่อม</label>
-            <input id="dateReported" name="วันที่แจ้งซ่อม" type="date"
-              class="mt-1 w-full border rounded px-3 py-2" />
-          </div>
-          <div>
-            <label for="dateCompleted" class="block text-sm font-medium text-gray-700">วันที่ซ่อมเสร็จ</label>
-            <input id="dateCompleted" name="วันที่ซ่อมเสร็จ" type="date"
-              class="mt-1 w-full border rounded px-3 py-2" />
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700">QR Code สำหรับใบแจ้งซ่อม</label>
-          <div id="qrcode" class="border rounded p-4 bg-white inline-block"></div>
-        </div>
-
-        <button type="submit"
-          class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow">บันทึกข้อมูล</button>
-      </form>
+<nav class="bg-blue-900 text-white fixed top-0 left-0 w-full z-30 shadow-md">
+  <div class="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
+    
+    <!-- ซ้าย: ไอคอน + ชื่อโปรแกรม -->
+    <div class="flex items-center space-x-2">
+      <span class="text-2xl sm:text-3xl">🛠</span>
+      <span class="text-lg sm:text-xl font-semibold">โปรแกรมแจ้งซ่อม</span>
     </div>
 
-    <!-- ค้นหา -->
-    <div id="searchPage" class="page hidden space-y-4">
-      <h2 class="text-xl font-semibold text-green-700">🔍 ค้นหาใบแจ้งซ่อม</h2>
-      <div class="bg-white p-6 rounded shadow space-y-4">
-        <input type="text" id="searchInput" placeholder="🔍 ค้นหาเลขที่ใบแจ้งซ่อม..."
-          class="w-full border rounded px-3 py-2" />
-        <button id="btnSearch"
-          class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">ค้นหา</button>
-        <div id="searchResult" class="text-sm text-gray-700 mt-4"></div>
+    <!-- ขวา: ซ่อนไว้บนมือถือ -->
+    <div class="hidden sm:flex items-center space-x-4">
+      <!-- ผู้ใช้งาน -->
+      <div class="flex items-center space-x-1">
+        <span class="text-base">👤</span>
+        <span class="text-sm" id="username">ชื่อผู้ใช้</span>
       </div>
+
+      <!-- ปุ่มค้นหา -->
+      <a href="search.html" class="hover:underline text-sm">🔍 ค้นหา</a>
+
+      <!-- ปุ่ม Logout -->
+      <a href="login.html" class="hover:underline text-sm">📤 Logout</a>
     </div>
 
   </div>
+</nav>
 
+<script>
+  // แสดงชื่อผู้ใช้จาก localStorage (หรือเปลี่ยนตามระบบคุณ)
+  document.getElementById("username").innerText = localStorage.getItem("username") || "ไม่ทราบชื่อ";
+</script>
+
+
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background-color: #f9fafb;
+      margin: 0;
+      padding: 0;
+    }
+
+    nav {
+      background-color: #1e40af;
+      color: white;
+      padding: 1rem 2rem;
+      font-size: 1.25rem;
+      font-weight: bold;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 1.5rem auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+    }
+
+    .header h1 {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #1f2937;
+    }
+
+    .qrcode-box {
+      width: 96px;
+      height: 96px;
+      margin-top: 0.5rem;
+    }
+
+    form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem 1.5rem;
+    }
+
+    .form-group {
+      flex: 1 1 45%;
+      min-width: 200px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group-small {
+      flex: 1 1 30%;
+      min-width: 150px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .full-width {
+      flex: 1 1 100%;
+    }
+
+    label {
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+      color: #374151;
+    }
+
+    input, select, textarea {
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 1rem;
+      transition: 0.2s;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    button {
+      background-color: #1d4ed8;
+      color: white;
+      padding: 0.75rem 2rem;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      margin-top: 1rem;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #2563eb;
+    }
+
+    @media (max-width: 640px) {
+      form {
+        flex-direction: column;
+      }
+      .form-group, .form-group-small, button {
+        flex: 1 1 100%;
+      }
+      .header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+      .qrcode-box {
+        margin-top: 1rem;
+      }
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+
+  <nav>ระบบแจ้งซ่อม</nav>
+
+  <div class="container">
+    <div class="header">
+      <h1>📋 ฟอร์มแจ้งซ่อมเครื่องจักร</h1>
+      <div id="qrcode" class="qrcode-box"></div>
+    </div>
+
+    <form id="repairForm">
+      <div class="form-group full-width">
+        <label>เลขที่ใบแจ้งซ่อม</label>
+        <input name="เลขที่ใบแจ้งซ่อม" readonly />
+      </div>
+
+      <div class="form-group">
+        <label>หน่วยงาน</label>
+        <select name="หน่วยงาน" id="deptSelect" required>
+          <option value="">-- เลือกหน่วยงาน --</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>ชนิดงาน</label>
+        <select name="ชนิดงาน" id="jobTypeSelect" required>
+          <option value="">-- เลือกชนิดงาน --</option>
+        </select>
+      </div>
+
+      <div class="form-group-small">
+        <label>รหัสเครื่อง</label>
+        <select name="รหัสเครื่อง" id="machineSelect" required>
+          <option value="">-- เลือกเครื่อง --</option>
+        </select>
+      </div>
+
+      <div class="form-group full-width">
+        <label>รายละเอียดอาการเสีย</label>
+        <textarea name="รายละเอียดอาการเสีย"></textarea>
+      </div>
+
+      <div class="form-group full-width">
+        <label>วิเคราะห์สาเหตุ</label>
+        <textarea name="วิเคราะห์สาเหตุ"></textarea>
+      </div>
+
+      <div class="form-group full-width">
+        <label>การแก้ไขความคิดเห็น</label>
+        <textarea name="การแก้ไขความคิดเห็น"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>รายการอะไหล่ที่ใช้</label>
+        <input type="text" name="รายการอะไหล่ที่ใช้" />
+      </div>
+
+      <div class="form-group">
+        <label>จำนวน</label>
+        <input type="number" name="จำนวน" />
+      </div>
+
+      <div class="form-group full-width">
+        <label>มอบหมายงานให้ช่าง</label>
+        <input type="text" name="มอบหมายงานให้ช่าง" />
+      </div>
+
+      <div class="form-group">
+        <label>พนักงาน(ช่าง)</label>
+        <input type="text" name="พนักงาน(ช่าง)" />
+      </div>
+
+      <div class="form-group">
+        <label>ผู้แจ้งซ่อม</label>
+        <input type="text" name="ผู้แจ้งซ่อม" />
+      </div>
+
+      <div class="form-group full-width">
+        <label>สถานะเครื่อง</label>
+        <select name="สถานะเครื่อง">
+          <option value="">-- เลือกสถานะ --</option>
+          <option value="ใช้งานได้">ใช้งานได้</option>
+          <option value="รออะไหล่">รออะไหล่</option>
+          <option value="อยู่ระหว่างซ่อม">อยู่ระหว่างซ่อม</option>
+          <option value="ยกเลิก">ยกเลิก</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>วันที่แจ้งซ่อม</label>
+        <input type="date" name="วันที่แจ้งซ่อม" />
+      </div>
+
+      <div class="form-group">
+        <label>วันที่ซ่อมเสร็จ</label>
+        <input type="date" name="วันที่ซ่อมเสร็จ" />
+      </div>
+
+      <button type="submit">บันทึกข้อมูล</button>
+    </form>
+  </div>
+
+  <script>
+    
+    // สร้าง QR Code
+    new QRCode(document.getElementById("qrcode"), {
+      text: reqNo,
+      width: 96,
+      height: 96
+    });
+  </script>
+<script src="script.js"></script>
 </body>
 </html>
