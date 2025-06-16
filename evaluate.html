@@ -2,166 +2,175 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
-  <title>แบบประเมินช่างซ่อม (Responsive)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>แบบประเมินความพึงพอใจ</title>
   <style>
-    .score-img {
-      transition: transform 0.2s, border 0.2s;
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: #f9fafb;
+      padding: 20px;
+      max-width: 400px;
+      margin: auto;
+    }
+    h2 {
+      text-align: center;
+      color: #1e40af;
+    }
+    .topic {
+      margin: 20px 0 5px;
+      font-weight: 600;
+    }
+    .options {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      margin-top: 10px;
+    }
+    .option {
       cursor: pointer;
-      border-radius: 0.5rem;
+      transition: transform 0.2s;
+      border: 3px solid transparent;
+      border-radius: 10px;
+      padding: 5px;
+      width: 80px;
+      height: 80px;
       user-select: none;
     }
-    .score-img:hover {
-      transform: scale(1.15);
-      border: 3px solid #2563eb;
+    .option img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      pointer-events: none;
     }
-    .selected {
-      border: 4px solid #2563eb;
+    .option.selected {
+      border-color: #2563eb;
+      transform: scale(1.1);
+      box-shadow: 0 0 8px #2563eb;
+    }
+    button {
+      display: block;
+      margin: 30px auto 0;
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 6px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #1e40af;
     }
   </style>
 </head>
-<body class="bg-gray-50 min-h-screen flex items-center justify-center p-4">
-  <div class="w-full max-w-lg bg-white rounded-3xl shadow-lg p-8">
-    <h2 class="text-4xl font-extrabold text-blue-700 text-center mb-8">แบบประเมินช่างซ่อม</h2>
-    <p id="requestInfo" class="text-center text-gray-600 text-lg mb-10"></p>
+<body>
+  <h2>แบบประเมินความพึงพอใจ</h2>
 
-    <form id="feedbackForm" class="space-y-12">
-      <input type="hidden" name="เลขที่ใบแจ้งซ่อม" id="requestNumber" />
-      <input type="hidden" name="รหัสพนักงาน" id="empCode" />
-
-      <!-- 1. คุณภาพงาน -->
-      <div>
-        <label class="block font-extrabold text-2xl text-left mb-4 select-none">1. คุณภาพงาน</label>
-        <div class="flex justify-between gap-6 px-4 sm:px-12">
-          <img src="smile.png" alt="ยิ้ม" class="score-img w-20 sm:w-24" onclick="selectScore('คุณภาพ', 0, this)" />
-          <img src="sad.png" alt="ไม่พอใจ" class="score-img w-20 sm:w-24" onclick="selectScore('คุณภาพ', 2, this)" />
-        </div>
-      </div>
-
-      <!-- 2. การให้บริการ -->
-      <div>
-        <label class="block font-extrabold text-2xl text-left mb-4 select-none">2. การให้บริการ</label>
-        <div class="flex justify-between gap-6 px-4 sm:px-12">
-          <img src="smile.png" alt="ยิ้ม" class="score-img w-20 sm:w-24" onclick="selectScore('บริการ', 0, this)" />
-          <img src="sad.png" alt="ไม่พอใจ" class="score-img w-20 sm:w-24" onclick="selectScore('บริการ', 2, this)" />
-        </div>
-      </div>
-
-      <!-- 3. ความรวดเร็ว -->
-      <div>
-        <label class="block font-extrabold text-2xl text-left mb-4 select-none">3. ความรวดเร็ว</label>
-        <div class="flex justify-between gap-6 px-4 sm:px-12">
-          <img src="smile.png" alt="ยิ้ม" class="score-img w-20 sm:w-24" onclick="selectScore('รวดเร็ว', 0, this)" />
-          <img src="sad.png" alt="ไม่พอใจ" class="score-img w-20 sm:w-24" onclick="selectScore('รวดเร็ว', 2, this)" />
-        </div>
-      </div>
-
-      <button
-        type="submit"
-        class="w-full bg-blue-600 text-white py-4 rounded-3xl text-xl font-bold hover:bg-blue-700 transition-colors duration-200"
-      >
-        ส่งแบบประเมิน
-      </button>
-    </form>
+  <div class="topic">คุณภาพงาน</div>
+  <div class="options" id="qualityOptions">
+    <div class="option" data-value="1" onclick="selectOption('qualityOptions', this)">
+      <img src="https://cdn-icons-png.flaticon.com/512/742/742751.png" alt="พอใจ" />
+    </div>
+    <div class="option" data-value="0" onclick="selectOption('qualityOptions', this)">
+      <img src="https://cdn-icons-png.flaticon.com/512/742/742753.png" alt="ไม่พอใจ" />
+    </div>
   </div>
 
+  <div class="topic">ความรวดเร็ว</div>
+  <div class="options" id="speedOptions">
+    <div class="option" data-value="1" onclick="selectOption('speedOptions', this)">
+      <img src="https://cdn-icons-png.flaticon.com/512/742/742751.png" alt="พอใจ" />
+    </div>
+    <div class="option" data-value="0" onclick="selectOption('speedOptions', this)">
+      <img src="https://cdn-icons-png.flaticon.com/512/742/742753.png" alt="ไม่พอใจ" />
+    </div>
+  </div>
+
+  <div class="topic">การให้บริการ</div>
+  <div class="options" id="serviceOptions">
+    <div class="option" data-value="1" onclick="selectOption('serviceOptions', this)">
+      <img src="https://cdn-icons-png.flaticon.com/512/742/742751.png" alt="พอใจ" />
+    </div>
+    <div class="option" data-value="0" onclick="selectOption('serviceOptions', this)">
+      <img src="https://cdn-icons-png.flaticon.com/512/742/742753.png" alt="ไม่พอใจ" />
+    </div>
+  </div>
+
+  <button onclick="submitFeedback()">ส่งแบบประเมิน</button>
+
   <script>
-    const params = new URLSearchParams(location.search);
-    const requestNumber = params.get("requestNumber") || "ไม่พบเลขที่ใบแจ้งซ่อม";
-    const empCode = params.get("empCode") || "";
+    const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
+    const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
 
-    document.getElementById("requestNumber").value = requestNumber;
-    document.getElementById("empCode").value = empCode;
-    document.getElementById("requestInfo").innerText = `เลขที่ใบแจ้งซ่อม: ${requestNumber}`;
+    // เปลี่ยนค่านี้ตามใบแจ้งซ่อม และพนักงานจริงที่ login อยู่
+    const requestNumber = "RQ25650615001";
+    const empCode = "0003";
 
-    const scoreData = {};
-
-    function selectScore(topic, score, imgEl) {
-      scoreData[topic] = score;
-
-      const container = imgEl.parentElement;
-      [...container.children].forEach((img) => img.classList.remove("selected"));
-
-      imgEl.classList.add("selected");
+    function selectOption(containerId, selectedElem) {
+      const container = document.getElementById(containerId);
+      Array.from(container.children).forEach(el => el.classList.remove("selected"));
+      selectedElem.classList.add("selected");
     }
 
-    document.getElementById("feedbackForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
+    function getSelectedValue(containerId) {
+      const container = document.getElementById(containerId);
+      const selected = container.querySelector(".option.selected");
+      return selected ? Number(selected.getAttribute("data-value")) : null;
+    }
 
-      if (
-        scoreData["คุณภาพ"] === undefined ||
-        scoreData["บริการ"] === undefined ||
-        scoreData["รวดเร็ว"] === undefined
-      ) {
-        alert("กรุณาเลือกคะแนนทุกหัวข้อ");
+    async function submitFeedback() {
+      const quality = getSelectedValue("qualityOptions");
+      const speed = getSelectedValue("speedOptions");
+      const service = getSelectedValue("serviceOptions");
+
+      if (quality === null || speed === null || service === null) {
+        alert("กรุณาเลือกทุกหัวข้อก่อนส่ง");
         return;
       }
 
-      const body = {
+      // ส่งข้อมูลแต่ละหัวข้อเป็นแถว (TopicNo: 1,2,3)
+      const feedbacks = [
+        { TopicNo: 1, Rating: quality },
+        { TopicNo: 2, Rating: speed },
+        { TopicNo: 3, Rating: service }
+      ];
+
+      const records = feedbacks.map(fb => ({
         "เลขที่ใบแจ้งซ่อม": requestNumber,
-        "รหัสพนักงาน": empCode,
-        "Timestamp": new Date().toISOString(),
-        "Feedbacks": [
-          { TopicNo: 1, Rating: scoreData["คุณภาพ"] },
-          { TopicNo: 2, Rating: scoreData["รวดเร็ว"] },
-          { TopicNo: 3, Rating: scoreData["บริการ"] }
-        ],
+        "EmpCode": empCode,
+        "TopicNo": fb.TopicNo,
+        "Rating": fb.Rating,
+        "Timestamp": new Date().toISOString()
+      }));
+
+      const url = `https://api.appsheet.com/api/v2/apps/${appId}/tables/RepairFeedback/records`;
+
+      const body = {
+        Action: "Add",
+        Properties: {},
+        Rows: records
       };
 
       try {
-        const res = await fetch(
-          `https://api.appsheet.com/api/v2/apps/ae5d7dce-1c12-4c53-b201-5a2d7c5b5411/tables/RepairFeedback/Action`,
-          {
-            method: "POST",
-            headers: {
-              "ApplicationAccessKey": "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85",
-              "Content-Type": "application/json",
-            },
-              console.log("📤 กำลังส่งข้อมูลไปยัง AppSheet...");
-              console.log("Payload:", JSON.stringify(payload, null, 2));
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "ApplicationAccessKey": apiKey
+          },
+          body: JSON.stringify(body)
+        });
 
-            body: JSON.stringify({
-              Action: "Add",
-              Properties: {},
-              Rows: [
-                {
-                  "เลขที่ใบแจ้งซ่อม": requestNumber,
-                  "รหัสพนักงาน": empCode,
-                  TopicNo: 1,
-                  Rating: scoreData["คุณภาพ"],
-                  Timestamp: new Date().toISOString(),
-                },
-                {
-                  "เลขที่ใบแจ้งซ่อม": requestNumber,
-                  "รหัสพนักงาน": empCode,
-                  TopicNo: 2,
-                  Rating: scoreData["รวดเร็ว"],
-                  Timestamp: new Date().toISOString(),
-                },
-                {
-                  "เลขที่ใบแจ้งซ่อม": requestNumber,
-                  "รหัสพนักงาน": empCode,
-                  TopicNo: 3,
-                  Rating: scoreData["บริการ"],
-                  Timestamp: new Date().toISOString(),
-                },
-              ],
-            }),
-          }
-        );
+        if (!res.ok) throw new Error(`API Error: ${res.status}`);
 
-        if (res.ok) {
-          alert("ส่งแบบประเมินสำเร็จ ขอบคุณค่ะ");
-          window.location.href = "scan.html";
-        } else {
-          alert("เกิดข้อผิดพลาด กรุณาลองใหม่");
-        }
+        alert("✅ ส่งแบบประเมินเรียบร้อยแล้ว");
+        // reset หรือ redirect ตามต้องการ
       } catch (err) {
-        alert("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้ กรุณาลองใหม่อีกครั้ง");
-        console.error(err);
+        console.error("❌ API error", err);
+        alert("เกิดข้อผิดพลาดในการส่งแบบประเมิน");
       }
-    });
+    }
   </script>
 </body>
 </html>
