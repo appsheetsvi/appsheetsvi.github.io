@@ -103,9 +103,8 @@
     const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
     const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
 
-    // เปลี่ยนค่านี้ตามใบแจ้งซ่อม และพนักงานจริงที่ login อยู่
-    const requestNumber = "RQ25650615001";
-    const empCode = "0003";
+    const requestNumber = new URLSearchParams(window.location.search).get("request") || "RQ25650615001";
+    const empCode = localStorage.getItem("empCode") || prompt("กรอกรหัสพนักงาน");
 
     function selectOption(containerId, selectedElem) {
       const container = document.getElementById(containerId);
@@ -129,7 +128,6 @@
         return;
       }
 
-      // ส่งข้อมูลแต่ละหัวข้อเป็นแถว (TopicNo: 1,2,3)
       const feedbacks = [
         { TopicNo: 1, Rating: quality },
         { TopicNo: 2, Rating: speed },
@@ -165,7 +163,7 @@
         if (!res.ok) throw new Error(`API Error: ${res.status}`);
 
         alert("✅ ส่งแบบประเมินเรียบร้อยแล้ว");
-        // reset หรือ redirect ตามต้องการ
+        window.location.reload();
       } catch (err) {
         console.error("❌ API error", err);
         alert("เกิดข้อผิดพลาดในการส่งแบบประเมิน");
