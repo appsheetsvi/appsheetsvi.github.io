@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
@@ -95,7 +95,7 @@
       padding: 0.25rem 0.6rem;
       border-radius: 4px;
       font-size: 0.75rem;
-      margin: 0 2px;
+      margin: 2px;
       cursor: pointer;
       text-decoration: none;
     }
@@ -214,8 +214,6 @@
 
     function logout() {
       alert("ออกจากระบบแล้ว");
-      // ถ้าต้องการลิงก์ไปหน้า login ให้เพิ่มที่นี่
-      // window.location.href = "login.html";
     }
 
     async function fetchTable(table) {
@@ -283,6 +281,10 @@
         const dateReport = row["วันที่แจ้งซ่อม"] || "-";
         const status = row["สถานะเครื่อง"] || "-";
 
+        const evaluateButton = status === "ซ่อมเสร็จ"
+          ? `<a class="btn-edit" href="evaluate.html?requestNumber=${rq}" target="_blank">ให้คะแนน</a>`
+          : "";
+
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${rq}</td>
@@ -295,6 +297,7 @@
           <td>
             <button class="btn-qr" onclick="generateQR('${rq}')">QR</button>
             <a class="btn-edit" href="form.html?requestNumber=${rq}" target="_blank">แก้ไข</a>
+            ${evaluateButton}
           </td>
         `;
         tbody.appendChild(tr);
