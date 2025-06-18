@@ -1,0 +1,42 @@
+<!-- repair/templates/repair/base.html -->
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}ระบบแจ้งซ่อม{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-image: url('https://images.unsplash.com/photo-1581091870632-7c75d93fc90b?auto=format&fit=crop&w=1740&q=80');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }
+  
+    .overlay {
+      background-color: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(5px);
+      min-height: 100vh;
+    }
+  </style>
+  
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+  <!-- Navbar -->
+  <nav class="bg-blue-800 text-white p-4 mb-6">
+    <div class="container mx-auto flex justify-between">
+      <div><a href="/" class="font-bold">📋 ระบบแจ้งซ่อม</a></div>
+      <div class="space-x-4">
+        <a href="{% url 'create_request' %}" class="hover:underline">แจ้งซ่อม</a>
+        <a href="{% url 'list_requests' %}" class="hover:underline">รายการ</a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container mx-auto">
+    {% block content %}{% endblock %}
+  </div>
+
+</body>
+</html>

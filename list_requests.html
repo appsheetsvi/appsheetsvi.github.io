@@ -1,0 +1,16 @@
+{% extends "repair/base.html" %}
+
+{% block title %}รายการแจ้งซ่อม{% endblock %}
+{% block content %}
+<body>
+  <h2>รายการแจ้งซ่อม</h2>
+  <ul>
+    {% for r in repairs %}
+      <li>{{ r.request_number }} | {{ r.machine_name }} | {{ r.status }}</li>
+    {% endfor %}
+
+    {% if r.image %}
+    <img src="{{ r.image.url }}" alt="รูปประกอบ" width="200">
+    {% endif %}
+    
+    {% endblock %}
