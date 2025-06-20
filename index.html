@@ -201,12 +201,12 @@
 
       <div class="form-group">
         <label>วันที่แจ้งซ่อม</label>
-        <input type="date" name="วันที่แจ้งซ่อม" />
+        <input type="datetime-local" name="วันที่แจ้งซ่อม" required />
       </div>
 
       <div class="form-group">
         <label>วันที่ซ่อมเสร็จ</label>
-        <input type="date" name="วันที่ซ่อมเสร็จ" />
+ 	<input type="datetime-local" name="วันที่ซ่อมเสร็จ" required />
       </div>
 
       <button type="submit">บันทึกข้อมูล</button>
@@ -245,8 +245,8 @@
     // สร้าง QR Code
     new QRCode(document.getElementById("qrcode"), {
       text: reqNo,
-      width: 96,
-      height: 96
+      width: 50,
+      height: 50
     });
   </script>
 <script src="script.js"></script>
