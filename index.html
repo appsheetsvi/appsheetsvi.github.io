@@ -7,33 +7,20 @@
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
-    /* ให้แต่ละช่องในฟอร์มมี position relative เพื่อ dropdown ทำงานได้ดี */
-    #repairForm > div {
-      position: relative;
-      overflow: visible;
-    }
-
-    /* เพิ่ม z-index ให้ select ตอน focus เพื่อไม่ถูกบัง */
-    select:focus {
-      z-index: 50;
-      position: relative;
-    }
-
-    /* ปรับ input/select ให้ไม่ขยับหรือเลื่อน */
     input, select, textarea {
-      width: 100%;
-      box-sizing: border-box;
+      border-width: 2px !important;
+      border-color: #4B5563 !important;
+      outline: none;
     }
-
-    /* ปรับ layout ให้ดีขึ้นสำหรับมือถือ */
-    @media (max-width: 767px) {
-      .md\:grid-cols-2 {
-        grid-template-columns: 1fr !important;
-      }
+    input:focus, select:focus, textarea:focus {
+      border-color: #2563EB !important;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    }
+    label {
+      color: #1F2937;
     }
   </style>
 </head>
-
 <body class="bg-gray-100">
   <nav class="bg-blue-800 text-white fixed top-0 w-full z-50 shadow">
     <div class="max-w-7xl mx-auto px-4 py-2 text-lg font-semibold">ระบบแจ้งซ่อมออนไลน์</div>
@@ -44,22 +31,22 @@
     <form id="repairForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div class="col-span-2">
         <label class="font-semibold">เลขที่ใบแจ้งซ่อม</label>
-        <input name="เลขที่ใบแจ้งซ่อม" readonly class="w-full border rounded p-2 bg-gray-100" />
+        <input name="เลขที่ใบแจ้งซ่อม" readonly class="w-full rounded p-2 bg-gray-100" />
       </div>
 
       <div>
         <label class="font-semibold">หน่วยงาน</label>
-        <select name="หน่วยงาน" id="deptSelect" required class="w-full border rounded p-2"></select>
+        <select name="หน่วยงาน" id="deptSelect" required class="w-full rounded p-2"></select>
       </div>
 
       <div>
         <label class="font-semibold">ชนิดงาน</label>
-        <select name="ชนิดงาน" id="jobTypeSelect" required class="w-full border rounded p-2"></select>
+        <select name="ชนิดงาน" id="jobTypeSelect" required class="w-full rounded p-2"></select>
       </div>
 
       <div>
         <label class="font-semibold">ลำดับความสำคัญ</label>
-        <select name="ลำดับความสำคัญ" id="prioritySelect" onchange="updatePriorityStyle()" required class="w-full border rounded p-2">
+        <select name="ลำดับความสำคัญ" id="prioritySelect" onchange="updatePriorityStyle()" required class="w-full rounded p-2">
           <option value="">-- เลือก --</option>
           <option value="ด่วนมาก">🚨 ด่วนมาก</option>
           <option value="ด่วน">⚠️ ด่วน</option>
@@ -70,52 +57,52 @@
 
       <div>
         <label class="font-semibold">รหัสเครื่อง</label>
-        <select name="รหัสเครื่อง" id="machineSelect" required class="w-full border rounded p-2"></select>
+        <select name="รหัสเครื่อง" id="machineSelect" required class="w-full rounded p-2"></select>
       </div>
 
       <div class="col-span-2">
         <label class="font-semibold">รายละเอียดอาการเสีย</label>
-        <textarea name="รายละเอียดอาการเสีย" class="w-full border rounded p-2"></textarea>
+        <textarea name="รายละเอียดอาการเสีย" class="w-full rounded p-2"></textarea>
       </div>
 
       <div class="col-span-2">
         <label class="font-semibold">วิเคราะห์สาเหตุ</label>
-        <textarea name="วิเคราะห์สาเหตุ" class="w-full border rounded p-2"></textarea>
+        <textarea name="วิเคราะห์สาเหตุ" class="w-full rounded p-2"></textarea>
       </div>
 
       <div class="col-span-2">
         <label class="font-semibold">การแก้ไขความคิดเห็น</label>
-        <textarea name="การแก้ไขความคิดเห็น" class="w-full border rounded p-2"></textarea>
+        <textarea name="การแก้ไขความคิดเห็น" class="w-full rounded p-2"></textarea>
       </div>
 
       <div>
         <label class="font-semibold">รายการอะไหล่ที่ใช้</label>
-        <input name="รายการอะไหล่ที่ใช้" class="w-full border rounded p-2" />
+        <input name="รายการอะไหล่ที่ใช้" class="w-full rounded p-2" />
       </div>
 
       <div>
         <label class="font-semibold">จำนวน</label>
-        <input type="number" name="จำนวน" class="w-full border rounded p-2" />
+        <input type="number" name="จำนวน" class="w-full rounded p-2" />
       </div>
 
       <div class="col-span-2">
         <label class="font-semibold">มอบหมายงานให้ช่าง</label>
-        <input name="มอบหมายงานให้ช่าง" class="w-full border rounded p-2" />
+        <input name="มอบหมายงานให้ช่าง" class="w-full rounded p-2" />
       </div>
 
       <div>
         <label class="font-semibold">พนักงาน(ช่าง)</label>
-        <input name="พนักงาน(ช่าง)" class="w-full border rounded p-2" />
+        <input name="พนักงาน(ช่าง)" class="w-full rounded p-2" />
       </div>
 
       <div>
         <label class="font-semibold">ผู้แจ้งซ่อม</label>
-        <input name="ผู้แจ้งซ่อม" class="w-full border rounded p-2" />
+        <input name="ผู้แจ้งซ่อม" class="w-full rounded p-2" />
       </div>
 
       <div class="col-span-2">
         <label class="font-semibold">สถานะเครื่อง</label>
-        <select name="สถานะเครื่อง" class="w-full border rounded p-2">
+        <select name="สถานะเครื่อง" class="w-full rounded p-2">
           <option value="">-- เลือก --</option>
           <option value="ซ่อมเสร็จ">ซ่อมเสร็จ</option>
           <option value="รออะไหล่">รออะไหล่</option>
@@ -126,14 +113,14 @@
 
       <div class="col-span-2">
         <label class="font-semibold">วันที่แจ้งซ่อม</label>
-        <input type="datetime-local" name="วันที่แจ้งซ่อม" required class="w-full border rounded p-2" />
+        <input type="datetime-local" name="วันที่แจ้งซ่อม" required class="w-full rounded p-2" />
       </div>
 
       <div class="col-span-2 text-center mt-4">
         <button type="submit" class="w-full md:w-1/2 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl text-lg">
           ✅ บันทึกข้อมูล
         </button>
-        <p class="text-xs text-gray-400 mt-4">เวอร์ชันระบบ: <strong>1.0.0</strong></p>
+        <p class="text-xs text-gray-400 mt-4">เวอร์ชันระบบ: <strong>1.0.2</strong></p>
       </div>
     </form>
   </main>
@@ -193,7 +180,7 @@
     function updatePriorityStyle() {
       const select = document.getElementById("prioritySelect");
       const value = select.value;
-      select.className = "w-full border rounded p-2";
+      select.className = "w-full rounded p-2";
       if (value === "ด่วนมาก") select.classList.add("bg-red-100", "text-red-700");
       else if (value === "ด่วน") select.classList.add("bg-yellow-100", "text-yellow-700");
       else if (value === "ปกติ") select.classList.add("bg-green-100", "text-green-700");
@@ -210,13 +197,6 @@
         newCode = String(next).padStart(7, "0");
       }
       input.value = newCode;
-      generateQRCode(newCode);
-    }
-
-    function generateQRCode(text) {
-      const container = document.getElementById("qrcode");
-      container.innerHTML = "";
-      new QRCode(container, { text, width: 96, height: 96 });
     }
 
     document.getElementById("deptSelect").addEventListener("change", e => loadMachines(e.target.value));
