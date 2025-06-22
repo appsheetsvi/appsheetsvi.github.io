@@ -13,61 +13,63 @@
     }
     #qrcode {
       position: fixed;
-      bottom: 20px;
-      right: 20px;
-      width: 96px;
-      height: 96px;
+      bottom: 16px;
+      right: 16px;
+      width: 72px;
+      height: 72px;
       background: white;
-      padding: 8px;
-      border-radius: 12px;
+      padding: 6px;
+      border-radius: 10px;
       box-shadow: 0 2px 8px rgb(0 0 0 / 0.15);
       z-index: 1000;
+    }
+    @media (min-width: 768px) {
+      #qrcode {
+        width: 96px;
+        height: 96px;
+        padding: 8px;
+      }
     }
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
-<nav class="bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-900 text-white fixed top-0 w-full z-50 shadow-sm">
-  <div class="max-w-7xl mx-auto px-3 py-1.5 flex items-center space-x-2">
-    <!-- โลโก้ SVG -->
-    <div class="w-8 h-8 p-1 bg-white rounded flex items-center justify-center cursor-pointer
-                transition-transform duration-300 hover:scale-105 hover:shadow">
-      <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#1e40af" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
-           class="w-4 h-4" viewBox="0 0 24 24">
-        <path d="M14 9l-2 2-4-4"></path>
-        <path d="M18.364 5.636a9 9 0 11-12.728 12.728 9 9 0 0112.728-12.728z"></path>
-      </svg>
+
+  <!-- Navbar -->
+  <nav class="bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-900 text-white fixed top-0 w-full z-50 shadow-sm">
+    <div class="max-w-7xl mx-auto px-3 py-2 flex items-center space-x-2">
+      <div class="w-8 h-8 p-1 bg-white rounded flex items-center justify-center cursor-pointer hover:scale-105 transition">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="#1e40af" stroke-width="1.5" class="w-4 h-4" viewBox="0 0 24 24">
+          <path d="M14 9l-2 2-4-4"></path>
+          <path d="M18.364 5.636a9 9 0 11-12.728 12.728 9 9 0 0112.728-12.728z"></path>
+        </svg>
+      </div>
+      <h1 class="text-base font-semibold drop-shadow-sm">ระบบแจ้งซ่อม</h1>
     </div>
+  </nav>
 
-    <!-- ชื่อระบบ -->
-    <h1 class="text-sm font-semibold tracking-tight select-none drop-shadow-sm">
-      ระบบแจ้งซ่อม
-    </h1>
-  </div>
-</nav>
-
-
-  <main class="flex-grow max-w-3xl mx-auto mt-28 p-6 bg-white rounded-2xl shadow-md w-full">
-    <h1 class="text-2xl font-bold text-center mb-6">📋 ฟอร์มแจ้งซ่อมเครื่องจักร</h1>
+  <!-- Main Content -->
+  <main class="flex-grow max-w-screen-lg mx-auto mt-28 px-4 py-6 bg-white rounded-2xl shadow-md w-full">
+    <h1 class="text-xl sm:text-2xl font-bold text-center mb-6">📋 ฟอร์มแจ้งซ่อมเครื่องจักร</h1>
 
     <form id="repairForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div class="col-span-2">
-        <label class="font-semibold">เลขที่ใบแจ้งซ่อม</label>
-        <input name="เลขที่ใบแจ้งซ่อม" readonly class="w-full border rounded p-2 bg-gray-100" />
+        <label class="block font-semibold mb-1">เลขที่ใบแจ้งซ่อม</label>
+        <input name="เลขที่ใบแจ้งซ่อม" readonly class="w-full border rounded p-2 bg-gray-100 text-sm" />
       </div>
 
       <div>
-        <label class="font-semibold">หน่วยงาน</label>
-        <select name="หน่วยงาน" id="deptSelect" required class="w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"></select>
+        <label class="block font-semibold mb-1">หน่วยงาน</label>
+        <select name="หน่วยงาน" id="deptSelect" required class="w-full border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"></select>
       </div>
 
       <div>
-        <label class="font-semibold">ชนิดงาน</label>
-        <select name="ชนิดงาน" id="jobTypeSelect" required class="w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"></select>
+        <label class="block font-semibold mb-1">ชนิดงาน</label>
+        <select name="ชนิดงาน" id="jobTypeSelect" required class="w-full border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"></select>
       </div>
 
       <div>
-        <label class="font-semibold">ลำดับความสำคัญ</label>
-        <select name="ลำดับความสำคัญ" id="prioritySelect" onchange="updatePriorityStyle()" required class="w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <label class="block font-semibold mb-1">ลำดับความสำคัญ</label>
+        <select name="ลำดับความสำคัญ" id="prioritySelect" onchange="updatePriorityStyle()" required class="w-full border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
           <option value="">-- เลือก --</option>
           <option value="ด่วนมาก">🚨 ด่วนมาก</option>
           <option value="ด่วน">⚠️ ด่วน</option>
@@ -77,53 +79,53 @@
       </div>
 
       <div>
-        <label class="font-semibold">รหัสเครื่อง</label>
-        <select name="รหัสเครื่อง" id="machineSelect" required class="w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-400"></select>
+        <label class="block font-semibold mb-1">รหัสเครื่อง</label>
+        <select name="รหัสเครื่อง" id="machineSelect" required class="w-full border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"></select>
       </div>
 
       <div class="col-span-2">
-        <label class="font-semibold">รายละเอียดอาการเสีย</label>
-        <textarea name="รายละเอียดอาการเสีย" class="w-full border rounded p-2 resize-none" rows="3"></textarea>
+        <label class="block font-semibold mb-1">รายละเอียดอาการเสีย</label>
+        <textarea name="รายละเอียดอาการเสีย" class="w-full border rounded p-2 text-sm resize-none" rows="3"></textarea>
       </div>
 
       <div class="col-span-2">
-        <label class="font-semibold">วิเคราะห์สาเหตุ</label>
-        <textarea name="วิเคราะห์สาเหตุ" class="w-full border rounded p-2 resize-none" rows="3"></textarea>
+        <label class="block font-semibold mb-1">วิเคราะห์สาเหตุ</label>
+        <textarea name="วิเคราะห์สาเหตุ" class="w-full border rounded p-2 text-sm resize-none" rows="3"></textarea>
       </div>
 
       <div class="col-span-2">
-        <label class="font-semibold">การแก้ไขความคิดเห็น</label>
-        <textarea name="การแก้ไขความคิดเห็น" class="w-full border rounded p-2 resize-none" rows="3"></textarea>
+        <label class="block font-semibold mb-1">การแก้ไขความคิดเห็น</label>
+        <textarea name="การแก้ไขความคิดเห็น" class="w-full border rounded p-2 text-sm resize-none" rows="3"></textarea>
       </div>
 
       <div>
-        <label class="font-semibold">รายการอะไหล่ที่ใช้</label>
-        <input name="รายการอะไหล่ที่ใช้" class="w-full border rounded p-2" />
+        <label class="block font-semibold mb-1">รายการอะไหล่ที่ใช้</label>
+        <input name="รายการอะไหล่ที่ใช้" class="w-full border rounded p-2 text-sm" />
       </div>
 
       <div>
-        <label class="font-semibold">จำนวน</label>
-        <input type="number" name="จำนวน" class="w-full border rounded p-2" />
+        <label class="block font-semibold mb-1">จำนวน</label>
+        <input type="number" name="จำนวน" class="w-full border rounded p-2 text-sm" />
       </div>
 
       <div class="col-span-2">
-        <label class="font-semibold">มอบหมายงานให้ช่าง</label>
-        <input name="มอบหมายงานให้ช่าง" class="w-full border rounded p-2" />
+        <label class="block font-semibold mb-1">มอบหมายงานให้ช่าง</label>
+        <input name="มอบหมายงานให้ช่าง" class="w-full border rounded p-2 text-sm" />
       </div>
 
       <div>
-        <label class="font-semibold">พนักงาน(ช่าง)</label>
-        <input name="พนักงาน(ช่าง)" class="w-full border rounded p-2" />
+        <label class="block font-semibold mb-1">พนักงาน(ช่าง)</label>
+        <input name="พนักงาน(ช่าง)" class="w-full border rounded p-2 text-sm" />
       </div>
 
       <div>
-        <label class="font-semibold">ผู้แจ้งซ่อม</label>
-        <input name="ผู้แจ้งซ่อม" class="w-full border rounded p-2" />
+        <label class="block font-semibold mb-1">ผู้แจ้งซ่อม</label>
+        <input name="ผู้แจ้งซ่อม" class="w-full border rounded p-2 text-sm" />
       </div>
 
       <div class="col-span-2">
-        <label class="font-semibold">สถานะเครื่อง</label>
-        <select name="สถานะเครื่อง" class="w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <label class="block font-semibold mb-1">สถานะเครื่อง</label>
+        <select name="สถานะเครื่อง" class="w-full border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
           <option value="">-- เลือก --</option>
           <option value="ซ่อมเสร็จ">ซ่อมเสร็จ</option>
           <option value="รออะไหล่">รออะไหล่</option>
@@ -133,12 +135,12 @@
       </div>
 
       <div class="col-span-2">
-        <label class="font-semibold">วันที่แจ้งซ่อม</label>
-        <input type="datetime-local" name="วันที่แจ้งซ่อม" required class="w-full border rounded p-2" />
+        <label class="block font-semibold mb-1">วันที่แจ้งซ่อม</label>
+        <input type="datetime-local" name="วันที่แจ้งซ่อม" required class="w-full border rounded p-2 text-sm" />
       </div>
 
-      <div class="col-span-2 text-center mt-4">
-        <button type="submit" class="w-full md:w-1/2 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl text-lg transition duration-200 ease-in-out">
+      <div class="col-span-2 text-center mt-6">
+        <button type="submit" class="w-full sm:w-3/4 md:w-1/2 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl text-lg transition duration-200 ease-in-out">
           ✅ บันทึกข้อมูล
         </button>
         <p class="text-xs text-gray-400 mt-4">เวอร์ชันระบบ: <strong>1.0.1</strong></p>
@@ -146,9 +148,10 @@
     </form>
   </main>
 
-  <!-- QR Code ติดมุมล่างขวา -->
+  <!-- QR Code -->
   <div id="qrcode"></div>
 
+  <!-- Script -->
   <script>
     const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
     const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
@@ -204,7 +207,7 @@
     function updatePriorityStyle() {
       const select = document.getElementById("prioritySelect");
       const value = select.value;
-      select.className = "w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-blue-400";
+      select.className = "w-full border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400";
       if (value === "ด่วนมาก") select.classList.add("bg-red-100", "text-red-700");
       else if (value === "ด่วน") select.classList.add("bg-yellow-100", "text-yellow-700");
       else if (value === "ปกติ") select.classList.add("bg-green-100", "text-green-700");
@@ -260,5 +263,6 @@
     loadJobTypes();
     fetchAutoRequestNumber();
   </script>
+
 </body>
 </html>
