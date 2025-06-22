@@ -10,35 +10,59 @@
     body {
       font-family: 'Sarabun', sans-serif;
     }
-    #repairForm {
-      min-width: 0;
+    form#repairForm {
       display: flex;
       flex-direction: column;
       gap: 1rem;
+      min-width: 0;
+      max-width: 100%;
+      padding: 0 1rem;
+      box-sizing: border-box;
     }
     @media(min-width: 768px) {
-      #repairForm {
+      form#repairForm {
         display: grid;
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+        padding: 0;
+      }
+      /* ให้ col-span-2 ครอบสองคอลัมน์ */
+      .col-span-2 {
+        grid-column: span 2;
       }
     }
-    #repairForm > * {
+
+    /* กำหนดให้ลูกในฟอร์มหดขนาดได้ */
+    form#repairForm > * {
       min-width: 0;
+      max-width: 100%;
+      box-sizing: border-box;
       overflow-wrap: break-word;
-      word-wrap: break-word;
       word-break: break-word;
       white-space: normal;
     }
-    select {
-      max-width: 100% !important;
-      min-width: 0 !important;
+
+    /* บังคับ input, select, textarea ไม่เกินขนาดช่อง */
+    input, select, textarea {
+      max-width: 100%;
+      min-width: 0;
       box-sizing: border-box;
-      white-space: nowrap;
+      white-space: normal;
       position: relative;
       z-index: 1;
     }
+
+    /* เวลากดเลือก select ให้ dropdown ทับด้านบน ไม่ไปทับช่องอื่น */
     select:focus {
-      z-index: 10;
+      z-index: 20;
+      position: relative;
+    }
+
+    /* label ให้แสดง block และมี margin */
+    label {
+      display: block;
+      margin-bottom: 0.25rem;
+      font-weight: 600;
     }
   </style>
 </head>
@@ -58,31 +82,32 @@
   </nav>
 
   <!-- Main -->
-  <main class="flex-grow max-w-screen-lg mx-auto mt-28 px-4 py-6 bg-white rounded-2xl shadow-md w-full">
+  <main class="flex-grow max-w-screen-lg mx-auto mt-28 p-6 bg-white rounded-2xl shadow-md w-full">
     <h1 class="text-xl sm:text-2xl font-bold text-center mb-6">📋 ฟอร์มแจ้งซ่อมเครื่องจักร</h1>
 
     <form id="repairForm" >
+
       <div class="col-span-2">
-        <label class="block font-semibold mb-1">เลขที่ใบแจ้งซ่อม</label>
-        <input name="เลขที่ใบแจ้งซ่อม" readonly class="w-full border rounded p-2 bg-gray-100 text-sm" />
+        <label for="requestNo">เลขที่ใบแจ้งซ่อม</label>
+        <input id="requestNo" name="เลขที่ใบแจ้งซ่อม" readonly class="border rounded p-2 bg-gray-100 text-sm" />
       </div>
 
       <div>
-        <label class="block font-semibold mb-1">หน่วยงาน</label>
-        <select name="หน่วยงาน" id="deptSelect" required
-          class="w-full max-w-full min-w-0 border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"></select>
+        <label for="deptSelect">หน่วยงาน</label>
+        <select id="deptSelect" name="หน่วยงาน" required
+          class="border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"></select>
       </div>
 
       <div>
-        <label class="block font-semibold mb-1">ชนิดงาน</label>
-        <select name="ชนิดงาน" id="jobTypeSelect" required
-          class="w-full max-w-full min-w-0 border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"></select>
+        <label for="jobTypeSelect">ชนิดงาน</label>
+        <select id="jobTypeSelect" name="ชนิดงาน" required
+          class="border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"></select>
       </div>
 
       <div>
-        <label class="block font-semibold mb-1">ลำดับความสำคัญ</label>
-        <select name="ลำดับความสำคัญ" id="prioritySelect" onchange="updatePriorityStyle()" required
-          class="w-full max-w-full min-w-0 border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <label for="prioritySelect">ลำดับความสำคัญ</label>
+        <select id="prioritySelect" name="ลำดับความสำคัญ" onchange="updatePriorityStyle()" required
+          class="border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
           <option value="">-- เลือก --</option>
           <option value="ด่วนมาก">🚨 ด่วนมาก</option>
           <option value="ด่วน">⚠️ ด่วน</option>
@@ -92,55 +117,57 @@
       </div>
 
       <div>
-        <label class="block font-semibold mb-1">รหัสเครื่อง</label>
-        <select name="รหัสเครื่อง" id="machineSelect" required
-          class="w-full max-w-full min-w-0 border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"></select>
+        <label for="machineSelect">รหัสเครื่อง</label>
+        <select id="machineSelect" name="รหัสเครื่อง" required
+          class="border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"></select>
       </div>
 
       <div class="col-span-2">
-        <label class="block font-semibold mb-1">รายละเอียดอาการเสีย</label>
-        <textarea name="รายละเอียดอาการเสีย" class="w-full border rounded p-2 text-sm resize-none" rows="3"></textarea>
+        <label for="symptomDetail">รายละเอียดอาการเสีย</label>
+        <textarea id="symptomDetail" name="รายละเอียดอาการเสีย" rows="3"
+          class="border rounded p-2 text-sm resize-none"></textarea>
       </div>
 
       <div class="col-span-2">
-        <label class="block font-semibold mb-1">วิเคราะห์สาเหตุ</label>
-        <textarea name="วิเคราะห์สาเหตุ" class="w-full border rounded p-2 text-sm resize-none" rows="3"></textarea>
+        <label for="causeAnalysis">วิเคราะห์สาเหตุ</label>
+        <textarea id="causeAnalysis" name="วิเคราะห์สาเหตุ" rows="3"
+          class="border rounded p-2 text-sm resize-none"></textarea>
       </div>
 
       <div class="col-span-2">
-        <label class="block font-semibold mb-1">การแก้ไขความคิดเห็น</label>
-        <textarea name="การแก้ไขความคิดเห็น" class="w-full border rounded p-2 text-sm resize-none" rows="3"></textarea>
+        <label for="fixComments">การแก้ไขความคิดเห็น</label>
+        <textarea id="fixComments" name="การแก้ไขความคิดเห็น" rows="3"
+          class="border rounded p-2 text-sm resize-none"></textarea>
       </div>
 
       <div>
-        <label class="block font-semibold mb-1">รายการอะไหล่ที่ใช้</label>
-        <input name="รายการอะไหล่ที่ใช้" class="w-full border rounded p-2 text-sm" />
+        <label for="sparePart">รายการอะไหล่ที่ใช้</label>
+        <input id="sparePart" name="รายการอะไหล่ที่ใช้" class="border rounded p-2 text-sm" />
       </div>
 
       <div>
-        <label class="block font-semibold mb-1">จำนวน</label>
-        <input type="number" name="จำนวน" class="w-full border rounded p-2 text-sm" />
+        <label for="quantity">จำนวน</label>
+        <input id="quantity" type="number" name="จำนวน" class="border rounded p-2 text-sm" />
       </div>
 
       <div class="col-span-2">
-        <label class="block font-semibold mb-1">มอบหมายงานให้ช่าง</label>
-        <input name="มอบหมายงานให้ช่าง" class="w-full border rounded p-2 text-sm" />
+        <label for="assignTo">มอบหมายงานให้ช่าง</label>
+        <input id="assignTo" name="มอบหมายงานให้ช่าง" class="border rounded p-2 text-sm" />
       </div>
 
       <div>
-        <label class="block font-semibold mb-1">พนักงาน(ช่าง)</label>
-        <input name="พนักงาน(ช่าง)" class="w-full border rounded p-2 text-sm" />
+        <label for="technician">พนักงาน(ช่าง)</label>
+        <input id="technician" name="พนักงาน(ช่าง)" class="border rounded p-2 text-sm" />
       </div>
 
       <div>
-        <label class="block font-semibold mb-1">ผู้แจ้งซ่อม</label>
-        <input name="ผู้แจ้งซ่อม" class="w-full border rounded p-2 text-sm" />
+        <label for="reporter">ผู้แจ้งซ่อม</label>
+        <input id="reporter" name="ผู้แจ้งซ่อม" class="border rounded p-2 text-sm" />
       </div>
 
       <div class="col-span-2">
-        <label class="block font-semibold mb-1">สถานะเครื่อง</label>
-        <select name="สถานะเครื่อง"
-          class="w-full max-w-full min-w-0 border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <label for="machineStatus">สถานะเครื่อง</label>
+        <select id="machineStatus" name="สถานะเครื่อง" class="border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400">
           <option value="">-- เลือก --</option>
           <option value="ซ่อมเสร็จ">ซ่อมเสร็จ</option>
           <option value="รออะไหล่">รออะไหล่</option>
@@ -150,9 +177,9 @@
       </div>
 
       <div class="col-span-2">
-        <label class="block font-semibold mb-1">วันที่แจ้งซ่อม</label>
-        <input type="datetime-local" name="วันที่แจ้งซ่อม" required
-          class="w-full border rounded p-2 text-sm" />
+        <label for="reportDate">วันที่แจ้งซ่อม</label>
+        <input id="reportDate" type="datetime-local" name="วันที่แจ้งซ่อม" required
+          class="border rounded p-2 text-sm" />
       </div>
 
       <div class="col-span-2 text-center mt-6">
@@ -220,7 +247,7 @@
     function updatePriorityStyle() {
       const select = document.getElementById("prioritySelect");
       const value = select.value;
-      select.className = "w-full max-w-full min-w-0 border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400";
+      select.className = "border rounded p-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400";
       if (value === "ด่วนมาก") select.classList.add("bg-red-100", "text-red-700");
       else if (value === "ด่วน") select.classList.add("bg-yellow-100", "text-yellow-700");
       else if (value === "ปกติ") select.classList.add("bg-green-100", "text-green-700");
