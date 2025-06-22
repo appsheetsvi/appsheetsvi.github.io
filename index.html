@@ -6,7 +6,34 @@
   <title>ฟอร์มแจ้งซ่อม</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    /* ให้แต่ละช่องในฟอร์มมี position relative เพื่อ dropdown ทำงานได้ดี */
+    #repairForm > div {
+      position: relative;
+      overflow: visible;
+    }
+
+    /* เพิ่ม z-index ให้ select ตอน focus เพื่อไม่ถูกบัง */
+    select:focus {
+      z-index: 50;
+      position: relative;
+    }
+
+    /* ปรับ input/select ให้ไม่ขยับหรือเลื่อน */
+    input, select, textarea {
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* ปรับ layout ให้ดีขึ้นสำหรับมือถือ */
+    @media (max-width: 767px) {
+      .md\:grid-cols-2 {
+        grid-template-columns: 1fr !important;
+      }
+    }
+  </style>
 </head>
+
 <body class="bg-gray-100">
   <nav class="bg-blue-800 text-white fixed top-0 w-full z-50 shadow">
     <div class="max-w-7xl mx-auto px-4 py-2 text-lg font-semibold">ระบบแจ้งซ่อมออนไลน์</div>
