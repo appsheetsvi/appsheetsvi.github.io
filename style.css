@@ -1,75 +1,109 @@
-<label for="deptSelect">เลือกแผนก:</label>
-<select id="deptSelect">
-  <option value="">-- เลือกแผนก --</option>
-</select>
-
-<label for="machineSelect">เลือกเครื่องจักร:</label>
-<select id="machineSelect">
-  <option value="">-- เลือกเครื่องจักร --</option>
-</select>
-
-<script>
-const apiBase = 'https://api.appsheet.com/api/v2/apps/ae5d7dce-1c12-4c53-b201-5a2d7c5b5411/tables/';
-const headers = {
-  'ApplicationAccessKey': 'V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85'
-};
-
-// โหลดแผนกจาก AppSheet
-async function loadDepartments() {
-  const res = await fetch(apiBase + 'department/Action', {
-    method: 'POST',
-    headers: {
-      ...headers,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ Action: "Find", Properties: {}, Rows: [] })
-  });
-
-  const data = await res.json();
-  const deptSelect = document.getElementById('deptSelect');
-  data.Rows.forEach(row => {
-    const opt = document.createElement('option');
-    opt.value = row["DeptCode"]; // ใช้รหัสแผนกเป็น value
-    opt.textContent = row["DeptName"]; // แสดงชื่อแผนก
-    deptSelect.appendChild(opt);
-  });
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Kanit', sans-serif;
 }
 
-// โหลดเครื่องจักรเฉพาะแผนก
-async function loadMachinesByDept(deptCode) {
-  const res = await fetch(apiBase + 'macchin/Action', {
-    method: 'POST',
-    headers: {
-      ...headers,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ Action: "Find", Properties: {}, Rows: [] })
-  });
-
-  const data = await res.json();
-  const machineSelect = document.getElementById('machineSelect');
-  machineSelect.innerHTML = '<option value="">-- เลือกเครื่องจักร --</option>';
-
-  data.Rows
-    .filter(row => row["DeptCode"] === deptCode)
-    .forEach(row => {
-      const opt = document.createElement('option');
-      opt.value = row["รหัสเครื่อง"]; // ใช้รหัสเครื่อง
-      opt.textContent = row["รายชื่อเครื่องจักร"]; // แสดงชื่อเครื่องจักร
-      machineSelect.appendChild(opt);
-    });
+body {
+  background: #f4f4f4;
+  color: #333;
 }
 
-// Event เมื่อเลือกแผนก
-document.getElementById('deptSelect').addEventListener('change', e => {
-  const deptCode = e.target.value;
-  if (deptCode) {
-    loadMachinesByDept(deptCode);
-  } else {
-    document.getElementById('machineSelect').innerHTML = '<option value="">-- เลือกเครื่องจักร --</option>';
+/* Navbar */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(to right, #6a11cb, #2575fc);
+  padding: 1rem 2rem;
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 1.5rem;
+}
+
+.nav-links a {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s;
+}
+
+.nav-links a:hover {
+  color: #ffd369;
+}
+
+/* Hamburger */
+.menu-toggle {
+  display: none;
+  font-size: 1.8rem;
+  cursor: pointer;
+}
+
+/* Hero */
+.hero {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: linear-gradient(135deg, #ffffff, #e0e0ff);
+}
+
+.hero h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.hero p {
+  font-size: 1.2rem;
+  margin-bottom: 2rem;
+  color: #555;
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.8rem 2rem;
+  background: #2575fc;
+  color: white;
+  border-radius: 30px;
+  text-decoration: none;
+  font-size: 1rem;
+  transition: background 0.3s;
+}
+
+.btn:hover {
+  background: #6a11cb;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .nav-links {
+    flex-direction: column;
+    position: absolute;
+    top: 60px;
+    right: -100%;
+    background: #6a11cb;
+    width: 100%;
+    text-align: center;
+    transition: right 0.3s ease-in;
+    padding: 1rem 0;
   }
-});
 
-// โหลดแผนกตอนเริ่มต้น
-loadDepartments();
-</script>
+  .nav-links.active {
+    right: 0;
+  }
+
+  .menu-toggle {
+    display: block;
+  }
+}
