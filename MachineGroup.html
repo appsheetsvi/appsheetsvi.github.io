@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>เพิ่มเครื่องจักรใหม่</title>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Kanit', sans-serif;
+      background-color: #f0f4ff;
+      margin: 0; padding: 2rem;
+      color: #222;
+    }
+    h1 {
+      color: #1d4ed8;
+      text-align: center;
+    }
+    form {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    label {
+      display: block;
+      margin: 1rem 0 0.3rem;
+      font-weight: bold;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 0.6rem;
+      border: 1.5px solid #93c5fd;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+    button {
+      background-color: #2563eb;
+      color: white;
+      margin-top: 1.5rem;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background-color: #1e40af;
+    }
+    .msg {
+      text-align: center;
+      font-weight: bold;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>📦 เพิ่มข้อมูลเครื่องจักร</h1>
+  <form id="machineForm">
+    <label>รหัสเครื่อง (Auto)</label>
+    <input type="text" id="machineCode" disabled placeholder="กำลังโหลด...">
+
+    <label>รายชื่อเครื่องจักร</label>
+    <input type="text" id="machineName" required>
+
+    <label>ชั้น (เช่น 1, 2, 3.5)</label>
+    <input type="text" id="floor" placeholder="กรอกเฉพาะตัวเลข เช่น 1 หรือ 2.5" required>
+
+    <label>สถานะ</label>
+    <select id="status" required>
+      <option value="">-- เลือกสถานะ --</option>
+      <option value="ใช้งาน">ใช้งาน</option>
+      <option value="ไม่ใช้งาน">ไม่ใช้งาน</option>
+      <option value="ซ่อมบำรุง">ซ่อมบำรุง</option>
+    </select>
+
+    <label>รหัสงาน</label>
+    <select id="jobCode" required>
+      <option value="">-- เลือกรหัสงาน --</option>
+    </select>
+
+    <label>แผนก / หน่วยงาน</label>
+    <select id="deptCode" required>
+      <option value="">-- เลือกแผนกหรือหน่วย --</option>
+    </select>
+
+    <button type="submit">บันทึก</button>
+    <div class="msg" id="message"></div>
+  </form>
+
+  <script>
+    const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
+    const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
+
+    async function fetchTable(tableName) {
+      const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/${tableName}/Find`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "ApplicationAccessKey": apiKey
+        },
+        body: JSON.stringify({})
+      });
+      return res.json();
+    }
+
+    async function generateMachineCode() {
+      try {
+        const data = await fetchTable("MachineMaster");
+        const codes = data.map(d => d["รหัสเครื่อง"]).filter(Boolean);
+        const maxNum = Math.max(...codes.map(c => parseInt(c.split("-")[1] || "0")));
+        const nextCode = `MC-${maxNum + 1}`;
+        document.getElementById("machineCode").value = nextCode;
+      } catch {
+        document.getElementById("machineCode").value = "⚠️ โหลดรหัสล้มเหลว";
+      }
+    }
+
+    async function loadDropdowns() {
+      const jobs = await fetchTable("MachineJobType");
+      const depts = await fetchTable("Department");
+
+      const jobSelect = document.getElementById("jobCode");
+      jobs.forEach(j => {
+        const opt = document.createElement("option");
+        opt.value = j["รหัสงาน"];
+        opt.textContent = `${j["รหัสงาน"]} - ${j["ชนิดงาน"]}`;
+        jobSelect.appendChild(opt);
+      });
+
+      const deptSelect = document.getElementById("deptCode");
+      depts.forEach(d => {
+        const opt = document.createElement("option");
+        opt.value = d["DeptCode"];
+        opt.textContent = `${d["DeptCode"]} - ${d["DeptNameEng"] || d["DeptName"]}`;
+        deptSelect.appendChild(opt);
+      });
+    }
+
+    document.getElementById("machineForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const code = document.getElementById("machineCode").value;
+      const name = document.getElementById("machineName").value.trim();
+      const floor = document.getElementById("floor").value.trim();
+      const status = document.getElementById("status").value;
+      const job = document.getElementById("jobCode").value;
+      const deptCode = document.getElementById("deptCode").value;
+
+      const deptName = document.getElementById("deptCode").selectedOptions[0].text.split(" - ")[1] || "";
+
+      if (!code || !name || !floor || !status || !job || !deptCode || !deptName) {
+        document.getElementById("message").style.color = "red";
+        document.getElementById("message").textContent = "❌ กรุณากรอกข้อมูลให้ครบถ้วน";
+        return;
+      }
+
+      const payload = {
+        Action: "Add",
+        Properties: {},
+        Rows: [{
+          "รหัสเครื่อง": code,
+          "รายชื่อเครื่องจักร": name,
+          "ชั้น": `FL.${floor}`,
+          "สถานะ": status,
+          "รหัสงาน": job,
+          "DeptCode": deptCode,
+          "แผนก": deptName
+        }]
+      };
+
+      const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineMaster/Action`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "ApplicationAccessKey": apiKey
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        document.getElementById("message").style.color = "green";
+        document.getElementById("message").textContent = "✅ บันทึกข้อมูลเรียบร้อย";
+        document.getElementById("machineForm").reset();
+        await generateMachineCode();
+      } else {
+        const errorText = await res.text();
+        document.getElementById("message").style.color = "red";
+        document.getElementById("message").textContent = `❌ บันทึกไม่สำเร็จ: ${errorText}`;
+      }
+    });
+
+    (async function init() {
+      await generateMachineCode();
+      await loadDropdowns();
+    })();
+  </script>
+</body>
+</html>
