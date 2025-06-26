@@ -1,535 +1,425 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ค้นหาใบแจ้งซ่อม</title>
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun&display=swap" rel="stylesheet" />
-  <style>
-    body {
-      font-family: 'Sarabun', sans-serif;
-      background-color: #f0f4ff;
-      margin: 0;
-      padding: 1rem;
-      color: #222;
-      font-size: 1rem;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    h1 {
-      text-align: center;
-      color: #2563eb;
-      font-size: 2rem;
-      margin-bottom: 1rem;
-      font-weight: 700;
-      user-select: none;
-    }
-    .navbar {
-      background: linear-gradient(90deg, #4f46e5, #3b82f6);
-      color: #fff;
-      width: 100%;
-      max-width: 1200px;
-      padding: 0.75rem 1rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-radius: 10px;
-      margin-bottom: 1.5rem;
-      box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
-      user-select: none;
-    }
-    .navbar div {
-      font-weight: 600;
-      font-size: 1.1rem;
-    }
-    .btn-qr, .btn-edit {
-      background: #3b82f6;
-      color: white;
-      border: none;
-      padding: 0.35rem 0.8rem;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      margin: 0 3px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-      user-select: none;
-      text-decoration: none;
-    }
-    .btn-qr:hover, .btn-edit:hover {
-      background: #2563eb;
-    }
-    .search-bar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      justify-content: center;
-      margin-bottom: 1rem;
-      width: 100%;
-      max-width: 1200px;
-    }
-    .search-bar input,
-    .search-bar select,
-    .search-bar button {
-      padding: 0.5rem 0.75rem;
-      border: 1.5px solid #93c5fd;
-      border-radius: 8px;
-      font-size: 1rem;
-      transition: border-color 0.3s ease;
-      outline-offset: 2px;
-      outline-color: transparent;
-      min-width: 180px;
-    }
-    .search-bar input:focus,
-    .search-bar select:focus,
-    .search-bar button:focus {
-      border-color: #2563eb;
-      outline-color: #2563eb;
-    }
-    .search-bar button {
-      background-color: #2563eb;
-      color: #fff;
-      font-weight: 600;
-      min-width: 100px;
-      user-select: none;
-    }
-    .search-bar button:hover {
-      background-color: #1e40af;
-    }
-    #message {
-      text-align: center;
-      color: #dc2626;
-      font-weight: 600;
-      margin-bottom: 0.75rem;
-      user-select: none;
-    }
-    table {
-      width: 100%;
-      max-width: 1200px;
-      border-collapse: collapse;
-      font-size: 1rem;
-      background: white;
-      border-radius: 10px;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
-      user-select: none;
-    }
-    th, td {
-      padding: 0.8rem 0.6rem;
-      border-bottom: 1px solid #e0e7ff;
-      text-align: center;
-      vertical-align: middle;
-      word-break: break-word;
-      max-width: 180px;
-    }
-    th {
-      background-color: #bfdbfe;
-      font-weight: 700;
-      color: #1e3a8a;
-      user-select: none;
-    }
-    tr:hover {
-      background-color: #eff6ff;
-    }
-    .status {
-      padding: 0.3rem 0.6rem;
-      border-radius: 6px;
-      font-weight: 700;
-      font-size: 0.85rem;
-      color: white;
-      display: inline-block;
-      min-width: 90px;
-      user-select: none;
-    }
-    .status-ซ่อมเสร็จ { background: #16a34a; }
-    .status-รออะไหล่ { background: #d97706; }
-    .status-อยู่ระหว่างซ่อม { background: #3b82f6; }
-    .status-ยกเลิกซ่อม { background: #dc2626; }
-    /* Responsive */
-    @media (max-width: 900px) {
-      th, td {
-        max-width: 120px;
-        font-size: 0.9rem;
-        padding: 0.6rem 0.4rem;
-      }
-      .search-bar input,
-      .search-bar select {
-        min-width: 140px;
-        font-size: 0.9rem;
-      }
-      .btn-qr, .btn-edit {
-        padding: 0.25rem 0.6rem;
-        font-size: 0.8rem;
-        margin: 1px;
-      }
-    }
-    @media (max-width: 600px) {
-      body {
-        padding: 0.5rem;
-      }
-      h1 {
-        font-size: 1.5rem;
-      }
-      .search-bar {
-        flex-direction: column;
-        gap: 0.6rem;
-        align-items: stretch;
-      }
-      .search-bar input,
-      .search-bar select,
-      .search-bar button {
-        width: 100%;
-        min-width: auto;
-      }
-      table, thead, tbody, th, td, tr {
-        display: block;
-      }
-      thead {
-        display: none;
-      }
-      tr {
-        background: #fff;
-        margin-bottom: 1rem;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-        padding: 1rem;
-      }
-      td {
-        position: relative;
-        padding-left: 50%;
-        text-align: left;
-        max-width: 100%;
-      }
-      td::before {
-        position: absolute;
-        top: 1rem;
-        left: 1rem;
-        width: 45%;
-        white-space: nowrap;
-        font-weight: 700;
-        color: #2563eb;
-        user-select: none;
-      }
-      td:nth-of-type(1)::before { content: "เลขที่ใบแจ้งซ่อม"; }
-      td:nth-of-type(2)::before { content: "รายละเอียดอาการเสีย"; }
-      td:nth-of-type(3)::before { content: "รหัสเครื่อง"; }
-      td:nth-of-type(4)::before { content: "ชนิดงาน"; }
-      td:nth-of-type(5)::before { content: "หน่วยงาน"; }
-      td:nth-of-type(6)::before { content: "การแก้ไขความคิดเห็น"; }
-      td:nth-of-type(7)::before { content: "วันที่แจ้งซ่อม"; }
-      td:nth-of-type(8)::before { content: "วันที่ซ่อมเสร็จ"; }
-      td:nth-of-type(9)::before { content: "สถานะ"; }
-      td:nth-of-type(10)::before { content: "จัดการ"; }
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ค้นหาและแก้ไขใบแจ้งซ่อม พร้อมกรองวันที่</title>
+<style>
+  body {
+    font-family: 'Sarabun', sans-serif;
+    background-color: #f0f4ff;
+    margin: 0; padding: 1rem;
+    color: #222;
+  }
+  h1 {
+    color:#2563eb; text-align:center; user-select:none;
+  }
+  .filter-bar {
+    max-width: 1200px;
+    margin: 0 auto 1rem auto;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+  }
+  .filter-bar label {
+    font-weight: 600;
+    user-select:none;
+  }
+  .filter-bar input[type="date"],
+  .filter-bar select {
+    padding: 0.4rem 0.6rem;
+    border-radius: 6px;
+    border: 1.5px solid #93c5fd;
+    font-size: 1rem;
+  }
+  .filter-bar button {
+    padding: 0.5rem 1rem;
+    border: none;
+    background-color: #2563eb;
+    color: white;
+    cursor: pointer;
+    border-radius: 6px;
+    font-weight: 600;
+    user-select:none;
+  }
+  .filter-bar button:hover {
+    background-color: #1e40af;
+  }
+  table {
+    width: 100%; max-width: 1200px; margin: 0 auto;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+  }
+  th, td {
+    border: 1px solid #ddd;
+    padding: 0.6rem;
+    text-align: center;
+    vertical-align: middle;
+  }
+  th {
+    background-color: #bfdbfe;
+    font-weight: 700;
+    color: #1e3a8a;
+  }
+  tr:hover {
+    background-color: #eff6ff;
+  }
+  button.edit-btn {
+    padding: 0.3rem 0.7rem;
+    border: none;
+    background-color: #2563eb;
+    color: white;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  button.edit-btn:hover {
+    background-color: #1e40af;
+  }
+  /* Popup overlay */
+  #editModal {
+    display: none;
+    position: fixed;
+    top:0; left:0; right:0; bottom:0;
+    background-color: rgba(0,0,0,0.4);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  #editModal .modal-content {
+    background: white;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    max-width: 500px;
+    width: 90%;
+  }
+  #editModal label {
+    display: block;
+    margin-top: 0.8rem;
+    font-weight: 600;
+  }
+  #editModal input[type="text"],
+  #editModal select,
+  #editModal textarea {
+    width: 100%;
+    padding: 0.5rem;
+    margin-top: 0.3rem;
+    border: 1.5px solid #93c5fd;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-family: inherit;
+  }
+  #editModal textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+  #editModal .buttons {
+    margin-top: 1rem;
+    text-align: right;
+  }
+  #editModal .buttons button {
+    margin-left: 0.5rem;
+  }
+  .status {
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: white;
+    display: inline-block;
+    min-width: 90px;
+  }
+  .status-ซ่อมเสร็จ { background: #16a34a; }
+  .status-รออะไหล่ { background: #d97706; }
+  .status-อยู่ระหว่างซ่อม { background: #3b82f6; }
+  .status-ยกเลิกซ่อม { background: #dc2626; }
+</style>
 </head>
 <body>
-  <div class="navbar">
-    <div>📋 ระบบแจ้งซ่อม</div>
-    <div>
-      <span>สถานะ: <strong id="userStatus">-</strong></span>
-      <button onclick="logout()" class="btn-qr">Logout</button>
-    </div>
-  </div>
 
-  <h1>🔍 ค้นหาใบแจ้งซ่อม</h1>
+<h1>🔍 ค้นหาและแก้ไขใบแจ้งซ่อม</h1>
 
-  <div class="search-bar">
-    <select id="searchDepartment"><option value="">-- หน่วยงาน --</option></select>
-    <select id="searchStatus">
-      <option value="">-- สถานะ --</option>
+<div class="filter-bar">
+  <label>
+    วันที่แจ้งซ่อม จาก:
+    <input type="date" id="dateFrom" />
+  </label>
+  <label>
+    ถึง:
+    <input type="date" id="dateTo" />
+  </label>
+  <label>
+    หน่วยงาน:
+    <select id="filterDepartment">
+      <option value="">-- ทุกหน่วยงาน --</option>
+    </select>
+  </label>
+  <label>
+    สถานะ:
+    <select id="filterStatus">
+      <option value="">-- ทุกสถานะ --</option>
       <option value="ซ่อมเสร็จ">ซ่อมเสร็จ</option>
       <option value="รออะไหล่">รออะไหล่</option>
       <option value="อยู่ระหว่างซ่อม">อยู่ระหว่างซ่อม</option>
       <option value="ยกเลิกซ่อม">ยกเลิกซ่อม</option>
     </select>
-    <input type="date" id="searchReportDate" title="วันที่แจ้งซ่อม" />
-    <input type="date" id="searchFinishDate" title="วันที่ซ่อมเสร็จ" />
-    <button onclick="searchData()">ค้นหา</button>
-    <button onclick="resetSearch()">รีเซ็ต</button>
+  </label>
+  <button onclick="applyFilters()">ค้นหา</button>
+  <button onclick="resetFilters()">รีเซ็ต</button>
+</div>
+
+<table id="resultTable" >
+  <thead>
+    <tr>
+      <th>เลขที่ใบแจ้งซ่อม</th>
+      <th>รายละเอียดอาการเสีย</th>
+      <th>รหัสเครื่อง</th>
+      <th>ชนิดงาน</th>
+      <th>หน่วยงาน</th>
+      <th>การแก้ไขความคิดเห็น</th>
+      <th>วันที่แจ้งซ่อม</th>
+      <th>วันที่ซ่อมเสร็จ</th>
+      <th>สถานะ</th>
+      <th>จัดการ</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<div id="message" style="text-align:center; color:#dc2626; font-weight:600; margin-top: 1rem;"></div>
+
+<!-- Edit Modal -->
+<div id="editModal">
+  <div class="modal-content">
+    <h2>แก้ไขใบแจ้งซ่อม</h2>
+    <form id="editForm">
+      <label>เลขที่ใบแจ้งซ่อม (อ่านอย่างเดียว)</label>
+      <input type="text" id="editRequestNumber" disabled />
+
+      <label>รายละเอียดอาการเสีย</label>
+      <textarea id="editSymptom" required></textarea>
+
+      <label>สถานะเครื่อง</label>
+      <select id="editStatus" required>
+        <option value="ซ่อมเสร็จ">ซ่อมเสร็จ</option>
+        <option value="รออะไหล่">รออะไหล่</option>
+        <option value="อยู่ระหว่างซ่อม">อยู่ระหว่างซ่อม</option>
+        <option value="ยกเลิกซ่อม">ยกเลิกซ่อม</option>
+      </select>
+
+      <div class="buttons">
+        <button type="button" onclick="closeModal()">ยกเลิก</button>
+        <button type="submit">บันทึก</button>
+      </div>
+    </form>
   </div>
+</div>
 
-  <div id="message"></div>
+<script>
+  const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
+  const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
 
-  <div id="resultContainer">
-    <table id="resultTable" style="display: none;">
-      <thead>
-        <tr>
-          <th>เลขที่ใบแจ้งซ่อม</th>
-          <th>รายละเอียดอาการเสีย</th>
-          <th>รหัสเครื่อง</th>
-          <th>ชนิดงาน</th>
-          <th>หน่วยงาน</th>
-          <th>การแก้ไขความคิดเห็น</th>
-          <th>วันที่แจ้งซ่อม</th>
-          <th>วันที่ซ่อมเสร็จ</th>
-          <th>สถานะ</th>
-          <th>จัดการ</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
+  let allData = [];
+  let departmentsMap = {}; // รหัส -> ชื่อ
 
-  <script>
-    const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
-    const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
-
-    const departmentsMap = {};
-    const machinesMap = {};
-    const jobTypeMap = {};
-
-    async function fetchTable(table) {
-      const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/${table}/Find`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "ApplicationAccessKey": apiKey },
-        body: JSON.stringify({})
-      });
-      if (!res.ok) throw new Error("ไม่สามารถดึงข้อมูลจาก API ได้");
-      return await res.json();
-    }
-
-    async function loadDepartments() {
-      const data = await fetchTable("Department");
-      const select = document.getElementById("searchDepartment");
-      data.forEach(dept => {
-        departmentsMap[dept["DeptCode"]] = dept["DeptNameEng"];
-        const opt = document.createElement("option");
-        opt.value = dept["DeptCode"];
-        opt.textContent = dept["DeptNameEng"];
-        select.appendChild(opt);
-      });
-    }
-
-    async function loadMachines() {
-      const data = await fetchTable("MachineMaster");
-      data.forEach(m => machinesMap[m["รหัสเครื่อง"]] = m["รายชื่อเครื่องจักร"]);
-    }
-
-    async function loadJobTypes() {
-      const data = await fetchTable("MachineJobType");
-      data.forEach(jt => jobTypeMap[jt["รหัสงาน"]] = jt["ชนิดงาน"]);
-    }
-
-    function getStatusClass(status) {
-      return {
-        "ซ่อมเสร็จ": "status status-ซ่อมเสร็จ",
-        "รออะไหล่": "status status-รออะไหล่",
-        "อยู่ระหว่างซ่อม": "status status-อยู่ระหว่างซ่อม",
-        "ยกเลิกซ่อม": "status status-ยกเลิกซ่อม"
-      }[status] || "status";
-    }
-
-   function formatDate(dateStr) {
-  if (!dateStr || dateStr.trim() === "") return "-";
-
-  // ถ้า dateStr เป็นรูปแบบ DD/MM/YYYY ให้แปลงเป็น YYYY-MM-DD
-  const ddmmyyyy = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-  if (ddmmyyyy) {
-    // แปลงเป็นรูปแบบ ISO
-    dateStr = `${ddmmyyyy[3]}-${ddmmyyyy[2].padStart(2, '0')}-${ddmmyyyy[1].padStart(2, '0')}`;
+  async function fetchTable(table) {
+    const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/${table}/Find`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "ApplicationAccessKey": apiKey,
+      },
+      body: JSON.stringify({})
+    });
+    if (!res.ok) throw new Error(`ไม่สามารถดึงข้อมูลตาราง ${table} ได้`);
+    return res.json();
   }
 
-  const d = new Date(dateStr);
-  if (isNaN(d)) return "-";
-
-  const year = d.getFullYear();
-  if (year < 1900 || year > 2100) return "-";
-
-  const day = d.getDate().toString().padStart(2, '0');
-  const month = (d.getMonth() + 1).toString().padStart(2, '0');
-  return `${day}/${month}/${year}`;
-}
-
-
-
-    function displayResults(rows) {
-      const table = document.getElementById("resultTable");
-      const tbody = table.querySelector("tbody");
-      tbody.innerHTML = "";
-
-      if (!rows.length) {
-        table.style.display = "none";
-        document.getElementById("message").textContent = "ไม่พบข้อมูลตามเงื่อนไขที่ค้นหา";
-        return;
-      } else {
-        document.getElementById("message").textContent = "";
-      }
-
-      rows.forEach(row => {
-        const rq = row["เลขที่ใบแจ้งซ่อม"] || "-";
-        const symptom = row["รายละเอียดอาการเสีย"] || "-";
-        const machineCode = row["รหัสเครื่อง"] || "-";
-        const jobCode = row["ชนิดงาน"] || "-";
-        const deptCode = row["หน่วยงาน"] || "-";
-        const fixComment = row["การแก้ไขความคิดเห็น"] || "-";
-        const reportDate = formatDate(row["วันที่แจ้งซ่อม"] || "");
-        const finishDate = formatDate(row["วันที่ซ่อมเสร็จ"] || "");
-        const status = row["สถานะเครื่อง"] || "-";
-
-        const machineName = machinesMap[machineCode] || machineCode;
-        const jobName = jobTypeMap[jobCode] || jobCode;
-        const deptName = departmentsMap[deptCode] || deptCode;
-
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${rq}</td>
-          <td style="max-width: 200px; white-space: normal; word-wrap: break-word;">${symptom}</td>
-          <td>${machineName}</td>
-          <td>${jobName}</td>
-          <td>${deptName}</td>
-          <td style="max-width: 200px; white-space: normal; word-wrap: break-word;">${fixComment}</td>
-          <td>${reportDate}</td>
-          <td>${finishDate}</td>
-          <td><span class="${getStatusClass(status)}">${status}</span></td>
-          <td>
-            <button class="btn-edit" onclick="enableEditRow(this)">✏️ แก้ไข</button>
-          </td>
-        `;
-        tbody.appendChild(tr);
+  async function loadDepartments() {
+    try {
+      const depts = await fetchTable("Department");
+      const select = document.getElementById("filterDepartment");
+      depts.forEach(d => {
+        departmentsMap[d["DeptCode"]] = d["DeptNameEng"] || d["DeptName"] || d["DeptCode"];
+        const opt = document.createElement("option");
+        opt.value = d["DeptCode"];
+        opt.textContent = departmentsMap[d["DeptCode"]];
+        select.appendChild(opt);
       });
-
-      table.style.display = "table";
+    } catch(e) {
+      console.error("โหลดหน่วยงานไม่สำเร็จ", e);
     }
+  }
 
-    function enableEditRow(btn) {
-      const tr = btn.closest("tr");
-      const symptomCell = tr.children[1];
-      const fixCommentCell = tr.children[5];
-      const statusCell = tr.children[8].querySelector("span");
-
-      symptomCell.innerHTML = `<input type="text" value="${symptomCell.textContent.trim()}" class="edit-input" style="width: 100%;" />`;
-      fixCommentCell.innerHTML = `<input type="text" value="${fixCommentCell.textContent.trim()}" class="edit-fix" style="width: 100%;" />`;
-
-      const statusValue = statusCell.textContent.trim();
-      statusCell.parentElement.innerHTML = `
-        <select class="edit-status" style="width: 100%;">
-          <option value="ซ่อมเสร็จ" ${statusValue === "ซ่อมเสร็จ" ? "selected" : ""}>ซ่อมเสร็จ</option>
-          <option value="รออะไหล่" ${statusValue === "รออะไหล่" ? "selected" : ""}>รออะไหล่</option>
-          <option value="อยู่ระหว่างซ่อม" ${statusValue === "อยู่ระหว่างซ่อม" ? "selected" : ""}>อยู่ระหว่างซ่อม</option>
-          <option value="ยกเลิกซ่อม" ${statusValue === "ยกเลิกซ่อม" ? "selected" : ""}>ยกเลิกซ่อม</option>
-        </select>`;
-
-      btn.parentElement.innerHTML = `
-        <button class="btn-edit" onclick="saveEditRow(this)">💾 บันทึก</button>
-        <button class="btn-qr" onclick="cancelEditRow(this)">❌ ยกเลิก</button>`;
-    }
-
-    function saveEditRow(btn) {
-      const tr = btn.closest("tr");
-      const id = tr.children[0].textContent.trim();
-      const symptom = tr.querySelector(".edit-input").value.trim();
-      const fixComment = tr.querySelector(".edit-fix").value.trim();
-      const status = tr.querySelector(".edit-status").value;
-
-      fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/Machinesymptom/Action`, {
+  // โหลดข้อมูลใบแจ้งซ่อม
+  async function loadData() {
+    document.getElementById('message').textContent = "กำลังโหลดข้อมูล...";
+    try {
+      const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/Machinesymptom/Find`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "ApplicationAccessKey": apiKey },
-        body: JSON.stringify({
-          Action: "Edit",
-          Properties: { Locale: "th-TH" },
-          Rows: [{
-            "เลขที่ใบแจ้งซ่อม": id,
-            "รายละเอียดอาการเสีย": symptom,
-            "การแก้ไขความคิดเห็น": fixComment,
-            "สถานะเครื่อง": status
-          }]
-        })
-      }).then(res => {
-        if (res.ok) {
-          alert("✅ บันทึกเรียบร้อย");
-          searchData();
-        } else {
-          alert("❌ บันทึกไม่สำเร็จ");
-        }
-      }).catch(() => {
-        alert("❌ เกิดข้อผิดพลาดในการเชื่อมต่อ");
+        headers: {
+          "Content-Type": "application/json",
+          "ApplicationAccessKey": apiKey,
+        },
+        body: JSON.stringify({})
+      });
+      if (!res.ok) throw new Error("ไม่สามารถเชื่อมต่อ API ได้");
+      const data = await res.json();
+      allData = data;
+      // เรียงวันที่แจ้งซ่อมใหม่สุดก่อน
+      allData.sort((a,b) => new Date(b["วันที่แจ้งซ่อม"]) - new Date(a["วันที่แจ้งซ่อม"]));
+      renderTable(allData);
+      document.getElementById('message').textContent = "";
+    } catch(e) {
+      document.getElementById('message').textContent = "เกิดข้อผิดพลาดในการโหลดข้อมูล";
+      console.error(e);
+    }
+  }
+
+  function formatDateDisplay(dateVal) {
+    if (!dateVal) return "-";
+    const d = new Date(dateVal);
+    if (isNaN(d)) return "-";
+    const day = d.getDate().toString().padStart(2,'0');
+    const month = (d.getMonth()+1).toString().padStart(2,'0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+
+  // กรองข้อมูลตาม filter
+  function applyFilters() {
+    const fromDate = document.getElementById("dateFrom").value;
+    const toDate = document.getElementById("dateTo").value;
+    const dept = document.getElementById("filterDepartment").value;
+    const status = document.getElementById("filterStatus").value;
+
+    let filtered = allData;
+
+    if(fromDate) {
+      filtered = filtered.filter(r => {
+        if (!r["วันที่แจ้งซ่อม"]) return false;
+        return new Date(r["วันที่แจ้งซ่อม"]) >= new Date(fromDate);
       });
     }
-
-    function cancelEditRow(btn) {
-      searchData();
+    if(toDate) {
+      filtered = filtered.filter(r => {
+        if (!r["วันที่แจ้งซ่อม"]) return false;
+        return new Date(r["วันที่แจ้งซ่อม"]) <= new Date(toDate);
+      });
+    }
+    if(dept) {
+      filtered = filtered.filter(r => r["หน่วยงาน"] === dept);
+    }
+    if(status) {
+      filtered = filtered.filter(r => r["สถานะเครื่อง"] === status);
     }
 
-    function resetSearch() {
-      document.getElementById("searchDepartment").value = "";
-      document.getElementById("searchStatus").value = "";
-      document.getElementById("searchReportDate").value = "";
-      document.getElementById("searchFinishDate").value = "";
-      document.getElementById("message").textContent = "";
-      document.getElementById("resultTable").style.display = "none";
+    renderTable(filtered);
+  }
+
+  function resetFilters() {
+    document.getElementById("dateFrom").value = "";
+    document.getElementById("dateTo").value = "";
+    document.getElementById("filterDepartment").value = "";
+    document.getElementById("filterStatus").value = "";
+    renderTable(allData);
+  }
+
+  function renderTable(data) {
+    const tbody = document.querySelector("#resultTable tbody");
+    tbody.innerHTML = "";
+    if (data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:#555;">ไม่พบข้อมูล</td></tr>`;
+      return;
     }
 
-    function dateEqual(date1, date2) {
-      if (!date1 || !date2) return false;
-      const d1 = date1.length > 10 ? date1.slice(0,10) : date1;
-      const d2 = date2.length > 10 ? date2.slice(0,10) : date2;
-      return d1 === d2;
+    data.forEach(row => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${row["เลขที่ใบแจ้งซ่อม"] || "-"}</td>
+        <td style="white-space: normal; max-width: 250px;">${row["รายละเอียดอาการเสีย"] || "-"}</td>
+        <td>${row["รหัสเครื่อง"] || "-"}</td>
+        <td>${row["ชนิดงาน"] || "-"}</td>
+        <td>${departmentsMap[row["หน่วยงาน"]] || row["หน่วยงาน"] || "-"}</td>
+        <td style="white-space: normal; max-width: 250px;">${row["การแก้ไขความคิดเห็น"] || "-"}</td>
+        <td>${formatDateDisplay(row["วันที่แจ้งซ่อม"])}</td>
+        <td>${formatDateDisplay(row["วันที่ซ่อมเสร็จ"])}</td>
+        <td><span class="status status-${row["สถานะเครื่อง"] ? row["สถานะเครื่อง"].replace(/\s/g,'') : ''}">${row["สถานะเครื่อง"] || "-"}</span></td>
+        <td><button class="edit-btn" onclick="openEditModal('${row["เลขที่ใบแจ้งซ่อม"]}')">แก้ไข</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function openEditModal(requestNumber) {
+    const row = allData.find(r => r["เลขที่ใบแจ้งซ่อม"] === requestNumber);
+    if (!row) {
+      alert("ไม่พบข้อมูลที่จะแก้ไข");
+      return;
+    }
+    document.getElementById('editRequestNumber').value = row["เลขที่ใบแจ้งซ่อม"] || "";
+    document.getElementById('editSymptom').value = row["รายละเอียดอาการเสีย"] || "";
+    document.getElementById('editStatus').value = row["สถานะเครื่อง"] || "";
+
+    document.getElementById('editModal').style.display = "flex";
+  }
+
+  function closeModal() {
+    document.getElementById('editModal').style.display = "none";
+  }
+
+  document.getElementById('editForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const requestNumber = document.getElementById('editRequestNumber').value;
+    const symptom = document.getElementById('editSymptom').value.trim();
+    const status = document.getElementById('editStatus').value;
+
+    if (!symptom) {
+      alert("กรุณากรอกรายละเอียดอาการเสีย");
+      return;
     }
 
-    async function searchData() {
-      const deptFilter = document.getElementById("searchDepartment").value;
-      const statusFilter = document.getElementById("searchStatus").value;
-      const reportDateFilter = document.getElementById("searchReportDate").value;
-      const finishDateFilter = document.getElementById("searchFinishDate").value;
+    const updates = {
+      "รายละเอียดอาการเสีย": symptom,
+      "สถานะเครื่อง": status
+    };
 
-      document.getElementById("message").textContent = "กำลังค้นหาข้อมูล...";
-      document.getElementById("resultTable").style.display = "none";
+    try {
+      const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/Machinesymptom/Update`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "ApplicationAccessKey": apiKey,
+        },
+        body: JSON.stringify({
+          "Key": requestNumber,
+          "Updates": updates
+        })
+      });
+      if (!res.ok) throw new Error("อัปเดตข้อมูลไม่สำเร็จ");
 
-      try {
-        const response = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/Machinesymptom/Find`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "ApplicationAccessKey": apiKey
-          },
-          body: JSON.stringify({})
-        });
-        if (!response.ok) throw new Error("ไม่สามารถเชื่อมต่อ API ได้");
-        const data = await response.json();
-
-        let filtered = data;
-
-        if (deptFilter) {
-          filtered = filtered.filter(r => r["หน่วยงาน"] === deptFilter);
-        }
-        if (statusFilter) {
-          filtered = filtered.filter(r => r["สถานะเครื่อง"] === statusFilter);
-        }
-        if (reportDateFilter) {
-          filtered = filtered.filter(r => dateEqual(r["วันที่แจ้งซ่อม"], reportDateFilter));
-        }
-        if (finishDateFilter) {
-          filtered = filtered.filter(r => dateEqual(r["วันที่ซ่อมเสร็จ"], finishDateFilter));
-        }
-
-        displayResults(filtered);
-      } catch (error) {
-        document.getElementById("message").textContent = "เกิดข้อผิดพลาดในการดึงข้อมูล";
-        console.error(error);
-      }
+      alert("บันทึกข้อมูลเรียบร้อยแล้ว");
+      closeModal();
+      await loadData();
+      // หลังโหลดข้อมูลใหม่ ให้แสดง filter เดิม
+      applyFilters();
+    } catch(e) {
+      alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+      console.error(e);
     }
+  });
 
-    function logout() {
-      alert("ออกจากระบบเรียบร้อย");
-      // เพิ่มฟังก์ชัน logout ตามระบบจริง เช่น ล้าง Token หรือ Redirect
-    }
+  // เรียกโหลดข้อมูลและหน่วยงานตอนหน้าโหลด
+  async function initialize() {
+    await loadDepartments();
+    await loadData();
+  }
+  initialize();
 
-    async function initialize() {
-      try {
-        await Promise.all([
-          loadDepartments(),
-          loadMachines(),
-          loadJobTypes(),
-        ]);
-        document.getElementById("userStatus").textContent = "พร้อมใช้งาน";
-      } catch {
-        document.getElementById("userStatus").textContent = "โหลดข้อมูลล้มเหลว";
-      }
-    }
+</script>
 
-    initialize();
-  </script>
 </body>
 </html>
