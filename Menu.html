@@ -2,98 +2,115 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <title>เมนูระบบแจ้งซ่อม</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>เมนูหลัก</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     body {
-      background: linear-gradient(to bottom right, #e3f2fd, #bbdefb);
-      font-family: 'Sarabun', sans-serif;
+      font-family: 'Kanit', sans-serif;
+      background: #f0f4ff;
     }
-
+    .navbar {
+      background: #1976d2;
+    }
+    .navbar-brand, .navbar-text {
+      color: white !important;
+    }
     .card-menu {
-      border-radius: 14px;
-      padding: 15px;
+      border-radius: 16px;
+      padding: 20px;
       text-align: center;
-      min-height: 100px;
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
-      transition: 0.2s ease-in-out;
-      background: white;
-      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
     }
-
     .card-menu:hover {
       transform: translateY(-5px);
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
     }
-
     .menu-icon {
-      font-size: 1.8rem;
+      font-size: 2.5rem;
       color: #1976d2;
     }
-
     .menu-label {
-      font-size: 1rem;
-      font-weight: 500;
-      margin-top: 6px;
+      margin-top: 0.5rem;
+      font-size: 1.1rem;
       color: #333;
     }
   </style>
 </head>
 <body>
 
-<div class="container py-4">
-  <div class="row g-3 row-cols-2 row-cols-sm-3 row-cols-lg-4">
-
-    <!-- สร้างใบแจ้งซ่อม -->
-    <div class="col">
-      <div class="card card-menu" onclick="navigateTo('create-request.html')">
-        <div class="menu-icon">📄</div>
-        <div class="menu-label">สร้างใบแจ้งซ่อม</div>
-      </div>
+  <nav class="navbar px-4 py-2">
+    <div class="container-fluid">
+      <span class="navbar-brand">🔧 ระบบแจ้งซ่อมออนไลน์</span>
+      <span class="navbar-text">
+        👤 <span id="userDisplay">กำลังโหลด...</span>
+        <button onclick="logout()" class="btn btn-light btn-sm ms-3">ออกจากระบบ</button>
+      </span>
     </div>
+  </nav>
 
-    <!-- รายการแจ้งซ่อม -->
-    <div class="col">
-      <div class="card card-menu" onclick="navigateTo('repair-list.html')">
-        <div class="menu-icon">🛠</div>
-        <div class="menu-label">รายการแจ้งซ่อม</div>
+  <div class="container py-4">
+    <div class="row row-cols-1 row-cols-md-2 g-4">
+
+      <div class="col">
+        <a href="create-request.html" class="text-decoration-none">
+          <div class="card card-menu" onclick="navigateTo('https://appsheetsvi.github.io/form.html')">
+            <div class="menu-icon">📄</div>
+            <div class="menu-label">สร้างใบแจ้งซ่อม</div>
+          </div>
+        </a>
       </div>
-    </div>
 
-    <!-- ประเมินงาน -->
-    <div class="col">
-      <div class="card card-menu" onclick="navigateTo('evaluate.html')">
-        <div class="menu-icon">✅</div>
-        <div class="menu-label">ประเมินงาน</div>
+      <div class="col">
+        <a href="repair-list.html" class="text-decoration-none">
+          <div class="card card-menu" onclick="navigateTo('https://appsheetsvi.github.io/search.html')">
+            <div class="menu-icon">🛠</div>
+            <div class="menu-label">รายการแจ้งซ่อม</div>
+          </div>
+        </a>
       </div>
-    </div>
-
-    <!-- รายงาน -->
-    <div class="col">
-      <div class="card card-menu" onclick="navigateTo('report.html')">
-        <div class="menu-icon">📊</div>
-        <div class="menu-label">รายงานผู้บริหาร</div>
+      <div class="col">
+        <a href="repair-list.html" class="text-decoration-none">
+          <div class="card card-menu" onclick="navigateTo('https://appsheetsvi.github.io/MachineGroup.html')">
+            <div class="menu-icon">🛠</div>
+            <div class="menu-label">รายการแจ้งซ่อม</div>
+          </div>
+        </a>
       </div>
-    </div>
-
-    <!-- เพิ่มเครื่องจักร -->
-    <div class="col">
-      <div class="card card-menu" onclick="navigateTo('add-machine.html')">
-        <div class="menu-icon">🖥</div>
-        <div class="menu-label">เพิ่มเครื่องจักร</div>
+      <div class="col">
+        <a href="evaluate.html" class="text-decoration-none">
+          <div class="card card-menu" onclick="navigateTo('evaluate.html.html')">
+            <div class="menu-icon">✅</div>
+            <div class="menu-label">ประเมินงานซ่อม</div>
+          </div>
+        </a>
       </div>
-    </div>
 
+      <div class="col">
+        <a href="report.html" class="text-decoration-none">
+          <div class="card card-menu" onclick="navigateTo('dashboard.html')">
+            <div class="menu-icon">📊</div>
+            <div class="menu-label">รายงาน</div>
+          </div>
+        </a>
+      </div>
+
+    </div>
   </div>
-</div>
 
-<script>
-  function navigateTo(url) {
-    window.location.href = url;
-  }
-</script>
+  <script>
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user) {
+      window.location.href = "Login.html";
+    } else {
+      const fullName = `${user.TitleName || ""} ${user.EmpName || ""} ${user.LastName || ""} (${user.Role || ""})`;
+      document.getElementById("userDisplay").textContent = fullName;
+    }
 
+    function logout() {
+      localStorage.clear();
+      window.location.href = "Login.html";
+    }
+  </script>
 </body>
 </html>
-

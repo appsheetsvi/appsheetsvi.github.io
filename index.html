@@ -3,115 +3,88 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Login พนักงาน</title>
-  <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet" />
+  <title>Login</title>
   <style>
     body {
       font-family: 'Kanit', sans-serif;
-      background-color: #f0f4ff;
+      background-color: #e3f2fd;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
       margin: 0;
     }
-    .login-box {
+    form {
       background: white;
       padding: 2rem;
       border-radius: 12px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
       width: 100%;
-      max-width: 400px;
+      max-width: 360px;
     }
-    h2 {
-      text-align: center;
-      color: #1d4ed8;
-    }
-    input {
+    input, button {
       width: 100%;
-      padding: 0.7rem;
-      margin-top: 1rem;
+      padding: 0.6rem;
+      margin-top: 0.8rem;
       font-size: 1rem;
-      border: 1.5px solid #93c5fd;
       border-radius: 6px;
-      box-sizing: border-box;
+      border: 1px solid #ccc;
     }
     button {
-      width: 100%;
-      padding: 0.8rem;
-      background-color: #2563eb;
+      background: #1976d2;
       color: white;
-      border: none;
-      border-radius: 6px;
-      margin-top: 1.5rem;
-      font-size: 1rem;
       font-weight: bold;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #1e40af;
+      border: none;
     }
     .msg {
-      text-align: center;
       margin-top: 1rem;
       color: red;
-      font-weight: bold;
+      text-align: center;
     }
   </style>
 </head>
 <body>
-  <div class="login-box">
-    <h2>เข้าสู่ระบบพนักงาน</h2>
-    <input type="text" id="empCode" placeholder="รหัสพนักงาน" />
-    <input type="password" id="password" placeholder="รหัสผ่าน" />
-    <button onclick="login()">เข้าสู่ระบบ</button>
-    <div class="msg" id="message"></div>
-  </div>
+  <form id="loginForm">
+    <h2 style="text-align:center;">เข้าสู่ระบบ</h2>
+    <input type="text" id="empCode" placeholder="รหัสพนักงาน" required />
+    <input type="password" id="password" placeholder="รหัสผ่าน" required />
+    <button type="submit">เข้าสู่ระบบ</button>
+    <div class="msg" id="msg"></div>
+  </form>
 
   <script>
     const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
     const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
 
-    async function login() {
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
       const code = document.getElementById("empCode").value.trim();
       const pass = document.getElementById("password").value.trim();
-      const msg = document.getElementById("message");
-
-      if (!code || !pass) {
-        msg.textContent = "❌ กรุณากรอกข้อมูลให้ครบ";
-        return;
-      }
-
-      msg.textContent = "⏳ กำลังตรวจสอบ...";
+      const msg = document.getElementById("msg");
 
       try {
         const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/Emp/Find`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "ApplicationAccessKey": apiKey
+            "ApplicationAccessKey": apiKey,
           },
           body: JSON.stringify({})
         });
 
         const data = await res.json();
-        const found = data.find(emp => emp.EmpCode === code && emp.Password === pass);
+        const user = data.find(d => d.EmpCode === code && d.Password === pass);
 
-        if (found) {
-          msg.style.color = "green";
-          msg.textContent = "✅ เข้าสู่ระบบสำเร็จ กำลังไปยังเมนู...";
-          setTimeout(() => {
-            window.location.href = "Menu.html";
-          }, 1000);
+        if (user) {
+          localStorage.setItem("user", JSON.stringify(user));
+          window.location.href = "Menu.html";
         } else {
-          msg.style.color = "red";
           msg.textContent = "❌ รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง";
         }
       } catch (err) {
-        msg.style.color = "red";
-        msg.textContent = "❌ ไม่สามารถเชื่อมต่อระบบได้";
+        msg.textContent = "เกิดข้อผิดพลาดในการเชื่อมต่อ";
       }
-    }
+    });
   </script>
 </body>
 </html>
