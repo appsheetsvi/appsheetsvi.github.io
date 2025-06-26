@@ -2,173 +2,116 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ระบบแจ้งซ่อม</title>
-  <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Login พนักงาน</title>
+  <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet" />
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Kanit', sans-serif;
-    }
-
     body {
-      background: #f0f4ff;
-      color: #333;
-      min-height: 100vh;
-    }
-
-    /* Navbar */
-    .navbar {
+      font-family: 'Kanit', sans-serif;
+      background-color: #f0f4ff;
       display: flex;
-      justify-content: space-between;
+      justify-content: center;
       align-items: center;
-      background: linear-gradient(to right, #0072ff, #0051c1);
-      padding: 1rem 2rem;
-      color: white;
-      position: sticky;
-      top: 0;
-      z-index: 1000;
+      height: 100vh;
+      margin: 0;
     }
-
-    .logo {
-      font-size: 1.6rem;
+    .login-box {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+    }
+    h2 {
+      text-align: center;
+      color: #1d4ed8;
+    }
+    input {
+      width: 100%;
+      padding: 0.7rem;
+      margin-top: 1rem;
+      font-size: 1rem;
+      border: 1.5px solid #93c5fd;
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 0.8rem;
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      margin-top: 1.5rem;
+      font-size: 1rem;
       font-weight: bold;
-    }
-
-    .nav-links {
-      list-style: none;
-      display: flex;
-      gap: 1rem;
-    }
-
-    .nav-links a {
-      color: white;
-      text-decoration: none;
-      font-weight: 500;
-      padding: 0.5rem 1rem;
-      border-radius: 25px;
-      transition: background 0.3s, transform 0.2s;
-    }
-
-    .nav-links a:hover {
-      background: rgba(255, 255, 255, 0.15);
-      transform: translateY(-2px);
-    }
-
-    .menu-toggle {
-      display: none;
-      font-size: 2rem;
       cursor: pointer;
     }
-
-    /* Hero/Menu Buttons */
-    .hero {
+    button:hover {
+      background-color: #1e40af;
+    }
+    .msg {
       text-align: center;
-      padding: 3rem 1.5rem;
-    }
-
-    .hero h1 {
-      font-size: 2.2rem;
-      margin-bottom: 1rem;
-      color: #0051c1;
-    }
-
-    .button-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1.2rem;
-      margin-top: 2rem;
-      max-width: 800px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .btn-blue {
-      background: linear-gradient(to right, #007bff, #0056d2);
-      color: white;
-      padding: 1rem;
-      border: none;
-      border-radius: 30px;
-      font-size: 1rem;
-      text-decoration: none;
-      transition: background 0.3s, transform 0.2s;
-    }
-
-    .btn-blue:hover {
-      background: linear-gradient(to right, #0056d2, #003b9c);
-      transform: scale(1.03);
-    }
-
-    /* Responsive Navbar */
-    @media (max-width: 768px) {
-      .nav-links {
-        flex-direction: column;
-        position: absolute;
-        top: 60px;
-        right: -100%;
-        background: #0051c1;
-        width: 100%;
-        text-align: center;
-        transition: right 0.3s ease-in-out;
-        padding: 1rem 0;
-      }
-
-      .nav-links.active {
-        right: 0;
-      }
-
-      .menu-toggle {
-        display: block;
-        font-size: 2rem;
-      }
-
-      .hero h1 {
-        font-size: 1.6rem;
-      }
-
-      .btn-blue {
-        font-size: 0.95rem;
-        padding: 0.9rem;
-      }
+      margin-top: 1rem;
+      color: red;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
+  <div class="login-box">
+    <h2>เข้าสู่ระบบพนักงาน</h2>
+    <input type="text" id="empCode" placeholder="รหัสพนักงาน" />
+    <input type="password" id="password" placeholder="รหัสผ่าน" />
+    <button onclick="login()">เข้าสู่ระบบ</button>
+    <div class="msg" id="message"></div>
+  </div>
 
-  <!-- Navbar -->
-  <nav class="navbar">
-    <div class="logo">🔧 แจ้งซ่อม</div>
-    <div class="menu-toggle" id="mobile-menu">☰</div>
-    <ul class="nav-links" id="nav-links">
-      <li><a href="#">หน้าแรก</a></li>
-      <li><a href="#">แจ้งซ่อม</a></li>
-      <li><a href="#">ตรวจสอบงาน</a></li>
-      <li><a href="#">ติดต่อ</a></li>
-    </ul>
-  </nav>
-
-  <!-- Hero / Main Buttons -->
-  <section class="hero">
-    <h1>ระบบแจ้งซ่อมออนไลน์</h1>
-    <div class="button-grid">
-      <a href="https://appsheetsvi.github.io/search.html" class="btn-blue">📋 รายละเอียดแจ้งซ่อม</a>
-      <a href="https://appsheetsvi.github.io/form.html" class="btn-blue">🧾 สร้างใบแจ้งซ่อม</a>
-      <a href="https://appsheetsvi.github.io/evaluate.html" class="btn-blue">📊 ประเมินความพึงพอใจ</a>
-      <a href="https://appsheetsvi.github.io/dashboard.html" class="btn-blue">✅ ตรวจสอบสถานะงาน</a>
-    </div>
-  </section>
-
-  <!-- Responsive Menu Script -->
   <script>
-    const menuToggle = document.getElementById('mobile-menu');
-    const navLinks = document.getElementById('nav-links');
+    const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
+    const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
 
-    menuToggle.addEventListener('click', () => {
-      navLinks.classList.toggle('active');
-    });
+    async function login() {
+      const code = document.getElementById("empCode").value.trim();
+      const pass = document.getElementById("password").value.trim();
+      const msg = document.getElementById("message");
+
+      if (!code || !pass) {
+        msg.textContent = "❌ กรุณากรอกข้อมูลให้ครบ";
+        return;
+      }
+
+      msg.textContent = "⏳ กำลังตรวจสอบ...";
+
+      try {
+        const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/Emp/Find`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "ApplicationAccessKey": apiKey
+          },
+          body: JSON.stringify({})
+        });
+
+        const data = await res.json();
+        const found = data.find(emp => emp.EmpCode === code && emp.Password === pass);
+
+        if (found) {
+          msg.style.color = "green";
+          msg.textContent = "✅ เข้าสู่ระบบสำเร็จ กำลังไปยังเมนู...";
+          setTimeout(() => {
+            window.location.href = "Menu.html";
+          }, 1000);
+        } else {
+          msg.style.color = "red";
+          msg.textContent = "❌ รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง";
+        }
+      } catch (err) {
+        msg.style.color = "red";
+        msg.textContent = "❌ ไม่สามารถเชื่อมต่อระบบได้";
+      }
+    }
   </script>
-
 </body>
 </html>
