@@ -5,42 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ฟอร์มแจ้งซ่อม</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun&display=swap" rel="stylesheet" />
   <style>
-    /* ให้แต่ละช่องในฟอร์มมี position relative เพื่อ dropdown ทำงานได้ดี */
-    #repairForm > div {
-      position: relative;
-      overflow: visible;
+    body {
+      font-family: 'Sarabun', sans-serif;
+      background: linear-gradient(to right, #e0f7fa, #e0f2f1);
+      min-height: 100vh;
     }
-
-    /* เพิ่ม z-index ให้ select ตอน focus เพื่อไม่ถูกบัง */
-    select:focus {
-      z-index: 50;
-      position: relative;
+    nav {
+      box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
     }
-
-    /* ปรับ input/select ให้ไม่ขยับหรือเลื่อน */
-    input, select, textarea {
-      width: 100%;
-      box-sizing: border-box;
-    }
-
-    /* ปรับ layout ให้ดีขึ้นสำหรับมือถือ */
-    @media (max-width: 767px) {
+    @media (max-width: 768px) {
       .md\:grid-cols-2 {
         grid-template-columns: 1fr !important;
       }
     }
   </style>
 </head>
-
-<body class="bg-gray-100">
-  <nav class="bg-blue-800 text-white fixed top-0 w-full z-50 shadow">
-    <div class="max-w-7xl mx-auto px-4 py-2 text-lg font-semibold">ระบบแจ้งซ่อมออนไลน์</div>
+<body>
+  <nav class="bg-blue-700 text-white fixed top-0 w-full z-50">
+    <div class="max-w-4xl mx-auto px-4 py-3 text-lg font-semibold">ระบบแจ้งซ่อมออนไลน์</div>
   </nav>
 
-  <main class="max-w-3xl mx-auto mt-24 p-6 bg-white rounded-2xl shadow-md">
-    <h1 class="text-2xl font-bold text-center mb-6">📋 ฟอร์มแจ้งซ่อมเครื่องจักร</h1>
+  <main class="max-w-4xl mx-auto mt-24 p-6 bg-white rounded-3xl shadow-xl">
+    <h1 class="text-2xl font-bold text-center text-blue-700 mb-6">📋 ฟอร์มแจ้งซ่อมเครื่องจักร</h1>
     <form id="repairForm" class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div class="col-span-2">
         <label class="font-semibold">เลขที่ใบแจ้งซ่อม</label>
@@ -105,7 +93,7 @@
 
       <div>
         <label class="font-semibold">พนักงาน(ช่าง)</label>
-        <input name="พนักงาน(ช่าง)" class="w-full border rounded p-2" />
+        <select name="พนักงาน(ช่าง)" id="techSelect" class="w-full border rounded p-2" required></select>
       </div>
 
       <div>
@@ -124,9 +112,14 @@
         </select>
       </div>
 
-      <div class="col-span-2">
+      <div>
         <label class="font-semibold">วันที่แจ้งซ่อม</label>
-        <input type="datetime-local" name="วันที่แจ้งซ่อม" required class="w-full border rounded p-2" />
+        <input type="date" name="วันที่แจ้งซ่อม" id="วันที่แจ้งซ่อม" class="w-full border rounded p-2" required />
+      </div>
+
+      <div>
+        <label class="font-semibold">วันที่ซ่อมเสร็จ</label>
+        <input type="date" name="วันที่ซ่อมเสร็จ" id="วันที่ซ่อมเสร็จ" class="w-full border rounded p-2" />
       </div>
 
       <div class="col-span-2 text-center mt-4">
@@ -160,7 +153,7 @@
       list.forEach(item => {
         const opt = document.createElement("option");
         opt.value = item.DeptCode;
-        opt.textContent = item.DeptNameEng;
+        opt.textContent = item.DeptNameEng || item.DeptName;
         sel.appendChild(opt);
       });
     }
@@ -190,6 +183,18 @@
       });
     }
 
+    async function loadTechnicianDropdown() {
+      const list = await fetchFromTable("Emp");
+      const sel = document.getElementById("techSelect");
+      sel.innerHTML = '<option value="">-- เลือกช่างผู้รับผิดชอบ --</option>';
+      list.filter(emp => emp.DeptCode === "A12").forEach(emp => {
+        const opt = document.createElement("option");
+        opt.value = emp.EmpCode;
+        opt.textContent = `${emp.TitleName} ${emp.EmpName} ${emp.LastName}`;
+        sel.appendChild(opt);
+      });
+    }
+
     function updatePriorityStyle() {
       const select = document.getElementById("prioritySelect");
       const value = select.value;
@@ -210,44 +215,84 @@
         newCode = String(next).padStart(7, "0");
       }
       input.value = newCode;
-      generateQRCode(newCode);
     }
 
-    function generateQRCode(text) {
-      const container = document.getElementById("qrcode");
-      container.innerHTML = "";
-      new QRCode(container, { text, width: 96, height: 96 });
+    // แปลง ISO DateTime เป็น dd/mm/yyyy HH:mm:ss (เวลาไทย +7)
+    function formatDateTimeTH(isoString) {
+      if (!isoString) return "";
+      const date = new Date(isoString);
+      const utc = date.getTime() + date.getTimezoneOffset() * 60000;
+      const thaiDate = new Date(utc + 7 * 3600000);
+      const d = thaiDate.getDate().toString().padStart(2, "0");
+      const m = (thaiDate.getMonth() + 1).toString().padStart(2, "0");
+      const y = thaiDate.getFullYear();
+      const h = thaiDate.getHours().toString().padStart(2, "0");
+      const min = thaiDate.getMinutes().toString().padStart(2, "0");
+      const s = thaiDate.getSeconds().toString().padStart(2, "0");
+      return `${d}/${m}/${y} ${h}:${min}:${s}`;
     }
 
-    document.getElementById("deptSelect").addEventListener("change", e => loadMachines(e.target.value));
-
-    document.getElementById("repairForm").addEventListener("submit", async function (e) {
+    // กดบันทึกฟอร์มแจ้งซ่อม
+    document.getElementById("repairForm").addEventListener("submit", async function(e) {
       e.preventDefault();
-      const data = Object.fromEntries(new FormData(this).entries());
+      const formData = new FormData(this);
+      const data = Object.fromEntries(formData.entries());
+
+      // แปลงวันที่แจ้งซ่อมและวันที่ซ่อมเสร็จเป็น ISO พร้อมเวลา 00:00:00 (บันทึกแบบ DateTime)
+      if (data["วันที่แจ้งซ่อม"]) {
+        const dt = new Date(data["วันที่แจ้งซ่อม"] + "T00:00:00+07:00");
+        data["วันที่แจ้งซ่อม"] = dt.toISOString();
+      }
+      if (data["วันที่ซ่อมเสร็จ"]) {
+        const dt = new Date(data["วันที่ซ่อมเสร็จ"] + "T00:00:00+07:00");
+        data["วันที่ซ่อมเสร็จ"] = dt.toISOString();
+      }
+
       if (jobTypeMap.has(data["ชนิดงาน"])) data["ชนิดงาน"] = jobTypeMap.get(data["ชนิดงาน"]);
-      delete data["วันที่ซ่อมเสร็จ"];
-      const payload = { Action: "Add", Properties: { Locale: "th-TH" }, Rows: [data] };
+
+      const payload = {
+        Action: "Add",
+        Properties: { Locale: "th-TH" },
+        Rows: [data]
+      };
+
       const res = await fetch(`${apiBase}Machinesymptom/Action`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", ApplicationAccessKey: apiKey },
+        headers: {
+          "Content-Type": "application/json",
+          ApplicationAccessKey: apiKey
+        },
         body: JSON.stringify(payload)
       });
+
       const raw = await res.text();
       let result = null;
       try { result = JSON.parse(raw); } catch {}
+
       if (res.ok && (!result?.Failures?.length)) {
         alert("✅ บันทึกสำเร็จ!");
         this.reset();
         fetchAutoRequestNumber();
         document.getElementById("machineSelect").innerHTML = '<option value="">-- เลือกเครื่องจักร --</option>';
+        loadTechnicianDropdown();
+        updatePriorityStyle();
       } else {
         alert("❌ บันทึกไม่สำเร็จ: " + (result?.Failures?.[0]?.Message || "ไม่พบข้อความผิดพลาด"));
       }
     });
 
+    // โหลดข้อมูลเริ่มต้น
     loadDepartments();
     loadJobTypes();
     fetchAutoRequestNumber();
+    loadTechnicianDropdown();
+
+    // โหลดเครื่องจักรเมื่อเปลี่ยนแผนก
+    document.getElementById("deptSelect").addEventListener("change", e => {
+      loadMachines(e.target.value);
+    });
+
+    document.getElementById("prioritySelect").addEventListener("change", updatePriorityStyle);
   </script>
 </body>
 </html>
