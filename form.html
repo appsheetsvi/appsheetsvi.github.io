@@ -217,36 +217,32 @@
       input.value = newCode;
     }
 
-    // แปลง ISO DateTime เป็น dd/mm/yyyy HH:mm:ss (เวลาไทย +7)
-    function formatDateTimeTH(isoString) {
-      if (!isoString) return "";
-      const date = new Date(isoString);
-      const utc = date.getTime() + date.getTimezoneOffset() * 60000;
-      const thaiDate = new Date(utc + 7 * 3600000);
-      const d = thaiDate.getDate().toString().padStart(2, "0");
-      const m = (thaiDate.getMonth() + 1).toString().padStart(2, "0");
-      const y = thaiDate.getFullYear();
-      const h = thaiDate.getHours().toString().padStart(2, "0");
-      const min = thaiDate.getMinutes().toString().padStart(2, "0");
-      const s = thaiDate.getSeconds().toString().padStart(2, "0");
-      return `${d}/${m}/${y} ${h}:${min}:${s}`;
+    // ฟังก์ชันแปลงวันที่เลือก + เวลาไทยปัจจุบัน เป็น ISO string
+    function toThaiISOStringWithCurrentTime(dateStr) {
+      if (!dateStr) return null;
+      const [year, month, day] = dateStr.split('-').map(Number);
+      const now = new Date();
+      // ปรับเวลาปัจจุบันให้เป็นเวลา UTC+0 ในวันที่เลือก
+      const localTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+      // สร้าง Date ISO โดยใช้วัน + เวลาไทยปัจจุบัน
+      const d = new Date(Date.UTC(year, month - 1, day, localTime.getUTCHours(), localTime.getUTCMinutes(), localTime.getUTCSeconds()));
+      return d.toISOString();
     }
 
-    // กดบันทึกฟอร์มแจ้งซ่อม
+    document.getElementById("deptSelect").addEventListener("change", e => {
+      loadMachines(e.target.value);
+    });
+
+    document.getElementById("prioritySelect").addEventListener("change", updatePriorityStyle);
+
     document.getElementById("repairForm").addEventListener("submit", async function(e) {
       e.preventDefault();
       const formData = new FormData(this);
       const data = Object.fromEntries(formData.entries());
 
-      // แปลงวันที่แจ้งซ่อมและวันที่ซ่อมเสร็จเป็น ISO พร้อมเวลา 00:00:00 (บันทึกแบบ DateTime)
-      if (data["วันที่แจ้งซ่อม"]) {
-        const dt = new Date(data["วันที่แจ้งซ่อม"] + "T00:00:00+07:00");
-        data["วันที่แจ้งซ่อม"] = dt.toISOString();
-      }
-      if (data["วันที่ซ่อมเสร็จ"]) {
-        const dt = new Date(data["วันที่ซ่อมเสร็จ"] + "T00:00:00+07:00");
-        data["วันที่ซ่อมเสร็จ"] = dt.toISOString();
-      }
+      // แปลงวันที่แจ้งซ่อมและวันที่ซ่อมเสร็จเป็น ISO 8601 โดยใช้เวลาปัจจุบัน (ไทย)
+      if (data["วันที่แจ้งซ่อม"]) data["วันที่แจ้งซ่อม"] = toThaiISOStringWithCurrentTime(data["วันที่แจ้งซ่อม"]);
+      if (data["วันที่ซ่อมเสร็จ"]) data["วันที่ซ่อมเสร็จ"] = toThaiISOStringWithCurrentTime(data["วันที่ซ่อมเสร็จ"]);
 
       if (jobTypeMap.has(data["ชนิดงาน"])) data["ชนิดงาน"] = jobTypeMap.get(data["ชนิดงาน"]);
 
@@ -286,13 +282,6 @@
     loadJobTypes();
     fetchAutoRequestNumber();
     loadTechnicianDropdown();
-
-    // โหลดเครื่องจักรเมื่อเปลี่ยนแผนก
-    document.getElementById("deptSelect").addEventListener("change", e => {
-      loadMachines(e.target.value);
-    });
-
-    document.getElementById("prioritySelect").addEventListener("change", updatePriorityStyle);
   </script>
 </body>
 </html>
