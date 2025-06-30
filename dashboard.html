@@ -1,301 +1,383 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Repair Feedback Dashboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    .table-fixed-header thead {
-      position: sticky;
-      top: 0;
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ค้นหาใบแจ้งซ่อมพร้อมช่างผู้รับผิดชอบ</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun&display=swap" rel="stylesheet" />
+<style>
+  body {
+    font-family: 'Sarabun', sans-serif;
+    background: #f0f4f8;
+    margin: 0; padding: 1rem;
+    color: #1e293b; font-size: 0.9rem;
+  }
+  h1 {
+    text-align: center;
+    color: #1d4ed8;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+  }
+  .search-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+  .search-bar select,
+  .search-bar input[type="date"] {
+    padding: 0.4rem 0.6rem;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    font-size: 0.9rem;
+    min-width: 140px;
+  }
+  .search-bar button {
+    background: #1d4ed8;
+    color: white;
+    border: none;
+    padding: 0.4rem 1rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  .search-bar button:hover {
+    background: #1e40af;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgb(100 116 139 / 0.1);
+    font-size: 0.9rem;
+  }
+  thead {
+    background: #2563eb;
+    color: white;
+  }
+  th, td {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #e2e8f0;
+    text-align: left;
+    vertical-align: middle;
+    word-break: break-word;
+  }
+  tbody tr:hover {
+    background: #f0f9ff;
+  }
+  .status {
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    font-size: 0.75rem;
+    display: inline-block;
+  }
+  .status.ซ่อมเสร็จ { background: #34d399; color: #065f46; }
+  .status.รออะไหล่ { background: #fde68a; color: #92400e; }
+  .status.อยู่ระหว่างซ่อม { background: #bfdbfe; color: #1e40af; }
+  .status.ยกเลิกซ่อม { background: #fecaca; color: #991b1b; }
+
+  #noData {
+    text-align: center;
+    margin-top: 2rem;
+    color: #64748b;
+    font-style: italic;
+  }
+
+  @media (max-width: 768px) {
+    table, thead, tbody, th, td, tr {
+      display: block;
+    }
+    thead tr {
+      display: none;
+    }
+    tbody tr {
+      margin-bottom: 1rem;
       background: white;
-      z-index: 10;
+      box-shadow: 0 2px 8px rgb(100 116 139 / 0.1);
+      border-radius: 10px;
+      padding: 1rem;
     }
-  </style>
+    tbody td {
+      padding-left: 50%;
+      position: relative;
+      border: none;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: right;
+      font-size: 0.9rem;
+    }
+    tbody td:last-child {
+      border-bottom: none;
+    }
+    tbody td::before {
+      content: attr(data-label);
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-weight: 700;
+      color: #334155;
+      text-align: left;
+      white-space: nowrap;
+      width: 45%;
+      font-size: 0.85rem;
+    }
+  }
+</style>
 </head>
-<body class="bg-gray-50 min-h-screen p-6 font-sans">
+<body>
 
-  <h1 class="text-3xl font-bold mb-6 text-center text-blue-700">Repair Feedback Dashboard</h1>
+<h1>ค้นหาใบแจ้งซ่อมพร้อมช่างผู้รับผิดชอบ</h1>
 
-  <!-- Filters -->
-  <div class="flex flex-wrap gap-4 justify-center mb-6">
-    <div>
-      <label class="block font-semibold mb-1">From Date</label>
-      <input type="date" id="filterFromDate" class="border border-gray-300 rounded px-3 py-2" />
-    </div>
-    <div>
-      <label class="block font-semibold mb-1">To Date</label>
-      <input type="date" id="filterToDate" class="border border-gray-300 rounded px-3 py-2" />
-    </div>
-    <div>
-      <label class="block font-semibold mb-1">Department</label>
-      <select id="filterDepartment" class="border border-gray-300 rounded px-3 py-2">
-        <option value="">-- All --</option>
-      </select>
-    </div>
-    <div>
-      <label class="block font-semibold mb-1">Status</label>
-      <select id="filterStatus" class="border border-gray-300 rounded px-3 py-2">
-        <option value="">-- All --</option>
-        <option value="ซ่อมเสร็จ">Completed</option>
-        <option value="รออะไหล่">Waiting for Parts</option>
-        <option value="อยู่ระหว่างซ่อม">In Progress</option>
-        <option value="ยกเลิกซ่อม">Cancelled</option>
-      </select>
-    </div>
-    <div class="flex items-end">
-      <button id="btnFilter" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Search</button>
-    </div>
-  </div>
+<div class="search-bar">
+  <select id="searchDepartment">
+    <option value="">-- หน่วยงาน --</option>
+  </select>
+  <input type="date" id="searchDateFrom" />
+  <input type="date" id="searchDateTo" />
+  <button onclick="searchData()">ค้นหา</button>
+  <button onclick="resetSearch()">รีเซ็ต</button>
+</div>
 
-  <!-- KPI Summary -->
-  <div class="mb-6 text-center">
-    <span class="text-xl font-semibold">Total Requests: </span><span id="kpiTotal">0</span>
-  </div>
+<table id="dataTable" style="display:none;">
+  <thead>
+    <tr>
+      <th>เลขที่ใบแจ้งซ่อม</th>
+      <th>วันที่แจ้งซ่อม</th>
+      <th>หน่วยงาน</th>
+      <th>ชื่อเครื่อง</th>
+      <th>ปัญหา/อาการ</th>
+      <th>การแก้ไข</th>
+      <th>เวลาที่ใช้</th>
+      <th>วันที่ซ่อมเสร็จ</th>
+      <th>สถานะ</th>
+      <th>ช่างผู้รับผิดชอบ</th>
+    </tr>
+  </thead>
+  <tbody id="tableBody"></tbody>
+</table>
 
-  <!-- Chart -->
-  <div class="max-w-xl mx-auto mb-8">
-    <canvas id="departmentChart"></canvas>
-  </div>
+<div id="noData" style="display:none;">ไม่พบข้อมูล</div>
 
-  <!-- Table -->
-  <div class="overflow-x-auto max-w-full">
-    <table class="min-w-full bg-white rounded shadow table-fixed-header">
-      <thead>
-        <tr class="bg-blue-200 text-blue-900">
-          <th class="p-2 border">Request No.</th>
-          <th class="p-2 border">Symptom</th>
-          <th class="p-2 border">Report Date</th>
-          <th class="p-2 border">Evaluation Finish</th>
-          <th class="p-2 border">Eval. Duration (hrs)</th>
-          <th class="p-2 border">Status</th>
-          <th class="p-2 border">Department</th>
-        </tr>
-      </thead>
-      <tbody id="tableBody"></tbody>
-    </table>
-  </div>
+<script>
+const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
+const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
 
-  <script>
-    const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
-    const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
+const departmentsMap = {};
+let machinesMap = {};
+let empMap = {};
+let repairTechniciansMap = {}; // key: เลขที่ใบแจ้งซ่อม, value: array of EmpCode
+let cacheData = [];
 
-    // Maps for Department English Names (DeptCode -> DeptNameEng)
-    let departmentsMap = {};
+async function fetchDepartments() {
+  try {
+    const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/Department/Find`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "ApplicationAccessKey": apiKey
+      },
+      body: JSON.stringify({})
+    });
+    const data = await res.json();
+    const select = document.getElementById("searchDepartment");
+    data.forEach(d => {
+      departmentsMap[d.DeptCode] = d.DeptNameEng || d.DeptName || d.DeptCode;
+      const opt = document.createElement("option");
+      opt.value = d.DeptCode;
+      opt.textContent = d.DeptNameEng || d.DeptName || d.DeptCode;
+      select.appendChild(opt);
+    });
+  } catch (e) {
+    console.error("Error fetching departments", e);
+  }
+}
 
-    // Cached Data
-    let machinesymptomData = [];
-    let repairFeedbackData = [];
+async function fetchMachines() {
+  try {
+    const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineMaster/Find`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "ApplicationAccessKey": apiKey
+      },
+      body: JSON.stringify({})
+    });
+    const data = await res.json();
+    machinesMap = {};
+    data.forEach(m => {
+      machinesMap[m["รหัสเครื่อง"]] = m["รายชื่อเครื่องจักร"] || m["รหัสเครื่อง"];
+    });
+  } catch (e) {
+    console.error("Error fetching machines", e);
+  }
+}
 
-    // Chart instance
-    let deptChart;
+async function fetchEmp() {
+  try {
+    const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/Emp/Find`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "ApplicationAccessKey": apiKey
+      },
+      body: JSON.stringify({})
+    });
+    const data = await res.json();
+    empMap = {};
+    data.forEach(e => {
+      empMap[e.EmpCode] = e.EmpName || ''; // เอาแค่ชื่อ (ไม่เอานามสกุล)
+    });
+  } catch (e) {
+    console.error("Error fetching Emp", e);
+  }
+}
 
-    // Fetch generic table data from AppSheet API
-    async function fetchTableData(tableName) {
-      const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/${tableName}/Find`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "ApplicationAccessKey": apiKey,
-        },
-        body: JSON.stringify({})
-      });
-      if (!res.ok) throw new Error(`Failed to fetch ${tableName}`);
-      return res.json();
-    }
+async function fetchRepairTechnicians() {
+  try {
+    const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/RepairTechnicians/Find`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "ApplicationAccessKey": apiKey
+      },
+      body: JSON.stringify({})
+    });
+    const data = await res.json();
+    repairTechniciansMap = {};
+    data.forEach(r => {
+      const rqNo = r["เลขที่ใบแจ้งซ่อม"];
+      if (!repairTechniciansMap[rqNo]) repairTechniciansMap[rqNo] = [];
+      repairTechniciansMap[rqNo].push(r.EmpCode);
+    });
+  } catch (e) {
+    console.error("Error fetching RepairTechnicians", e);
+  }
+}
 
-    // Initialize - load Departments, Machinesymptom, RepairFeedback
-    async function initialize() {
-      try {
-        const departments = await fetchTableData("Department");
-        departments.forEach(d => {
-          departmentsMap[d.DeptCode] = d.DeptNameEng || d.DeptName || d.DeptCode;
-        });
+async function fetchRepairRequests() {
+  try {
+    const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/Machinesymptom/Find`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "ApplicationAccessKey": apiKey
+      },
+      body: JSON.stringify({})
+    });
+    const data = await res.json();
+    cacheData = data;
+  } catch (e) {
+    console.error("Error fetching repair requests", e);
+  }
+}
 
-        // Populate department filter dropdown
-        const deptSelect = document.getElementById("filterDepartment");
-        Object.entries(departmentsMap).forEach(([code, name]) => {
-          const opt = document.createElement("option");
-          opt.value = code;
-          opt.textContent = name;
-          deptSelect.appendChild(opt);
-        });
+function formatDateTH(dateStr) {
+  if (!dateStr) return "-";
+  const d = new Date(dateStr);
+  if (isNaN(d)) return "-";
+  const day = d.getDate().toString().padStart(2, "0");
+  const month = (d.getMonth() + 1).toString().padStart(2, "0");
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+}
 
-        // Load Machinesymptom data
-        machinesymptomData = await fetchTableData("Machinesymptom");
-        // Load RepairFeedback data
-        repairFeedbackData = await fetchTableData("RepairFeedback");
+function formatDuration(mins) {
+  if (mins === null || mins === undefined || isNaN(mins)) return "-";
+  if (mins < 60) return `${mins} นาที`;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return m === 0 ? `${h} ชม.` : `${h} ชม. ${m} นาที`;
+}
 
-        // Initially show all data
-        filterAndRender();
+function calcDurationMinutes(start, end) {
+  if (!start || !end) return null;
+  const d1 = new Date(start);
+  const d2 = new Date(end);
+  if (isNaN(d1) || isNaN(d2)) return null;
+  const diffMs = d2 - d1;
+  if (diffMs < 0) return null;
+  return Math.round(diffMs / 60000);
+}
 
-      } catch (error) {
-        alert("Error loading data: " + error.message);
-      }
-    }
+function renderTable(data) {
+  const table = document.getElementById("dataTable");
+  const tbody = document.getElementById("tableBody");
+  const noData = document.getElementById("noData");
 
-    // Helper: Parse date string or datetime to Date object (Thai Buddhist year to AD)
-    function parseThaiDate(dateStr) {
-      if (!dateStr) return null;
-      // Try to parse with Date constructor first
-      let dt = new Date(dateStr);
-      if (!isNaN(dt)) {
-        // Adjust year if Buddhist Era year (>= 2500)
-        const year = dt.getFullYear();
-        if (year > 2500) {
-          dt.setFullYear(year - 543);
-        }
-        return dt;
-      }
-      return null;
-    }
+  tbody.innerHTML = "";
+  if (!data.length) {
+    table.style.display = "none";
+    noData.style.display = "block";
+    return;
+  }
+  noData.style.display = "none";
+  table.style.display = "table";
 
-    // Calculate duration in hours between two dates
-    function calcDurationHours(startDate, endDate) {
-      if (!startDate || !endDate) return "-";
-      const diffMs = endDate - startDate;
-      if (diffMs < 0) return "-";
-      return (diffMs / (1000 * 3600)).toFixed(2);
-    }
+  data.forEach(item => {
+    const statusClass = item["สถานะเครื่อง"] ? item["สถานะเครื่อง"].replace(/\s/g, "") : "";
+    const durationMinutes = calcDurationMinutes(item["วันที่แจ้งซ่อม"], item["วันที่ซ่อมเสร็จ"]);
 
-    // Main filtering and rendering function
-    function filterAndRender() {
-      const fromDateStr = document.getElementById("filterFromDate").value;
-      const toDateStr = document.getElementById("filterToDate").value;
-      const deptFilter = document.getElementById("filterDepartment").value;
-      const statusFilter = document.getElementById("filterStatus").value;
+    // หาชื่อช่างผู้รับผิดชอบจาก RepairTechnicians + Emp
+    const techEmpCodes = repairTechniciansMap[item["เลขที่ใบแจ้งซ่อม"]] || [];
+    const techNames = techEmpCodes.map(code => empMap[code] || code).join(", ");
 
-      const fromDate = fromDateStr ? new Date(fromDateStr) : null;
-      const toDate = toDateStr ? new Date(toDateStr) : null;
+    tbody.innerHTML += `
+      <tr>
+        <td data-label="เลขที่ใบแจ้งซ่อม">${item["เลขที่ใบแจ้งซ่อม"] || "-"}</td>
+        <td data-label="วันที่แจ้งซ่อม">${formatDateTH(item["วันที่แจ้งซ่อม"])}</td>
+        <td data-label="หน่วยงาน">${departmentsMap[item["หน่วยงาน"]] || "-"}</td>
+        <td data-label="ชื่อเครื่อง">${machinesMap[item["รหัสเครื่อง"]] || "-"}</td>
+        <td data-label="ปัญหา/อาการ">${item["รายละเอียดอาการเสีย"] || "-"}</td>
+        <td data-label="การแก้ไข">${item["การแก้ไขความคิดเห็น"] || "-"}</td>
+        <td data-label="เวลาที่ใช้">${formatDuration(durationMinutes)}</td>
+        <td data-label="วันที่ซ่อมเสร็จ">${formatDateTH(item["วันที่ซ่อมเสร็จ"])}</td>
+        <td data-label="สถานะ"><span class="status ${statusClass}">${item["สถานะเครื่อง"] || "-"}</span></td>
+        <td data-label="ช่างผู้รับผิดชอบ">${techNames || "-"}</td>
+      </tr>`;
+  });
+}
 
-      // Filter Machinesymptom by date, dept, status
-      let filteredRequests = machinesymptomData.filter(r => {
-        const reportDate = parseThaiDate(r["วันที่แจ้งซ่อม"]);
-        if (!reportDate) return false;
+function searchData() {
+  const dept = document.getElementById("searchDepartment").value;
+  const from = document.getElementById("searchDateFrom").value;
+  const to = document.getElementById("searchDateTo").value;
 
-        if (fromDate && reportDate < fromDate) return false;
-        if (toDate && reportDate > toDate) return false;
+  const filtered = cacheData.filter(item => {
+    const d = new Date(item["วันที่แจ้งซ่อม"]);
+    if (isNaN(d)) return false;
 
-        if (deptFilter && r["หน่วยงาน"] !== deptFilter) return false;
-        if (statusFilter && r["สถานะเครื่อง"] !== statusFilter) return false;
+    let ok = true;
+    if (from) ok = d >= new Date(from + "T00:00:00");
+    if (to && ok) ok = d <= new Date(to + "T23:59:59");
 
-        return true;
-      });
+    return (!dept || item["หน่วยงาน"] === dept) && ok;
+  });
 
-      // Map RepairFeedback by RequestNo (เลขที่ใบแจ้งซ่อม) to get latest Timestamp
-      const feedbackByRequest = {};
-      repairFeedbackData.forEach(fb => {
-        const rq = fb["เลขที่ใบแจ้งซ่อม"];
-        if (!feedbackByRequest[rq]) {
-          feedbackByRequest[rq] = [];
-        }
-        feedbackByRequest[rq].push(fb);
-      });
+  renderTable(filtered);
+}
 
-      // Compute evaluation finish date (latest Timestamp per request)
-      filteredRequests.forEach(rq => {
-        const fbList = feedbackByRequest[rq["เลขที่ใบแจ้งซ่อม"]] || [];
-        if (fbList.length) {
-          // Get max timestamp
-          const latestTS = fbList.reduce((max, fb) => {
-            const ts = parseThaiDate(fb.Timestamp) || new Date(0);
-            return ts > max ? ts : max;
-          }, new Date(0));
-          rq.evalFinish = latestTS;
-        } else {
-          rq.evalFinish = null;
-        }
-        // Parse report date as Date
-        rq.reportDateObj = parseThaiDate(rq["วันที่แจ้งซ่อม"]);
-      });
+function resetSearch() {
+  document.getElementById("searchDepartment").value = "";
+  document.getElementById("searchDateFrom").value = "";
+  document.getElementById("searchDateTo").value = "";
+  renderTable(cacheData);
+}
 
-      // Calculate duration hours for each request (evaluation finish - report date)
-      filteredRequests.forEach(rq => {
-        rq.evalDuration = rq.evalFinish && rq.reportDateObj ?
-          ((rq.evalFinish - rq.reportDateObj) / (1000*3600)).toFixed(2) : "-";
-      });
-
-      // Update KPI
-      document.getElementById("kpiTotal").textContent = filteredRequests.length;
-
-      renderTable(filteredRequests);
-      renderChart(filteredRequests);
-    }
-
-    // Render table rows
-    function renderTable(data) {
-      const tbody = document.getElementById("tableBody");
-      tbody.innerHTML = "";
-      if (data.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4">No data found</td></tr>`;
-        return;
-      }
-
-      data.forEach(row => {
-        const tr = document.createElement("tr");
-        tr.className = "hover:bg-gray-100";
-        tr.innerHTML = `
-          <td class="p-2 border">${row["เลขที่ใบแจ้งซ่อม"] || "-"}</td>
-          <td class="p-2 border max-w-xs break-words">${row["รายละเอียดอาการเสีย"] || "-"}</td>
-          <td class="p-2 border">${row.reportDateObj ? row.reportDateObj.toLocaleDateString() : "-"}</td>
-          <td class="p-2 border">${row.evalFinish ? row.evalFinish.toLocaleString() : "-"}</td>
-          <td class="p-2 border text-right">${row.evalDuration}</td>
-          <td class="p-2 border">${row["สถานะเครื่อง"] || "-"}</td>
-          <td class="p-2 border">${departmentsMap[row["หน่วยงาน"]] || row["หน่วยงาน"] || "-"}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    // Render department pie chart
-    function renderChart(data) {
-      const ctx = document.getElementById("departmentChart").getContext("2d");
-
-      // Count by department
-      const counts = {};
-      data.forEach(r => {
-        const deptName = departmentsMap[r["หน่วยงาน"]] || r["หน่วยงาน"] || "Unknown";
-        counts[deptName] = (counts[deptName] || 0) + 1;
-      });
-
-      const labels = Object.keys(counts);
-      const values = Object.values(counts);
-
-      if (deptChart) deptChart.destroy();
-
-      deptChart = new Chart(ctx, {
-        type: "doughnut",
-        data: {
-          labels,
-          datasets: [{
-            data: values,
-            backgroundColor: [
-              "#3b82f6", "#ef4444", "#10b981", "#f59e0b", "#6366f1",
-              "#ec4899", "#14b8a6", "#f97316", "#8b5cf6", "#22c55e"
-            ],
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { position: "bottom" },
-            tooltip: { enabled: true },
-            title: {
-              display: true,
-              text: "Repair Requests by Department"
-            }
-          }
-        }
-      });
-    }
-
-    // Init and event listeners
-    document.getElementById("btnFilter").addEventListener("click", filterAndRender);
-
-    initialize();
-  </script>
+window.addEventListener("DOMContentLoaded", async () => {
+  await fetchDepartments();
+  await fetchMachines();
+  await fetchEmp();
+  await fetchRepairTechnicians();
+  await fetchRepairRequests();
+  renderTable(cacheData);
+});
+</script>
 
 </body>
 </html>
