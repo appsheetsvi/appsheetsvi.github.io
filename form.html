@@ -59,6 +59,9 @@
 <body>
   <nav class="bg-blue-700 text-white fixed top-0 w-full z-50">
     <div class="max-w-4xl mx-auto px-4 py-3 text-lg font-semibold">ระบบแจ้งซ่อมออนไลน์</div>
+	<a href="Menu.html" class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm">
+    🔙 กลับหน้าหลัก
+  </a>
   </nav>
 
   <main class="max-w-4xl mx-auto mt-24 p-6 bg-white rounded-3xl shadow-xl">
@@ -88,10 +91,11 @@
           <option value="ไม่เร่งด่วน">⏳ ไม่เร่งด่วน</option>
         </select>
       </div>
-      <div>
-        <label class="font-semibold">รหัสเครื่อง</label>
-        <select name="รหัสเครื่อง" id="machineSelect" required class="w-full border rounded p-2"></select>
-      </div>
+    <div>
+	 <label class="font-semibold">รหัสเครื่อง</label>
+	 <input name="รหัสเครื่อง" id="machineInput" list="machineList" required class="w-full border rounded p-2" placeholder="พิมพ์รหัสหรือชื่อเครื่อง" />
+	 <datalist id="machineList"></datalist>
+	</div>
       <div class="col-span-2">
         <label class="font-semibold">รายละเอียดอาการเสีย</label>
         <textarea name="รายละเอียดอาการเสีย" class="w-full border rounded p-2"></textarea>
@@ -174,18 +178,23 @@ async function fetchFromTable(table, filter = {}) {
   return await res.json();
 }
 
-// โหลดข้อมูลหน่วยงาน
+// โหลดข้อมูลหน่วยงาน โดยแสดง DeptNameEng และเรียง A-Z
 async function loadDepartments() {
   const list = await fetchFromTable("Department");
   const sel = document.getElementById("deptSelect");
-  sel.innerHTML = '<option value="">-- เลือกแผนก --</option>';
-  list.forEach(item => {
-    const opt = document.createElement("option");
-    opt.value = item.DeptCode;
-    opt.textContent = item.DeptName || item.DeptNameEng || item.DeptCode;
-    sel.appendChild(opt);
-  });
+  sel.innerHTML = '<option value="">-- Select Department --</option>';
+
+  list
+    .filter(d => d.DeptNameEng) // มีชื่ออังกฤษเท่านั้น
+    .sort((a, b) => a.DeptNameEng.localeCompare(b.DeptNameEng)) // เรียง A-Z
+    .forEach(item => {
+      const opt = document.createElement("option");
+      opt.value = item.DeptCode;
+      opt.textContent = item.DeptNameEng;
+      sel.appendChild(opt);
+    });
 }
+
 
 // โหลดชนิดงาน
 async function loadJobTypes() {
@@ -200,20 +209,20 @@ async function loadJobTypes() {
     sel.appendChild(opt);
   });
 }
-
-// โหลดเครื่องจักรตามแผนก
 async function loadMachines(deptCode) {
   const list = await fetchFromTable("MachineMaster");
-  const sel = document.getElementById("machineSelect");
-  sel.innerHTML = '<option value="">-- เลือกเครื่องจักร --</option>';
-  list.filter(i => i.DeptCode === deptCode).forEach(i => {
-    const opt = document.createElement("option");
-    opt.value = i["รหัสเครื่อง"];
-    opt.textContent = `${i["รหัสเครื่อง"]} - ${i["รายชื่อเครื่องจักร"]}`;
-    sel.appendChild(opt);
-  });
-}
+  const datalist = document.getElementById("machineList");
+  datalist.innerHTML = '';
 
+  list
+    .filter(i => i.DeptCode === deptCode)
+    .forEach(i => {
+      const opt = document.createElement("option");
+      opt.value = i["รหัสเครื่อง"];
+      opt.text = `${i["รหัสเครื่อง"]} - ${i["รายชื่อเครื่องจักร"]}`;
+      datalist.appendChild(opt);
+    });
+}
 // โหลดรายการช่าง (สำหรับ checkbox)
 async function loadTechniciansCheckbox() {
   const list = await fetchFromTable("Emp");
