@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ค้นหาใบแจ้งซ่อมพร้อมช่างผู้รับผิดชอบ</title>
+<title>ค้นหาใบแจ้งซ่อมพร้อมรายละเอียดช่าง</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun&display=swap" rel="stylesheet" />
 <style>
   body {
@@ -132,7 +132,7 @@
 </head>
 <body>
 
-<h1>ค้นหาใบแจ้งซ่อมพร้อมช่างผู้รับผิดชอบ</h1>
+<h1>ค้นหาใบแจ้งซ่อมพร้อมรายละเอียดช่าง</h1>
 
 <div class="search-bar">
   <select id="searchDepartment">
@@ -147,16 +147,15 @@
 <table id="dataTable" style="display:none;">
   <thead>
     <tr>
-      <th>เลขที่ใบแจ้งซ่อม</th>
-      <th>วันที่แจ้งซ่อม</th>
-      <th>หน่วยงาน</th>
+      <th>เลขที่/ใบแจ้งซ่อม</th>
+	  <th>ว/ด/ป</th>
+      <th>แผนก</th>
       <th>ชื่อเครื่อง</th>
       <th>ปัญหา/อาการ</th>
       <th>การแก้ไข</th>
-      <th>เวลาที่ใช้</th>
-      <th>วันที่ซ่อมเสร็จ</th>
-      <th>สถานะ</th>
-      <th>ช่างผู้รับผิดชอบ</th>
+      <th>เวลาที่ใช้(นาที/ชั่วโมง)</th>
+      <th>ผู้แก้</th>
+	  <th>สถานะ</th>
     </tr>
   </thead>
   <tbody id="tableBody"></tbody>
@@ -171,7 +170,7 @@ const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
 const departmentsMap = {};
 let machinesMap = {};
 let empMap = {};
-let repairTechniciansMap = {}; // { เลขที่ใบแจ้งซ่อม: [row, row, ...] }
+let repairTechniciansMap = {};
 let cacheData = [];
 
 async function fetchDepartments() {
@@ -314,36 +313,55 @@ function renderTableByTechnician(dataFilter = null) {
 
   const allRows = [];
 
-  // วนตาม RepairTechnicians แล้วโยง Machinesymptom ตามเลขที่ใบแจ้งซ่อม
   Object.keys(repairTechniciansMap).forEach(requestNumber => {
-    if(dataFilter && !dataFilter.includes(requestNumber)) return; // กรองถ้ามี
-    const techList = repairTechniciansMap[requestNumber]; // array of technician rows
-    techList.forEach(tech => {
-      const mainData = cacheData.find(row => row["เลขที่ใบแจ้งซ่อม"] === requestNumber);
-      if (!mainData) return;
+    if(dataFilter && !dataFilter.includes(requestNumber)) return;
 
+    const techList = repairTechniciansMap[requestNumber];
+    const mainData = cacheData.find(row => row["เลขที่ใบแจ้งซ่อม"] === requestNumber);
+    if (!mainData) return;
+
+    // รวมรายละเอียดช่างและความเห็นในช่องเดียวกัน (แยกด้วย | )
+    const combinedComments = techList.map(tech => {
       const empName = empMap[tech.EmpCode] || tech.EmpCode;
-      const machineName = machinesMap[mainData["รหัสเครื่อง"]] || "-";
-      const deptName = departmentsMap[mainData["หน่วยงาน"]] || "-";
-      const statusText = tech["สถานะของงานช่าง"] || mainData["สถานะเครื่อง"] || "-";
-      const statusClass = statusText.replace(/\s/g, "");
-      const durationMinutes = calcDurationMinutes(tech["เวลาเริ่ม"], tech["เวลาจบ"]);
+      const comment = tech["การแก้ไขความคิดเห็น"] || "-";
+      const time = tech["เวลาจบ"] || tech["เวลาเริ่ม"] || "-";
 
-      allRows.push(`
-        <tr>
-          <td data-label="เลขที่ใบแจ้งซ่อม">${requestNumber}</td>
-          <td data-label="วันที่แจ้งซ่อม">${formatDateTH(mainData["วันที่แจ้งซ่อม"])}</td>
-          <td data-label="หน่วยงาน">${deptName}</td>
-          <td data-label="ชื่อเครื่อง">${machineName}</td>
-          <td data-label="ปัญหา/อาการ">${mainData["รายละเอียดอาการเสีย"] || "-"}</td>
-          <td data-label="การแก้ไข">${tech["การแก้ไขความคิดเห็น"] || "-"}</td>
-          <td data-label="เวลาที่ใช้">${formatDuration(durationMinutes)}</td>
-          <td data-label="วันที่ซ่อมเสร็จ">${formatDateTH(tech["เวลาจบ"])}</td>
-          <td data-label="สถานะ"><span class="status ${statusClass}">${statusText}</span></td>
-          <td data-label="ช่างผู้รับผิดชอบ">${empName}</td>
-        </tr>
-      `);
-    });
+      let timeFormatted = "-";
+      if (time !== "-") {
+        const d = new Date(time);
+        if (!isNaN(d)) {
+          const day = d.getDate().toString().padStart(2, "0");
+          const month = (d.getMonth() + 1).toString().padStart(2, "0");
+          const year = d.getFullYear() + 543;
+          const hour = d.getHours().toString().padStart(2, "0");
+          const minute = d.getMinutes().toString().padStart(2, "0");
+          timeFormatted = `${day}/${month}/${year} ${hour}:${minute}`;
+        }
+      }
+
+      return `<b>${empName}</b>: ${comment} <small>(${timeFormatted})</small>`;
+    }).join(" <br> ");
+
+    // รวมชื่อช่าง
+    const empNames = techList.map(t => empMap[t.EmpCode] || t.EmpCode).join(", ");
+
+    const statusText = techList[0]["สถานะของงานช่าง"] || mainData["สถานะเครื่อง"] || "-";
+    const statusClass = statusText.replace(/\s/g, "");
+    const durationMinutes = calcDurationMinutes(techList[0]["เวลาเริ่ม"], techList[0]["เวลาจบ"]);
+
+    allRows.push(`
+      <tr>
+        <td data-label="เลขที่/ใบแจ้งซ่อม">${requestNumber}</td>
+        <td data-label="ว/ด/ป">${formatDateTH(mainData["วันที่แจ้งซ่อม"])}</td>
+        <td data-label="แผนก">${departmentsMap[mainData["หน่วยงาน"]] || "-"}</td>
+        <td data-label="ชื่อเครื่อง">${machinesMap[mainData["รหัสเครื่อง"]] || "-"}</td>
+        <td data-label="ปัญหา/อาการ">${mainData["รายละเอียดอาการเสีย"] || "-"}</td>
+        <td data-label="การแก้ไข">${combinedComments}</td>
+        <td data-label="เวลาที่ใช้(นาที/ชั่วโมง)">${formatDuration(durationMinutes)}</td>
+        <td data-label="ผู้แก้">${empNames}</td>
+		<td data-label="สถานะ"><span class="status ${statusClass}">${statusText}</span></td>
+      </tr>
+    `);
   });
 
   if (allRows.length === 0) {
@@ -361,7 +379,6 @@ function searchData() {
   const from = document.getElementById("searchDateFrom").value;
   const to = document.getElementById("searchDateTo").value;
 
-  // กรองเลขที่ใบแจ้งซ่อมที่ตรงเงื่อนไขวันที่ และหน่วยงาน จาก cacheData
   const filteredRequests = cacheData.filter(item => {
     const d = new Date(item["วันที่แจ้งซ่อม"]);
     if (isNaN(d)) return false;
