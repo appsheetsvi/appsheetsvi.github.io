@@ -79,7 +79,7 @@
   }
   .status.ซ่อมเสร็จ { background: #34d399; color: #065f46; }
   .status.รออะไหล่ { background: #fde68a; color: #92400e; }
-  .status.อยู่ระหว่างซ่อม { background: #bfdbfe; color: #1e40af; }
+  .status.อยู่ระหว่างดำเนินการ { background: #bfdbfe; color: #1e40af; }
   .status.ยกเลิกซ่อม { background: #fecaca; color: #991b1b; }
 
   #noData {
@@ -171,7 +171,7 @@ const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
 const departmentsMap = {};
 let machinesMap = {};
 let empMap = {};
-let repairTechniciansMap = {}; // key: เลขที่ใบแจ้งซ่อม, value: array of EmpCode
+let repairTechniciansMap = {}; // { เลขที่ใบแจ้งซ่อม: [row, row, ...] }
 let cacheData = [];
 
 async function fetchDepartments() {
@@ -231,7 +231,7 @@ async function fetchEmp() {
     const data = await res.json();
     empMap = {};
     data.forEach(e => {
-      empMap[e.EmpCode] = e.EmpName || ''; // เอาแค่ชื่อ (ไม่เอานามสกุล)
+      empMap[e.EmpCode] = e.EmpName || e.EmpNameEng || e.EmpCode;
     });
   } catch (e) {
     console.error("Error fetching Emp", e);
@@ -253,7 +253,7 @@ async function fetchRepairTechnicians() {
     data.forEach(r => {
       const rqNo = r["เลขที่ใบแจ้งซ่อม"];
       if (!repairTechniciansMap[rqNo]) repairTechniciansMap[rqNo] = [];
-      repairTechniciansMap[rqNo].push(r.EmpCode);
+      repairTechniciansMap[rqNo].push(r);
     });
   } catch (e) {
     console.error("Error fetching RepairTechnicians", e);
@@ -283,7 +283,7 @@ function formatDateTH(dateStr) {
   if (isNaN(d)) return "-";
   const day = d.getDate().toString().padStart(2, "0");
   const month = (d.getMonth() + 1).toString().padStart(2, "0");
-  const year = d.getFullYear();
+  const year = d.getFullYear() + 543;
   return `${day}/${month}/${year}`;
 }
 
@@ -305,42 +305,55 @@ function calcDurationMinutes(start, end) {
   return Math.round(diffMs / 60000);
 }
 
-function renderTable(data) {
+function renderTableByTechnician(dataFilter = null) {
   const table = document.getElementById("dataTable");
   const tbody = document.getElementById("tableBody");
   const noData = document.getElementById("noData");
 
   tbody.innerHTML = "";
-  if (!data.length) {
+
+  const allRows = [];
+
+  // วนตาม RepairTechnicians แล้วโยง Machinesymptom ตามเลขที่ใบแจ้งซ่อม
+  Object.keys(repairTechniciansMap).forEach(requestNumber => {
+    if(dataFilter && !dataFilter.includes(requestNumber)) return; // กรองถ้ามี
+    const techList = repairTechniciansMap[requestNumber]; // array of technician rows
+    techList.forEach(tech => {
+      const mainData = cacheData.find(row => row["เลขที่ใบแจ้งซ่อม"] === requestNumber);
+      if (!mainData) return;
+
+      const empName = empMap[tech.EmpCode] || tech.EmpCode;
+      const machineName = machinesMap[mainData["รหัสเครื่อง"]] || "-";
+      const deptName = departmentsMap[mainData["หน่วยงาน"]] || "-";
+      const statusText = tech["สถานะของงานช่าง"] || mainData["สถานะเครื่อง"] || "-";
+      const statusClass = statusText.replace(/\s/g, "");
+      const durationMinutes = calcDurationMinutes(tech["เวลาเริ่ม"], tech["เวลาจบ"]);
+
+      allRows.push(`
+        <tr>
+          <td data-label="เลขที่ใบแจ้งซ่อม">${requestNumber}</td>
+          <td data-label="วันที่แจ้งซ่อม">${formatDateTH(mainData["วันที่แจ้งซ่อม"])}</td>
+          <td data-label="หน่วยงาน">${deptName}</td>
+          <td data-label="ชื่อเครื่อง">${machineName}</td>
+          <td data-label="ปัญหา/อาการ">${mainData["รายละเอียดอาการเสีย"] || "-"}</td>
+          <td data-label="การแก้ไข">${tech["การแก้ไขความคิดเห็น"] || "-"}</td>
+          <td data-label="เวลาที่ใช้">${formatDuration(durationMinutes)}</td>
+          <td data-label="วันที่ซ่อมเสร็จ">${formatDateTH(tech["เวลาจบ"])}</td>
+          <td data-label="สถานะ"><span class="status ${statusClass}">${statusText}</span></td>
+          <td data-label="ช่างผู้รับผิดชอบ">${empName}</td>
+        </tr>
+      `);
+    });
+  });
+
+  if (allRows.length === 0) {
     table.style.display = "none";
     noData.style.display = "block";
-    return;
+  } else {
+    table.style.display = "table";
+    noData.style.display = "none";
+    tbody.innerHTML = allRows.join("");
   }
-  noData.style.display = "none";
-  table.style.display = "table";
-
-  data.forEach(item => {
-    const statusClass = item["สถานะเครื่อง"] ? item["สถานะเครื่อง"].replace(/\s/g, "") : "";
-    const durationMinutes = calcDurationMinutes(item["วันที่แจ้งซ่อม"], item["วันที่ซ่อมเสร็จ"]);
-
-    // หาชื่อช่างผู้รับผิดชอบจาก RepairTechnicians + Emp
-    const techEmpCodes = repairTechniciansMap[item["เลขที่ใบแจ้งซ่อม"]] || [];
-    const techNames = techEmpCodes.map(code => empMap[code] || code).join(", ");
-
-    tbody.innerHTML += `
-      <tr>
-        <td data-label="เลขที่ใบแจ้งซ่อม">${item["เลขที่ใบแจ้งซ่อม"] || "-"}</td>
-        <td data-label="วันที่แจ้งซ่อม">${formatDateTH(item["วันที่แจ้งซ่อม"])}</td>
-        <td data-label="หน่วยงาน">${departmentsMap[item["หน่วยงาน"]] || "-"}</td>
-        <td data-label="ชื่อเครื่อง">${machinesMap[item["รหัสเครื่อง"]] || "-"}</td>
-        <td data-label="ปัญหา/อาการ">${item["รายละเอียดอาการเสีย"] || "-"}</td>
-        <td data-label="การแก้ไข">${item["การแก้ไขความคิดเห็น"] || "-"}</td>
-        <td data-label="เวลาที่ใช้">${formatDuration(durationMinutes)}</td>
-        <td data-label="วันที่ซ่อมเสร็จ">${formatDateTH(item["วันที่ซ่อมเสร็จ"])}</td>
-        <td data-label="สถานะ"><span class="status ${statusClass}">${item["สถานะเครื่อง"] || "-"}</span></td>
-        <td data-label="ช่างผู้รับผิดชอบ">${techNames || "-"}</td>
-      </tr>`;
-  });
 }
 
 function searchData() {
@@ -348,7 +361,8 @@ function searchData() {
   const from = document.getElementById("searchDateFrom").value;
   const to = document.getElementById("searchDateTo").value;
 
-  const filtered = cacheData.filter(item => {
+  // กรองเลขที่ใบแจ้งซ่อมที่ตรงเงื่อนไขวันที่ และหน่วยงาน จาก cacheData
+  const filteredRequests = cacheData.filter(item => {
     const d = new Date(item["วันที่แจ้งซ่อม"]);
     if (isNaN(d)) return false;
 
@@ -359,14 +373,16 @@ function searchData() {
     return (!dept || item["หน่วยงาน"] === dept) && ok;
   });
 
-  renderTable(filtered);
+  const filteredRequestNumbers = filteredRequests.map(r => r["เลขที่ใบแจ้งซ่อม"]);
+
+  renderTableByTechnician(filteredRequestNumbers);
 }
 
 function resetSearch() {
   document.getElementById("searchDepartment").value = "";
   document.getElementById("searchDateFrom").value = "";
   document.getElementById("searchDateTo").value = "";
-  renderTable(cacheData);
+  renderTableByTechnician();
 }
 
 window.addEventListener("DOMContentLoaded", async () => {
@@ -375,7 +391,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   await fetchEmp();
   await fetchRepairTechnicians();
   await fetchRepairRequests();
-  renderTable(cacheData);
+  renderTableByTechnician();
 });
 </script>
 
