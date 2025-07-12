@@ -74,13 +74,11 @@
 
         const data = await res.json();
         const user = data.find(d => d.EmpCode === code && d.Password === pass);
-        
-     if (user) {
-     localStorage.setItem("EmpCode", user.EmpCode);
-     localStorage.setItem("EmpName", user.Name); // สมมติว่ามีชื่อพนักงาน
-     window.location.href = "Menu.html";
-     }
-      else {
+
+        if (user) {
+          localStorage.setItem("user", JSON.stringify(user));
+          window.location.href = "Menu.html";
+        } else {
           msg.textContent = "❌ รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง";
         }
       } catch (err) {
