@@ -3,7 +3,7 @@ const empName = localStorage.getItem("EmpName");
 
 if (!empCode) {
   alert("กรุณาเข้าสู่ระบบก่อน");
-  window.location.href = "login.html";
+  window.location.href = "index.html";
 } else {
   document.getElementById("empCode").textContent = `${empCode} ${empName || ''}`;
 }
