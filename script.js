@@ -1,5 +1,3 @@
-// ✅ ตรวจสอบการล็อกอิน
-
 const empCode = localStorage.getItem("EmpCode");
 const empName = localStorage.getItem("EmpName");
 
@@ -9,7 +7,6 @@ if (!empCode) {
 } else {
   document.getElementById("empCode").textContent = `${empCode} ${empName || ''}`;
 }
-
 
 const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
 const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
