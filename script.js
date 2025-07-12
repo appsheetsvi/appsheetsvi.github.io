@@ -1,18 +1,14 @@
 // ✅ ตรวจสอบการล็อกอิน
 
-localStorage.setItem("EmpCode", "1905"); // ใส่รหัสพนักงานจริงหลัง login
-
 const empCode = localStorage.getItem("EmpCode");
+const empName = localStorage.getItem("EmpName");
 
-// ถ้ายังไม่ได้ล็อกอิน ให้ redirect ไปหน้า login
 if (!empCode) {
-  alert("กรุณาเข้าสู่ระบบก่อนใช้งาน");
-  window.location.href = "login.html"; // เปลี่ยนชื่อไฟล์ตามจริงถ้าชื่อไม่ใช่ login.html
+  alert("กรุณาเข้าสู่ระบบก่อน");
+  window.location.href = "login.html";
 } else {
-  // แสดงรหัสพนักงานบน navbar
-  document.getElementById("empCode").textContent = empCode;
+  document.getElementById("empCode").textContent = `${empCode} ${empName || ''}`;
 }
-
 
 
 const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
