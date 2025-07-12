@@ -85,6 +85,8 @@
 
         if (user) {
           localStorage.setItem("user", JSON.stringify(user));
+          localStorage.setItem("EmpCode", user.EmpCode);        // ✅ เพิ่มบรรทัดนี้
+          localStorage.setItem("EmpName", user.EmpName);        // ✅ เพิ่มบรรทัดนี้
           window.location.href = "Menu.html";
         } else {
           msg.textContent = "❌ รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง";
