@@ -35,6 +35,7 @@
       color: white;
       font-weight: bold;
       border: none;
+      cursor: pointer;
     }
     .msg {
       margin-top: 1rem;
@@ -44,6 +45,7 @@
   </style>
 </head>
 <body>
+
   <form id="loginForm">
     <h2 style="text-align:center;">เข้าสู่ระบบ</h2>
     <input type="text" id="empCode" placeholder="รหัสพนักงาน" required />
@@ -53,6 +55,12 @@
   </form>
 
   <script>
+    // ตรวจสอบถ้าล็อกอินอยู่แล้ว ให้ redirect ไปหน้าเมนูหลักทันที
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (user) {
+      window.location.href = "Menu.html"; // เปลี่ยนเป็นไฟล์เมนูหลักของคุณ
+    }
+
     const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
     const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
 
@@ -86,5 +94,6 @@
       }
     });
   </script>
+
 </body>
 </html>

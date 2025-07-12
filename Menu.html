@@ -53,8 +53,8 @@
     <div class="row row-cols-1 row-cols-md-2 g-4">
 
       <div class="col">
-        <a href="https://appsheetsvi.github.io/form.html" class="text-decoration-none">
-          <div class="card card-menu" onclick="navigateTo('form.html')">
+        <a href="form.html" class="text-decoration-none">
+          <div class="card card-menu">
             <div class="menu-icon">📄</div>
             <div class="menu-label">สร้างใบแจ้งซ่อม</div>
           </div>
@@ -62,24 +62,26 @@
       </div>
 
       <div class="col">
-        <a href="https://appsheetsvi.github.io/search.html" class="text-decoration-none">
-          <div class="card card-menu" onclick="navigateTo('search.html')">
+        <a href="search.html" class="text-decoration-none">
+          <div class="card card-menu">
             <div class="menu-icon">🛠</div>
             <div class="menu-label">รายการแจ้งซ่อม</div>
           </div>
         </a>
       </div>
+
       <div class="col">
-        <a href="https://appsheetsvi.github.io/MachineGroup.html" class="text-decoration-none">
-          <div class="card card-menu" onclick="navigateTo('MachineGroup.html')">
-            <div class="menu-icon">🛠</div>
+        <a href="MachineGroup.html" class="text-decoration-none">
+          <div class="card card-menu">
+            <div class="menu-icon">🏭</div>
             <div class="menu-label">เพิ่มข้อมูลเครื่องจักร</div>
           </div>
         </a>
       </div>
+
       <div class="col">
-        <a href="https://appsheetsvi.github.io/evaluate.html" class="text-decoration-none">
-          <div class="card card-menu" onclick="navigateTo('evaluate.html')">
+        <a href="evaluate.html" class="text-decoration-none">
+          <div class="card card-menu">
             <div class="menu-icon">✅</div>
             <div class="menu-label">ประเมินงานซ่อม</div>
           </div>
@@ -87,8 +89,8 @@
       </div>
 
       <div class="col">
-        <a href="https://appsheetsvi.github.io/dashboard.html" class="text-decoration-none">
-          <div class="card card-menu" onclick="navigateTo('dashboard.html')">
+        <a href="dashboard.html" class="text-decoration-none">
+          <div class="card card-menu">
             <div class="menu-icon">📊</div>
             <div class="menu-label">รายงาน</div>
           </div>
@@ -101,15 +103,16 @@
   <script>
     const user = JSON.parse(localStorage.getItem("user"));
     if (!user) {
-      window.location.href = "Login.html";
+      localStorage.clear();
+      window.location.replace("login.html"); // ป้องกันย้อนกลับ
     } else {
       const fullName = `${user.TitleName || ""} ${user.EmpName || ""} ${user.LastName || ""} (${user.Role || ""})`;
-      document.getElementById("userDisplay").textContent = fullName;
+      document.getElementById("userDisplay").textContent = fullName.trim();
     }
 
     function logout() {
       localStorage.clear();
-      window.location.href = "index.html";
+      window.location.replace("login.html");
     }
   </script>
 </body>
