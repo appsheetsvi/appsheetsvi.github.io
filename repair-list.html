@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>รายการแจ้งซ่อมของฉัน</title>
+  <style>
+    body { font-family: 'Sarabun', sans-serif; background: #f7f9fc; margin: 0; padding: 0; }
+    .navbar {
+      display: flex; justify-content: space-between; align-items: center;
+      background: #1976d2; color: white; padding: 0.5rem 1rem; font-weight: bold;
+    }
+    .container { max-width: 960px; margin: 1rem auto; padding: 1rem; background: white; border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { border: 1px solid #ccc; padding: 0.5rem; text-align: left; }
+    th { background-color: #e3f2fd; }
+    tr:hover { background-color: #f1faff; }
+    .btn { text-decoration: none; padding: 0.3rem 0.8rem; background: #1565c0; color: white; border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+<div class="navbar">
+  <div>📄 รายการใบแจ้งซ่อมของฉัน</div>
+  <div>
+    👤 <span id="empDisplay">กำลังโหลด...</span>
+    <a href="menu.html" class="btn">🏠 เมนูหลัก</a>
+  </div>
+</div>
+
+<div class="container">
+  <h2>📋 ใบแจ้งซ่อมที่ฉันรับผิดชอบ</h2>
+  <table id="repairTable">
+    <thead>
+      <tr>
+        <th>เลขที่ใบแจ้ง</th>
+        <th>รหัสเครื่อง</th>
+        <th>อาการเสีย</th>
+        <th>สถานะ</th>
+        <th>จัดการ</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<script>
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user || !user.EmpCode) {
+    alert("กรุณาเข้าสู่ระบบก่อน");
+    window.location.href = "login.html";
+  } else {
+    document.getElementById("empDisplay").textContent = `${user.EmpCode} ${user.EmpName || ""} ${user.LastName || ""}`;
+  }
+
+  const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
+  const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
+  const baseUrl = `https://api.appsheet.com/api/v2/apps/${appId}/tables/RepairTechnicians/Find`;
+
+  async function loadRepairs() {
+    const res = await fetch(baseUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "ApplicationAccessKey": apiKey
+      },
+      body: JSON.stringify({
+        filter: `EmpCode = "${user.EmpCode}"`
+      })
+    });
+
+    const data = await res.json();
+    const tbody = document.querySelector("#repairTable tbody");
+    tbody.innerHTML = "";
+
+    data.forEach(row => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${row['เลขที่ใบแจ้งซ่อม']}</td>
+        <td>${row['รหัสเครื่อง'] || "-"}</td>
+        <td>${row['รายละเอียดอาการเสีย'] || "-"}</td>
+        <td>${row['สถานะของงานช่าง'] || "-"}</td>
+        <td><a class="btn" href="tech-detail.html?request=${encodeURIComponent(row['เลขที่ใบแจ้งซ่อม'])}">✏️ แก้ไข</a></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  loadRepairs();
+</script>
+
+</body>
+</html>
