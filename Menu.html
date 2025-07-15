@@ -114,7 +114,7 @@
     const user = JSON.parse(localStorage.getItem("user"));
     if (!user) {
       localStorage.clear();
-      window.location.replace("login.html"); // ป้องกันย้อนกลับ
+      window.location.replace("index.html"); // ป้องกันย้อนกลับ
     } else {
       const fullName = `${user.TitleName || ""} ${user.EmpName || ""} ${user.LastName || ""} (${user.Role || ""})`;
       document.getElementById("userDisplay").textContent = fullName.trim();
@@ -122,7 +122,7 @@
 
     function logout() {
       localStorage.clear();
-      window.location.replace("login.html");
+      window.location.replace("index.html");
     }
   </script>
 </body>
