@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
@@ -228,7 +228,7 @@
       <div>
         <label for="machineSearch">รหัสเครื่อง</label>
         <div class="select-searchable">
-          <input type="text" id="machineSearch" placeholder="🔍 พิมพ์ชื่อหรือรหัสเครื่อง..." />
+          <input type="text" id="machineSearch" placeholder="🔍 พิมพ์ชื่อหรือรหัสเครื่อง..." autocomplete="off" />
           <ul id="machineList"></ul>
         </div>
         <input type="hidden" id="machineCodeHidden" name="รหัสเครื่อง" required />
@@ -256,6 +256,12 @@
       <div>
         <label>เลือกช่างผู้รับผิดชอบ (เลือกได้สูงสุด 3 คน)</label>
         <div id="techCheckboxes" class="tech-checkboxes"></div>
+      </div>
+
+      <!-- การแก้ไขความคิดเห็น -->
+      <div>
+        <label for="commentEdit">การแก้ไขความคิดเห็น</label>
+        <textarea id="commentEdit" name="การแก้ไขความคิดเห็น" rows="3" placeholder="ใส่ความคิดเห็นสำหรับช่าง"></textarea>
       </div>
 
       <!-- รายการอะไหล่ -->
@@ -403,7 +409,6 @@
     const checked = [...document.querySelectorAll("#techCheckboxes input[type=checkbox]:checked")];
     if (checked.length > 3) {
       alert("เลือกช่างได้สูงสุด 3 คนเท่านั้น");
-      // เอา checkbox ตัวล่าสุดออก
       checked[checked.length - 1].checked = false;
       return getSelectedTechnicians();
     }
@@ -428,6 +433,7 @@
     return parts;
   }
 
+  // generate เลขที่ใบแจ้งซ่อม (แบบเลขเพิ่ม 1)
   async function generateRequestNo() {
     const list = await fetchFromTable("Machinesymptom");
     let maxNo = 2506000;
@@ -438,12 +444,10 @@
     return (maxNo + 1).toString();
   }
 
+  // ฟังก์ชันบันทึกข้อมูลหลัก
   async function saveRepairMain(data) {
-    const body = {
-      Action: "Add",
-      Rows: [data]
-    };
-    const res = await fetch(`${apiBase}Machinesymptom/Add`, {
+    const body = { Action: "Add", Rows: [data] };
+    const res = await fetch(`${apiBase}Machinesymptom/Action`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -451,17 +455,24 @@
       },
       body: JSON.stringify(body)
     });
-    if (!res.ok) throw new Error("บันทึกข้อมูลหลักไม่สำเร็จ");
+
+    if (!res.ok) throw new Error(`ไม่สามารถบันทึกข้อมูลหลักได้: ${res.status}`);
+
+    const text = await res.text();
+    if (text) return JSON.parse(text);
+    return null;
   }
 
-  async function saveTechnicians(requestNo, techs) {
-    if (techs.length === 0) return;
-    const rows = techs.map(t => ({
+  // ฟังก์ชันบันทึกข้อมูลช่าง
+  async function saveTechnicians(requestNo, techs, comment) {
+    if (!techs.length) return null;
+    const rows = techs.map(code => ({
       "เลขที่ใบแจ้งซ่อม": requestNo,
-      "EmpCode": t
+      "EmpCode": code,
+      "การแก้ไขความคิดเห็น": comment || ""
     }));
     const body = { Action: "Add", Rows: rows };
-    const res = await fetch(`${apiBase}RepairTechnicians/Add`, {
+    const res = await fetch(`${apiBase}RepairTechnicians/Action`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -469,11 +480,16 @@
       },
       body: JSON.stringify(body)
     });
-    if (!res.ok) throw new Error("บันทึกช่างไม่สำเร็จ");
+    if (!res.ok) throw new Error(`ไม่สามารถบันทึกข้อมูลช่างได้: ${res.status}`);
+
+    const text = await res.text();
+    if (text) return JSON.parse(text);
+    return null;
   }
 
+  // ฟังก์ชันบันทึกอะไหล่
   async function saveParts(requestNo, parts) {
-    if (parts.length === 0) return;
+    if (!parts.length) return null;
     const rows = parts.map(p => ({
       "เลขที่ใบแจ้งซ่อม": requestNo,
       "รายการอะไหล่": p["รายการอะไหล่"],
@@ -481,7 +497,7 @@
       "หน่วยนับ": p["หน่วยนับ"]
     }));
     const body = { Action: "Add", Rows: rows };
-    const res = await fetch(`${apiBase}RepairParts/Add`, {
+    const res = await fetch(`${apiBase}RepairParts/Action`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -489,105 +505,112 @@
       },
       body: JSON.stringify(body)
     });
-    if (!res.ok) throw new Error("บันทึกอะไหล่ไม่สำเร็จ");
+    if (!res.ok) throw new Error(`ไม่สามารถบันทึกข้อมูลอะไหล่ได้: ${res.status}`);
+
+    const text = await res.text();
+    if (text) return JSON.parse(text);
+    return null;
   }
 
-  async function init() {
+  document.addEventListener("DOMContentLoaded", async () => {
     await loadDepartments();
     await loadTechnicians();
-    addNewPart();
 
-    // รันเลขที่ใบแจ้งซ่อมอัตโนมัติ
-    const no = await generateRequestNo();
-    document.getElementById("requestNo").value = no;
-  }
+    // รันเลขที่ใบแจ้งซ่อมตอนเปิดฟอร์ม
+    const requestNo = await generateRequestNo();
+    document.getElementById("requestNo").value = requestNo;
 
-  document.getElementById("deptSelect").addEventListener("change", (e) => {
-    const dept = e.target.value;
-    document.getElementById("machineSearch").value = "";
-    document.getElementById("machineCodeHidden").value = "";
-    if (dept) loadMachinesByDept(dept);
-    else {
-      machineList = [];
-      document.getElementById("machineList").innerHTML = "";
-      document.getElementById("machineList").classList.remove("show");
-    }
-  });
+    // วันที่แจ้งซ่อม ตั้งเป็นเวลาปัจจุบัน (ไทย)
+    const now = new Date();
+    const tzoffset = now.getTimezoneOffset() * 60000;
+    const localISOTime = new Date(now - tzoffset).toISOString().slice(0, 16);
+    document.getElementById("dateReport").value = localISOTime;
 
-  document.getElementById("machineSearch").addEventListener("input", filterMachines);
-
-  document.getElementById("btnAddPart").addEventListener("click", () => addNewPart());
-
-  document.getElementById("techCheckboxes").addEventListener("change", () => {
-    getSelectedTechnicians();
-  });
-
-  document.getElementById("repairForm").addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    try {
-      const form = e.target;
-      // เก็บข้อมูลหลัก
-      const dataMain = {
-        "เลขที่ใบแจ้งซ่อม": form["เลขที่ใบแจ้งซ่อม"].value,
-        "หน่วยงาน": form["หน่วยงาน"].value,
-        "ลำดับความสำคัญ": form["ลำดับความสำคัญ"].value,
-        "รหัสเครื่อง": form["รหัสเครื่อง"].value,
-        "รายละเอียดอาการเสีย": form["รายละเอียดอาการเสีย"].value,
-        "วิเคราะห์สาเหตุ": form["วิเคราะห์สาเหตุ"].value,
-        "วันที่แจ้งซ่อม": form["วันที่แจ้งซ่อม"].value
-      };
-
-      // ตรวจสอบข้อมูลสำคัญ
-      if (!dataMain["รหัสเครื่อง"]) {
-        alert("กรุณาเลือก รหัสเครื่องจากรายการ");
-        return;
+    // เมื่อเปลี่ยนแผนก ให้โหลดเครื่องจักรใหม่
+    document.getElementById("deptSelect").addEventListener("change", async e => {
+      const deptCode = e.target.value;
+      if (deptCode) {
+        await loadMachinesByDept(deptCode);
+        document.getElementById("machineSearch").value = "";
+        document.getElementById("machineCodeHidden").value = "";
       }
+    });
 
-      // เก็บข้อมูลช่าง
-      const techs = getSelectedTechnicians();
+    // ค้นหาเครื่องจักรตามข้อความที่พิมพ์
+    document.getElementById("machineSearch").addEventListener("input", filterMachines);
 
-      // เก็บข้อมูลอะไหล่
-      const parts = getPartsData();
+    // ซ่อน list เมื่อคลิกนอก
+    document.addEventListener("click", e => {
+      if (!e.target.closest(".select-searchable")) {
+        document.getElementById("machineList").classList.remove("show");
+      }
+    });
 
-      // บันทึกข้อมูล
-      await saveRepairMain(dataMain);
-      await saveTechnicians(dataMain["เลขที่ใบแจ้งซ่อม"], techs);
-      await saveParts(dataMain["เลขที่ใบแจ้งซ่อม"], parts);
+    // กดปุ่มเพิ่มอะไหล่
+    document.getElementById("btnAddPart").addEventListener("click", () => addNewPart());
 
-      alert("บันทึกข้อมูลสำเร็จ 🎉");
-      form.reset();
-      // รีเซ็ตเลขที่ใบแจ้งซ่อมใหม่
-      const no = await generateRequestNo();
-      form["เลขที่ใบแจ้งซ่อม"].value = no;
-      // เคลียร์อะไหล่ใหม่ 1 แถว
-      document.getElementById("partsContainer").innerHTML = "";
-      addNewPart();
-      // เคลียร์ช่าง
-      [...document.querySelectorAll("#techCheckboxes input[type=checkbox]")].forEach(cb => cb.checked = false);
-      // เคลียร์เครื่องจักรและแผนก
-      document.getElementById("deptSelect").value = "";
-      document.getElementById("machineSearch").value = "";
-      document.getElementById("machineCodeHidden").value = "";
-      machineList = [];
-      document.getElementById("machineList").innerHTML = "";
-      document.getElementById("machineList").classList.remove("show");
+    // ฟอร์ม submit
+    document.getElementById("repairForm").addEventListener("submit", async e => {
+      e.preventDefault();
 
-    } catch (err) {
-      alert("เกิดข้อผิดพลาด: " + err.message);
-      console.error(err);
-    }
+      try {
+        // ดึงข้อมูลฟอร์ม
+        const form = e.target;
+
+        // ตรวจสอบเลือกช่างเกิน 3 คน
+        const techs = getSelectedTechnicians();
+        if (techs.length === 0) {
+          alert("กรุณาเลือกช่างผู้รับผิดชอบอย่างน้อย 1 คน");
+          return;
+        }
+
+        // ข้อมูลหลัก
+        const dataMain = {
+          "เลขที่ใบแจ้งซ่อม": form["เลขที่ใบแจ้งซ่อม"].value,
+          "หน่วยงาน": form["หน่วยงาน"].value,
+          "ลำดับความสำคัญ": form["ลำดับความสำคัญ"].value,
+          "รหัสเครื่อง": form["รหัสเครื่อง"].value,
+          "รายละเอียดอาการเสีย": form["รายละเอียดอาการเสีย"].value,
+          "วิเคราะห์สาเหตุ": form["วิเคราะห์สาเหตุ"].value || "",
+          "วันที่แจ้งซ่อม": form["วันที่แจ้งซ่อม"].value
+        };
+
+        // ตรวจสอบฟิลด์บังคับ
+        if (!dataMain["หน่วยงาน"] || !dataMain["ลำดับความสำคัญ"] || !dataMain["รหัสเครื่อง"] || !dataMain["รายละเอียดอาการเสีย"] || !dataMain["วันที่แจ้งซ่อม"]) {
+          alert("กรุณากรอกข้อมูลให้ครบถ้วน");
+          return;
+        }
+
+        // อะไหล่
+        const parts = getPartsData();
+
+        // ความคิดเห็นช่าง
+        const comment = form["การแก้ไขความคิดเห็น"].value || "";
+
+        // บันทึกข้อมูลหลัก
+        await saveRepairMain(dataMain);
+
+        // บันทึกช่าง
+        await saveTechnicians(dataMain["เลขที่ใบแจ้งซ่อม"], techs, comment);
+
+        // บันทึกอะไหล่
+        if (parts.length) await saveParts(dataMain["เลขที่ใบแจ้งซ่อม"], parts);
+
+        alert("บันทึกข้อมูลสำเร็จแล้ว");
+        form.reset();
+        // รันเลขที่ใหม่หลังบันทึก
+        const newRequestNo = await generateRequestNo();
+        document.getElementById("requestNo").value = newRequestNo;
+        // รีโหลดช่างและอะไหล่เริ่มต้น
+        await loadTechnicians();
+        document.getElementById("partsContainer").innerHTML = "";
+      } catch (error) {
+        console.error(error);
+        alert("เกิดข้อผิดพลาดขณะบันทึกข้อมูล: " + error.message);
+      }
+    });
+
   });
-
-  // ปิด dropdown เครื่องจักรเมื่อคลิกข้างนอก
-  document.addEventListener("click", e => {
-    if (!e.target.closest(".select-searchable")) {
-      document.getElementById("machineList").classList.remove("show");
-    }
-  });
-
-  init();
 </script>
-
 </body>
 </html>
