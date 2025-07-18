@@ -90,119 +90,24 @@
   const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
   const baseUrl = `https://api.appsheet.com/api/v2/apps/${appId}/tables/`;
 
-  // จำลอง user login (เปลี่ยนตามระบบจริง)
-  const user = JSON.parse(localStorage.getItem("user")) || { EmpCode: "1900", TitleName: "นาย", EmpName: "สมชาย", LastName: "ใจดี" };
-  document.title = `รายละเอียดช่าง - ${user.EmpCode}`;
-
-  document.getElementById("requestNumber").value = "";
-
-  const jobTypeMap = new Map();
-  let machineList = [];
-
-  async function fetchFromTable(table, filter = null) {
-    const bodyObj = filter ? { Filter: filter } : {};
-    const res = await fetch(`${baseUrl}${table}/Find`, {
-      method: 'POST',
-      headers: {
-        "Content-Type": "application/json",
-        "ApplicationAccessKey": apiKey
-      },
-      body: JSON.stringify(bodyObj)
-    });
-    if (!res.ok) return [];
-    return await res.json();
+  // อ่านค่า EmpCode user ที่ login จาก localStorage
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user || !user.EmpCode) {
+    alert("กรุณาเข้าสู่ระบบก่อน");
+    window.location.href = "login.html";
   }
 
-  async function init() {
-    // แสดง EmpCode
-    console.log(`User logged in: ${user.EmpCode} ${user.TitleName} ${user.EmpName} ${user.LastName}`);
-
-    // ดึงเลขที่ใบแจ้งซ่อมล่าสุด + 1
-    const ms = await fetchFromTable('Machinesymptom');
-    let lastNo = ms.map(r => r['เลขที่ใบแจ้งซ่อม']).filter(Boolean).sort().pop();
-    let nextNo = lastNo ? String(parseInt(lastNo) + 1).padStart(7, '0') : '2506001';
-    document.getElementById('requestNumber').value = nextNo;
-
-    // โหลดหน่วยงาน
-    const depts = await fetchFromTable('Department');
-    const deptSelect = document.getElementById('deptSelect');
-    deptSelect.innerHTML = `<option value="">-- เลือกหน่วยงาน --</option>`;
-    depts.forEach(d => {
-      if(d.DeptCode && d.DeptNameEng){
-        deptSelect.innerHTML += `<option value="${d.DeptCode}">${d.DeptNameEng}</option>`;
-      }
-    });
-
-    // โหลดชนิดงาน
-    const jts = await fetchFromTable('MachineJobType');
-    const jobTypeSelect = document.getElementById('jobTypeSelect');
-    jobTypeSelect.innerHTML = `<option value="">-- เลือกชนิดงาน --</option>`;
-    jts.forEach(j => {
-      jobTypeMap.set(j['ชนิดงาน'], j['รหัสงาน']);
-      jobTypeSelect.innerHTML += `<option value="${j['ชนิดงาน']}">${j['ชนิดงาน']}</option>`;
-    });
-
-    // โหลดเครื่องจักร
-    machineList = await fetchFromTable('MachineMaster');
-
-    // event เครื่องจักรค้นหา
-    const machineSearch = document.getElementById('machineSearch');
-    const machineSelect = document.getElementById('machineSelect');
-
-    machineSearch.addEventListener('input', () => {
-      const val = machineSearch.value.trim().toLowerCase();
-      if (!val) {
-        machineSelect.style.display = 'none';
-        machineSelect.innerHTML = '';
-        return;
-      }
-      const filtered = machineList.filter(m =>
-        (m['รหัสเครื่อง'] || '').toLowerCase().includes(val) ||
-        (m['รายชื่อเครื่องจักร'] || '').toLowerCase().includes(val)
-      );
-      if (filtered.length === 0) {
-        machineSelect.style.display = 'none';
-        machineSelect.innerHTML = '';
-        return;
-      }
-      machineSelect.innerHTML = '';
-      filtered.forEach(m => {
-        const opt = document.createElement('option');
-        opt.value = m['รหัสเครื่อง'];
-        opt.textContent = `${m['รหัสเครื่อง']} – ${m['รายชื่อเครื่องจักร']}`;
-        machineSelect.appendChild(opt);
-      });
-      machineSelect.style.display = 'block';
-    });
-
-    machineSelect.addEventListener('change', () => {
-      if (machineSelect.value) {
-        machineSearch.value = machineSelect.value;
-        machineSelect.style.display = 'none';
-      }
-    });
-
-    machineSelect.addEventListener('click', e => {
-      if (e.target.tagName === 'OPTION') {
-        machineSearch.value = e.target.value;
-        machineSelect.style.display = 'none';
-      }
-    });
-
-    machineSearch.addEventListener('blur', () => {
-      setTimeout(() => {
-        machineSelect.style.display = 'none';
-      }, 200);
-    });
-
-    // เริ่มเพิ่มอะไหล่ 1 รายการ
-    addPart();
+  // อ่าน requestNumber จาก URL parameter ?request=xxxxx
+  function getRequestNumberFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get("request") || "";
   }
 
-  function addPart(name = '', qty = '', unit = '') {
-    const container = document.getElementById('partsContainer');
-    const div = document.createElement('div');
-    div.className = 'part-row';
+  // ฟังก์ชันเพิ่ม input อะไหล่
+  function addPart(name = "", qty = "", unit = "") {
+    const container = document.getElementById("partsContainer");
+    const div = document.createElement("div");
+    div.className = "part-row";
     div.innerHTML = `
       <input type="text" name="รายการอะไหล่[]" placeholder="ชื่ออะไหล่" value="${name}" required />
       <input type="number" name="จำนวน[]" class="qty" placeholder="จำนวน" min="1" value="${qty}" required />
@@ -212,143 +117,197 @@
     container.appendChild(div);
   }
 
-  async function fetchRepairParts(requestNumber) {
-    const res = await fetch(`${baseUrl}RepairParts/Find`, {
-      method: 'POST',
+  // โหลดข้อมูล RepairTechnicians ตามเลขที่ใบแจ้งซ่อมและ EmpCode
+  async function loadRepairTechnician(requestNumber, empCode) {
+    const res = await fetch(`${baseUrl}RepairTechnicians/Find`, {
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "ApplicationAccessKey": apiKey
+        "ApplicationAccessKey": apiKey,
       },
       body: JSON.stringify({
         Filter: [
-          { Column: "เลขที่ใบแจ้งซ่อม", Expression: "Equals", Value: requestNumber }
-        ]
-      })
+          { Column: "เลขที่ใบแจ้งซ่อม", Expression: "Equals", Value: requestNumber },
+          { Column: "EmpCode", Expression: "Equals", Value: empCode },
+        ],
+      }),
     });
+
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    if (data.length === 0) return null;
+
+    return data[0];
+  }
+
+  // โหลดข้อมูล RepairParts ตามเลขที่ใบแจ้งซ่อมและ EmpCode
+  async function loadRepairParts(requestNumber, empCode) {
+    const res = await fetch(`${baseUrl}RepairParts/Find`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "ApplicationAccessKey": apiKey,
+      },
+      body: JSON.stringify({
+        Filter: [
+          { Column: "เลขที่ใบแจ้งซ่อม", Expression: "Equals", Value: requestNumber },
+          { Column: "EmpCode", Expression: "Equals", Value: empCode },
+        ],
+      }),
+    });
+
     if (!res.ok) return [];
+
     return await res.json();
   }
 
-  document.getElementById('techForm').addEventListener('submit', async e => {
-    e.preventDefault();
+  // กำหนดค่าลงฟอร์มจาก RepairTechnician data
+  function populateTechnicianForm(data) {
+    if (!data) return;
 
-    const f = new FormData(e.target);
-    const main = {};
-    f.forEach((v, k) => {
-      if (!k.includes('[]')) main[k] = v.trim();
-    });
-    main.EmpCode = user.EmpCode;
+    const form = document.getElementById("techForm");
+    form.elements["การแก้ไขความคิดเห็น"].value = data["การแก้ไขความคิดเห็น"] || "";
+    form.elements["เวลาเริ่ม"].value = data["เวลาเริ่ม"] ? data["เวลาเริ่ม"].slice(0,16) : "";
+    form.elements["เวลาจบ"].value = data["เวลาจบ"] ? data["เวลาจบ"].slice(0,16) : "";
+    form.elements["สถานะของงานช่าง"].value = data["สถานะของงานช่าง"] || "";
+  }
 
-    // แปลง ชนิดงาน เป็น รหัสงาน
-    if (jobTypeMap.has(main['ชนิดงาน'])) {
-      main['ชนิดงาน'] = jobTypeMap.get(main['ชนิดงาน']);
+  // กำหนดอะไหล่ลงฟอร์ม
+  function populateParts(parts) {
+    const container = document.getElementById("partsContainer");
+    container.innerHTML = "";
+    if (!parts || parts.length === 0) {
+      addPart(); // เพิ่มบรรทัดเปล่าไว้ 1 แถว
+      return;
     }
+    parts.forEach(p => {
+      addPart(p["รายการอะไหล่"], p["จำนวน"], p["หน่วย"]);
+    });
+  }
 
+  // ฟังก์ชันบันทึกข้อมูล (Add หรือ Edit)
+  async function saveData(formData, userEmpCode) {
     // เตรียมข้อมูล RepairTechnicians
-    const tech = {
-      'เลขที่ใบแจ้งซ่อม': main['เลขที่ใบแจ้งซ่อม'],
-      EmpCode: user.EmpCode,
-      'การแก้ไขความคิดเห็น': f.get('การแก้ไขความคิดเห็น')?.trim() || '',
-      'เวลาเริ่ม': f.get('เวลาเริ่ม') || null,
-      'เวลาจบ': f.get('เวลาจบ') || null,
-      'สถานะของงานช่าง': f.get('สถานะของงานช่าง') || ''
+    const techData = {
+      "เลขที่ใบแจ้งซ่อม": formData.get("เลขที่ใบแจ้งซ่อม"),
+      EmpCode: userEmpCode,
+      "การแก้ไขความคิดเห็น": formData.get("การแก้ไขความคิดเห็น")?.trim() || "",
+      "เวลาเริ่ม": formData.get("เวลาเริ่ม") || null,
+      "เวลาจบ": formData.get("เวลาจบ") || null,
+      "สถานะของงานช่าง": formData.get("สถานะของงานช่าง") || "",
     };
 
-    // เตรียมอะไหล่จากฟอร์ม
-    const names = f.getAll('รายการอะไหล่[]');
-    const nums = f.getAll('จำนวน[]');
-    const units = f.getAll('หน่วย[]');
-    let partsToSave = [];
-    for(let i=0; i < names.length; i++) {
-      if(names[i].trim() === '') continue;
+    // เตรียมข้อมูล RepairParts
+    const partNames = formData.getAll("รายการอะไหล่[]");
+    const partQtys = formData.getAll("จำนวน[]");
+    const partUnits = formData.getAll("หน่วย[]");
+    const partsToSave = [];
+
+    for (let i = 0; i < partNames.length; i++) {
+      if (partNames[i].trim() === "") continue;
       partsToSave.push({
-        'เลขที่ใบแจ้งซ่อม': main['เลขที่ใบแจ้งซ่อม'],
-        EmpCode: user.EmpCode,
-        'รายการอะไหล่': names[i].trim(),
-        จำนวน: nums[i],
-        หน่วย: units[i].trim()
+        "เลขที่ใบแจ้งซ่อม": techData["เลขที่ใบแจ้งซ่อม"],
+        EmpCode: userEmpCode,
+        "รายการอะไหล่": partNames[i].trim(),
+        จำนวน: partQtys[i],
+        หน่วย: partUnits[i].trim(),
       });
+    }
+
+    // ฟังก์ชันช่วยทำ POST action
+    async function postAction(table, action, rows) {
+      const resp = await fetch(`${baseUrl}${table}/Action`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "ApplicationAccessKey": apiKey,
+        },
+        body: JSON.stringify({
+          Action: action,
+          Properties: { Locale: "th-TH" },
+          Rows: rows,
+        }),
+      });
+      if (!resp.ok) throw new Error(`Error ${action} on ${table}`);
+      return await resp.json();
     }
 
     try {
-      // บันทึก Machinesymptom (เพิ่ม/แก้ไขตามจริงอาจต้องแยก action Add/Edit)
-      await fetch(`${baseUrl}Machinesymptom/Action`, {
-        method: 'POST',
-        headers: {
-          "Content-Type": "application/json",
-          "ApplicationAccessKey": apiKey
-        },
-        body: JSON.stringify({ Action: 'Add', Properties: { Locale: 'th-TH' }, Rows: [main] })
-      });
+      // บันทึก RepairTechnicians: ถ้ามีอยู่แล้ว edit, ถ้าไม่มี add
+      const existingTech = await loadRepairTechnician(techData["เลขที่ใบแจ้งซ่อม"], userEmpCode);
+      if (existingTech) {
+        techData.ID = existingTech.ID; // ต้องใส่ ID สำหรับแก้ไข
+        await postAction("RepairTechnicians", "Edit", [techData]);
+      } else {
+        await postAction("RepairTechnicians", "Add", [techData]);
+      }
 
-      // บันทึก RepairTechnicians
-      await fetch(`${baseUrl}RepairTechnicians/Action`, {
-        method: 'POST',
-        headers: {
-          "Content-Type": "application/json",
-          "ApplicationAccessKey": apiKey
-        },
-        body: JSON.stringify({ Action: 'Add', Properties: { Locale: 'th-TH' }, Rows: [tech] })
-      });
-
-      // ดึงข้อมูล RepairParts เก่าตามเลขที่ใบแจ้งซ่อม
-      const oldParts = await fetchRepairParts(main['เลขที่ใบแจ้งซ่อม']);
-
-      // หา map key: "EmpCode|เลขที่ใบแจ้งซ่อม|รายการอะไหล่"
+      // ดึง RepairParts เก่า
+      const oldParts = await loadRepairParts(techData["เลขที่ใบแจ้งซ่อม"], userEmpCode);
       const oldPartsMap = new Map();
       oldParts.forEach(p => {
-        const key = `${p.EmpCode}|${p['เลขที่ใบแจ้งซ่อม']}|${p['รายการอะไหล่']}`;
+        const key = `${p["รายการอะไหล่"]}`;
         oldPartsMap.set(key, p);
       });
 
+      // แยกเพิ่มกับแก้ไข parts
       const partsToAdd = [];
       const partsToEdit = [];
-
       partsToSave.forEach(p => {
-        const key = `${p.EmpCode}|${p['เลขที่ใบแจ้งซ่อม']}|${p['รายการอะไหล่']}`;
-        if (oldPartsMap.has(key)) {
-          // มีรายการเดิม -> แก้ไข โดยต้องใส่ ID
-          p.ID = oldPartsMap.get(key).ID;
+        if (oldPartsMap.has(p["รายการอะไหล่"])) {
+          p.ID = oldPartsMap.get(p["รายการอะไหล่"]).ID;
           partsToEdit.push(p);
         } else {
           partsToAdd.push(p);
         }
       });
 
-      // อัปเดต RepairParts
-      for(const p of partsToEdit) {
-        await fetch(`${baseUrl}RepairParts/Action`, {
-          method: 'POST',
-          headers: {
-            "Content-Type": "application/json",
-            "ApplicationAccessKey": apiKey
-          },
-          body: JSON.stringify({ Action: 'Edit', Properties: { Locale: 'th-TH' }, Rows: [p] })
-        });
+      // แก้ไขอะไหล่เก่า
+      for (const p of partsToEdit) {
+        await postAction("RepairParts", "Edit", [p]);
+      }
+      // เพิ่มอะไหล่ใหม่
+      if (partsToAdd.length > 0) {
+        await postAction("RepairParts", "Add", partsToAdd);
       }
 
-      // เพิ่ม RepairParts ใหม่
-      if(partsToAdd.length > 0) {
-        await fetch(`${baseUrl}RepairParts/Action`, {
-          method: 'POST',
-          headers: {
-            "Content-Type": "application/json",
-            "ApplicationAccessKey": apiKey
-          },
-          body: JSON.stringify({ Action: 'Add', Properties: { Locale: 'th-TH' }, Rows: partsToAdd })
-        });
-      }
-
-      alert('✅ บันทึกข้อมูลเรียบร้อยแล้ว');
-      window.location.reload();
-
-    } catch(err) {
-      alert('❌ เกิดข้อผิดพลาดในการบันทึก: ' + err.message);
-      console.error(err);
+      alert("✅ บันทึกข้อมูลเรียบร้อยแล้ว");
+      // อาจจะกลับไปหน้ารายการ หรือโหลดข้อมูลใหม่
+      // window.location.href = "list.html";
+    } catch (error) {
+      alert("❌ เกิดข้อผิดพลาด: " + error.message);
+      console.error(error);
     }
+  }
+
+  // โหลดข้อมูลและแสดงฟอร์ม
+  async function init() {
+    const requestNumber = getRequestNumberFromURL();
+    if (!requestNumber) {
+      alert("ไม่พบเลขที่ใบแจ้งซ่อม (requestNumber)");
+      return;
+    }
+    document.getElementById("requestNumber").value = requestNumber;
+
+    // โหลด RepairTechnicians
+    const techData = await loadRepairTechnician(requestNumber, user.EmpCode);
+    if (techData) {
+      populateTechnicianForm(techData);
+    }
+
+    // โหลด RepairParts
+    const parts = await loadRepairParts(requestNumber, user.EmpCode);
+    populateParts(parts);
+  }
+
+  document.getElementById("techForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    await saveData(formData, user.EmpCode);
   });
 
-  // เริ่มต้นโหลดข้อมูล
+  // เริ่มต้น
   init();
 </script>
 </body>

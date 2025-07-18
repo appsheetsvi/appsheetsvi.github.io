@@ -189,12 +189,8 @@
 
   <form id="filterForm" class="filter-group" autocomplete="off">
     <div>
-      <label for="startDate">วันที่แจ้งซ่อม (เริ่ม)</label>
+      <label for="startDate">วันที่แจ้งซ่อม</label>
       <input type="date" id="startDate" name="startDate" />
-    </div>
-    <div>
-      <label for="endDate">วันที่แจ้งซ่อม (สิ้นสุด)</label>
-      <input type="date" id="endDate" name="endDate" />
     </div>
     <div>
       <label for="deptSelect">หน่วยงาน</label>
@@ -235,6 +231,7 @@
 </div>
 
 <script>
+  // โหลดข้อมูล user จาก localStorage
   const user = JSON.parse(localStorage.getItem("user"));
   if (!user || !user.EmpCode) {
     alert("กรุณาเข้าสู่ระบบก่อน");
@@ -267,36 +264,24 @@
     });
   }
 
-  // สร้างฟังก์ชันช่วยแปลงวันที่ (yyyy-mm-dd) เป็น timestamp สำหรับเทียบ
-  function toTimestamp(dateStr) {
-    if (!dateStr) return null;
-    const d = new Date(dateStr + "T00:00:00"); // ตั้งเวลาเริ่มต้นวัน
-    return d.getTime();
-  }
-
-  // โหลดข้อมูลแจ้งซ่อมตามฟิลเตอร์
+  // โหลดข้อมูลแจ้งซ่อมตามฟิลเตอร์ (วันที่แจ้งซ่อม 1 วัน)
   async function loadRepairs(filters = {}) {
-    // filter ที่จะส่งไป AppSheet API ต้องใช้รูปแบบ filter expression ภาษา AppSheet เช่น
-    // [EmpCode] = "xxx" AND [วันที่แจ้งซ่อม] >= "yyyy-mm-dd" AND [วันที่แจ้งซ่อม] <= "yyyy-mm-dd" AND [หน่วยงาน] = "xxx" AND [สถานะของงานช่าง] = "xxx"
+    let filterParts = [`[EmpCode] = "${user.EmpCode}"`];
 
-    let filterParts = [`EmpCode = "${user.EmpCode}"`];
-
-    if (filters.startDate) {
-      filterParts.push(`"วันที่แจ้งซ่อม" >= "${filters.startDate}"`);
-    }
-    if (filters.endDate) {
-      filterParts.push(`"วันที่แจ้งซ่อม" <= "${filters.endDate}"`);
+    if (filters.date) {
+      // วันที่แจ้งซ่อม เท่ากับวันที่เลือก
+      filterParts.push(`["วันที่แจ้งซ่อม"] = "${filters.date}"`);
     }
     if (filters.dept && filters.dept !== "") {
-      filterParts.push(`"หน่วยงาน" = "${filters.dept}"`);
+      filterParts.push(`["หน่วยงาน"] = "${filters.dept}"`);
     }
     if (filters.status && filters.status !== "") {
-      filterParts.push(`"สถานะของงานช่าง" = "${filters.status}"`);
+      filterParts.push(`["สถานะของงานช่าง"] = "${filters.status}"`);
     }
 
     const filterExp = filterParts.join(" AND ");
 
-    const url = `https://api.appsheet.com/api/v2/apps/${appId}/tables/RepairTechnicians/Find`;
+    const url = `https://api.appsheet.com/api/v2/apps/${appId}/tables/Machinesymptom/Find`;
     const res = await fetch(url, {
       method: "POST",
       headers: {
@@ -305,10 +290,14 @@
       },
       body: JSON.stringify({
         filter: filterExp,
-        // limit: 100, // ถ้าต้องการจำกัดจำนวน
         orderby: `"วันที่แจ้งซ่อม" desc`
       }),
     });
+
+    if (!res.ok) {
+      alert("เกิดข้อผิดพลาดในการดึงข้อมูล");
+      return;
+    }
 
     const data = await res.json();
     const tbody = document.querySelector("#repairTable tbody");
@@ -338,20 +327,15 @@
     });
   }
 
-  // เริ่มต้นโหลดหน่วยงานและข้อมูล
+  // เริ่มต้นตั้งค่าวันที่วันนี้ใน input และโหลดหน่วยงาน
   async function init() {
     await loadDepartments();
-    // ตั้งวันที่เริ่มต้นเป็น 2 วันที่ผ่านมา (ค่า default)
-    const today = new Date();
-    const twoDaysAgo = new Date(today);
-    twoDaysAgo.setDate(today.getDate() - 2);
-    document.getElementById("startDate").value = twoDaysAgo.toISOString().slice(0,10);
-    document.getElementById("endDate").value = today.toISOString().slice(0,10);
 
-    // โหลดข้อมูลตามวันที่ 2 วันที่ผ่านมาเป็น default
+    const today = new Date();
+    document.getElementById("startDate").value = today.toISOString().slice(0,10);
+
     loadRepairs({
-      startDate: document.getElementById("startDate").value,
-      endDate: document.getElementById("endDate").value,
+      date: document.getElementById("startDate").value,
       dept: "",
       status: ""
     });
@@ -361,8 +345,7 @@
   document.getElementById("filterForm").addEventListener("submit", e => {
     e.preventDefault();
     const filters = {
-      startDate: document.getElementById("startDate").value,
-      endDate: document.getElementById("endDate").value,
+      date: document.getElementById("startDate").value,
       dept: document.getElementById("deptSelect").value,
       status: document.getElementById("statusSelect").value,
     };
