@@ -59,6 +59,7 @@
     }
     .select-searchable {
       position: relative;
+      margin-bottom: 1rem;
     }
     .select-searchable ul {
       position: absolute;
@@ -182,14 +183,24 @@
         </select>
       </div>
 
+      <!-- รายชื่อเครื่องจักร1 (searchable) -->
+      <div>
+        <label for="machineSearch1">รายชื่อเครื่องจักร1</label>
+        <div class="select-searchable">
+          <input type="text" id="machineSearch1" placeholder="🔍 พิมพ์รายชื่อเครื่องจักร1..." autocomplete="off" />
+          <ul id="machineList1"></ul>
+        </div>
+        <input type="hidden" id="machineCodeHidden1" name="รหัสเครื่อง" />
+      </div>
+
       <!-- รหัสเครื่อง (searchable) -->
       <div>
-        <label for="machineSearch">รหัสเครื่อง</label>
+        <label for="machineSearchCode">รหัสเครื่อง</label>
         <div class="select-searchable">
-          <input type="text" id="machineSearch" placeholder="🔍 พิมพ์ชื่อหรือรหัสเครื่อง..." />
-          <ul id="machineList"></ul>
+          <input type="text" id="machineSearchCode" placeholder="🔍 พิมพ์ชื่อหรือรหัสเครื่อง..." autocomplete="off" />
+          <ul id="machineListCode"></ul>
         </div>
-        <input type="hidden" id="machineCodeHidden" name="รหัสเครื่อง" required />
+        <input type="hidden" id="machineCodeHiddenCode" name="รหัสเครื่อง" required />
       </div>
 
       <!-- รายละเอียดอาการเสีย -->
@@ -210,9 +221,15 @@
         <input type="datetime-local" id="dateReport" name="วันที่แจ้งซ่อม" required />
       </div>
 
+      <!-- วันที่ซ่อมเสร็จ -->
+      <div>
+        <label for="dateFinish">วันที่ซ่อมเสร็จ</label>
+        <input type="datetime-local" id="dateFinish" name="วันที่ซ่อมเสร็จ" />
+      </div>
+
       <!-- เลือกช่างผู้รับผิดชอบ (จำกัด 3 คน) -->
       <div>
-        <label>เลือกช่างผู้รับผิดชอบ (เลือกได้สูงสุด 3 คน)</label>
+        <label>เลือกช่างผู้รับผิดชอบ</label>
         <div id="techCheckboxes" class="tech-checkboxes"></div>
       </div>
 
@@ -274,11 +291,22 @@
   async function loadMachinesByDept(deptCode) {
     const list = await fetchFromTable("MachineMaster");
     machineList = list.filter(m => m.DeptCode === deptCode);
-    renderMachineList(machineList);
+    // clear autocomplete lists
+    clearAutocomplete('machineList1', 'machineSearch1', 'machineCodeHidden1');
+    clearAutocomplete('machineListCode', 'machineSearchCode', 'machineCodeHiddenCode');
   }
 
-  function renderMachineList(list) {
-    const ul = document.getElementById("machineList");
+  // Clear autocomplete input and hidden field & list
+  function clearAutocomplete(ulId, inputId, hiddenId) {
+    document.getElementById(ulId).innerHTML = "";
+    document.getElementById(ulId).classList.remove("show");
+    document.getElementById(inputId).value = "";
+    document.getElementById(hiddenId).value = "";
+  }
+
+  function renderAutocomplete(list, ulId, inputId, hiddenId, mode) {
+    // mode: 'name' or 'code' controls how we match
+    const ul = document.getElementById(ulId);
     ul.innerHTML = "";
     if (list.length === 0) {
       ul.classList.remove("show");
@@ -286,11 +314,16 @@
     }
     list.forEach(m => {
       const li = document.createElement("li");
-      li.textContent = `${m["รหัสเครื่อง"]} - ${m["รายชื่อเครื่องจักร"]}`;
-      li.dataset.code = m["รหัสเครื่อง"];
+      if(mode === 'name'){
+        li.textContent = m["รายชื่อเครื่องจักร1"];
+        li.dataset.code = m["รหัสเครื่อง"];
+      } else if(mode === 'code'){
+        li.textContent = m["รหัสเครื่อง"];
+        li.dataset.code = m["รหัสเครื่อง"];
+      }
       li.onclick = () => {
-        document.getElementById("machineSearch").value = li.textContent;
-        document.getElementById("machineCodeHidden").value = li.dataset.code;
+        document.getElementById(inputId).value = li.textContent;
+        document.getElementById(hiddenId).value = li.dataset.code;
         ul.classList.remove("show");
       };
       ul.appendChild(li);
@@ -298,16 +331,23 @@
     ul.classList.add("show");
   }
 
-  function filterMachines() {
-    const val = document.getElementById("machineSearch").value.toLowerCase();
-    const filtered = machineList.filter(m => {
-      return (m["รหัสเครื่อง"] + " " + m["รายชื่อเครื่องจักร"]).toLowerCase().includes(val);
-    });
-    renderMachineList(filtered);
+  function filterAutocomplete(inputId, ulId, hiddenId, mode) {
+    const val = document.getElementById(inputId).value.toLowerCase();
     if (!val) {
-      document.getElementById("machineList").classList.remove("show");
-      document.getElementById("machineCodeHidden").value = "";
+      document.getElementById(ulId).classList.remove("show");
+      document.getElementById(hiddenId).value = "";
+      return;
     }
+    let filtered;
+    if(mode === 'name'){
+      filtered = machineList.filter(m => (m["รายชื่อเครื่องจักร1"] || "").toLowerCase().includes(val));
+    } else if(mode === 'code'){
+      filtered = machineList.filter(m =>
+        (m["รหัสเครื่อง"] || "").toLowerCase().includes(val) ||
+        (m["รายชื่อเครื่องจักร1"] || "").toLowerCase().includes(val)
+      );
+    }
+    renderAutocomplete(filtered, ulId, inputId, hiddenId, mode);
   }
 
   async function loadUnits() {
@@ -347,7 +387,7 @@
       container.appendChild(label);
     });
 
-    // เพิ่มฟังก์ชันจำกัดเลือกช่างได้ไม่เกิน 3 คน
+    // จำกัดเลือกช่างได้ไม่เกิน 3 คน
     container.querySelectorAll('input[type="checkbox"]').forEach(chk => {
       chk.addEventListener('change', e => {
         const checkedCount = container.querySelectorAll('input[type="checkbox"]:checked').length;
@@ -429,7 +469,7 @@
     const dataMain = {};
     const fd = new FormData(form);
     for (let [k, v] of fd.entries()) {
-      if (k === "วันที่แจ้งซ่อม") {
+      if (k === "วันที่แจ้งซ่อม" || k === "วันที่ซ่อมเสร็จ") {
         dataMain[k] = toISOStringFromLocalDatetime(v);
       } else if (!["ช่างผู้รับผิดชอบ", "รายการอะไหล่", "จำนวน", "หน่วย"].includes(k)) {
         dataMain[k] = v;
@@ -463,7 +503,7 @@
     }
 
     try {
-      // บันทึกข้อมูลหลัก Machinesymptom (เพิ่มฟิลด์ วิเคราะห์สาเหตุ)
+      // บันทึกข้อมูลหลัก Machinesymptom
       let resMain = await fetch(`${apiBase}Machinesymptom/Add`, {
         method: "POST",
         headers: {
@@ -474,7 +514,7 @@
       });
       if (!resMain.ok) throw "บันทึกข้อมูลหลักไม่สำเร็จ";
 
-      // บันทึกข้อมูลช่าง RepairTechnicians (ส่งช่างที่เลือกได้)
+      // บันทึกข้อมูลช่าง RepairTechnicians
       for (let empCode of selectedTechs) {
         let techData = {
           "เลขที่ใบแจ้งซ่อม": dataMain["เลขที่ใบแจ้งซ่อม"],
@@ -512,8 +552,8 @@
 
       alert("บันทึกข้อมูลสำเร็จแล้ว");
       form.reset();
-      document.getElementById("machineCodeHidden").value = "";
-      document.getElementById("machineList").classList.remove("show");
+      clearAutocomplete('machineList1', 'machineSearch1', 'machineCodeHidden1');
+      clearAutocomplete('machineListCode', 'machineSearchCode', 'machineCodeHiddenCode');
       document.getElementById("partsContainer").innerHTML = "";
       await generateNextRequestNumber();
 
@@ -528,26 +568,31 @@
     const dept = e.target.value;
     if (!dept) {
       machineList = [];
-      document.getElementById("machineList").classList.remove("show");
-      document.getElementById("machineSearch").value = "";
-      document.getElementById("machineCodeHidden").value = "";
+      clearAutocomplete('machineList1', 'machineSearch1', 'machineCodeHidden1');
+      clearAutocomplete('machineListCode', 'machineSearchCode', 'machineCodeHiddenCode');
       return;
     }
     await loadMachinesByDept(dept);
-    document.getElementById("machineSearch").value = "";
-    document.getElementById("machineCodeHidden").value = "";
   });
 
-  // เมื่อพิมพ์ใน input เครื่องจักร
-  document.getElementById("machineSearch").addEventListener("input", filterMachines);
+  // เมื่อพิมพ์ใน input รายชื่อเครื่องจักร1
+  document.getElementById("machineSearch1").addEventListener("input", () => {
+    filterAutocomplete('machineSearch1', 'machineList1', 'machineCodeHidden1', 'name');
+  });
 
-  // เมื่อคลิกนอก autocomplete list ซ่อน list
+  // เมื่อพิมพ์ใน input รหัสเครื่อง
+  document.getElementById("machineSearchCode").addEventListener("input", () => {
+    filterAutocomplete('machineSearchCode', 'machineListCode', 'machineCodeHiddenCode', 'code');
+  });
+
+  // ซ่อน autocomplete lists เมื่อคลิกนอก
   document.addEventListener("click", e => {
-    const ms = document.getElementById("machineSearch");
-    const ml = document.getElementById("machineList");
-    if (!ms.contains(e.target) && !ml.contains(e.target)) {
-      ml.classList.remove("show");
-    }
+    ["machineSearch1", "machineList1", "machineSearchCode", "machineListCode"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el && !el.contains(e.target)) {
+        if (id.startsWith("machineList")) el.classList.remove("show");
+      }
+    });
   });
 
   // ปุ่มเพิ่มอะไหล่
