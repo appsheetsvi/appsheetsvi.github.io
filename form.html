@@ -305,22 +305,38 @@
   }
 
   function renderAutocomplete(list, ulId, inputId, hiddenId, mode) {
-    // mode: 'name' or 'code' controls how we match
-    const ul = document.getElementById(ulId);
-    ul.innerHTML = "";
-    if (list.length === 0) {
-      ul.classList.remove("show");
-      return;
-    }
+  const ul = document.getElementById(ulId);
+  ul.innerHTML = "";
+  if (list.length === 0) {
+    ul.classList.remove("show");
+    return;
+  }
+
+  if (mode === 'name') {
+    const seenNames = new Map();
+    list.forEach(m => {
+      const name = m["รายชื่อเครื่องจักร1"];
+      const code = m["รหัสเครื่อง"];
+      if (name && !seenNames.has(name)) {
+        seenNames.set(name, code);
+      }
+    });
+    seenNames.forEach((code, name) => {
+      const li = document.createElement("li");
+      li.textContent = name;
+      li.dataset.code = code;
+      li.onclick = () => {
+        document.getElementById(inputId).value = name;
+        document.getElementById(hiddenId).value = code;
+        ul.classList.remove("show");
+      };
+      ul.appendChild(li);
+    });
+  } else if (mode === 'code') {
     list.forEach(m => {
       const li = document.createElement("li");
-      if(mode === 'name'){
-        li.textContent = m["รายชื่อเครื่องจักร1"];
-        li.dataset.code = m["รหัสเครื่อง"];
-      } else if(mode === 'code'){
-        li.textContent = m["รหัสเครื่อง"];
-        li.dataset.code = m["รหัสเครื่อง"];
-      }
+      li.textContent = m["รหัสเครื่อง"];
+      li.dataset.code = m["รหัสเครื่อง"];
       li.onclick = () => {
         document.getElementById(inputId).value = li.textContent;
         document.getElementById(hiddenId).value = li.dataset.code;
@@ -328,8 +344,11 @@
       };
       ul.appendChild(li);
     });
-    ul.classList.add("show");
   }
+
+  ul.classList.add("show");
+}
+
 
   function filterAutocomplete(inputId, ulId, hiddenId, mode) {
     const val = document.getElementById(inputId).value.toLowerCase();
