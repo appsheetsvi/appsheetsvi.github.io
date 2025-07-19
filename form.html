@@ -552,22 +552,23 @@
 
       // บันทึกข้อมูลอะไหล่ RepairParts
       for (let part of partsData) {
-        let partData = {
-          "เลขที่ใบแจ้งซ่อม": dataMain["เลขที่ใบแจ้งซ่อม"],
-          "รายการอะไหล่": part["รายการอะไหล่"],
-          "จำนวน": part["จำนวน"],
-          "หน่วย": part["หน่วย"]
-        };
-        let resPart = await fetch(`${apiBase}RepairParts/Add`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "ApplicationAccessKey": apiKey
-          },
-          body: JSON.stringify({ Action: "Add", Rows: [partData] })
-        });
-        if (!resPart.ok) throw "บันทึกข้อมูลอะไหล่ไม่สำเร็จ";
-      }
+  let partData = {
+    "เลขที่ใบแจ้งซ่อม": dataMain["เลขที่ใบแจ้งซ่อม"],
+    "รายการอะไหล่": part["รายการอะไหล่"],
+    "จำนวน": part["จำนวน"],
+    "หน่วย": part["หน่วย"],
+    "EmpCode": selectedTechs[0]  // เอา EmpCode ของช่างคนแรกเป็นตัวอย่าง
+  };
+  let resPart = await fetch(`${apiBase}RepairParts/Add`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "ApplicationAccessKey": apiKey
+    },
+    body: JSON.stringify({ Action: "Add", Rows: [partData] })
+  });
+  if (!resPart.ok) throw "บันทึกข้อมูลอะไหล่ไม่สำเร็จ";
+}
 
       alert("บันทึกข้อมูลสำเร็จแล้ว");
       form.reset();
