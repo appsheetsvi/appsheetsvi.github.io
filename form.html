@@ -215,18 +215,13 @@
         <textarea id="causeAnalysis" name="วิเคราะห์สาเหตุ" rows="3" placeholder="กรอกวิเคราะห์สาเหตุ"></textarea>
       </div>
 
-      <!-- วันที่แจ้งซ่อม -->
-      <div>
-        <label for="dateReport">วันที่แจ้งซ่อม</label>
-        <input type="datetime-local" id="dateReport" name="วันที่แจ้งซ่อม" required />
-      </div>
+  <!-- การแก้ไขความคิดเห็น -->
+<div>
+  <label for="repairComment">การแก้ไขความคิดเห็น</label>
+  <textarea id="repairComment" name="การแก้ไขความคิดเห็น" rows="3" placeholder="กรอกความคิดเห็นการแก้ไข"></textarea>
+</div>
 
-      <!-- วันที่ซ่อมเสร็จ -->
-      <div>
-        <label for="dateFinish">วันที่ซ่อมเสร็จ</label>
-        <input type="datetime-local" id="dateFinish" name="วันที่ซ่อมเสร็จ" />
-      </div>
-  <!-- ตัวอย่างที่เพิ่ม -->
+
  <<div>
   <label for="jobTypeSelect">ชนิดงาน</label>
   <select id="jobTypeSelect" name="ชนิดงาน" required>
@@ -234,16 +229,6 @@
   </select>
 </div>
 
-
-<div>
-  <label for="machineStatus">สถานะเครื่อง</label>
-  <select id="machineStatus" name="สถานะเครื่อง" required>
-        <option value="ซ่อมเสร็จ">ซ่อมเสร็จ</option>
-        <option value="รออะไหล่">รออะไหล่</option>
-        <option value="อยู่ระหว่างซ่อม">อยู่ระหว่างซ่อม</option>
-        <option value="ยกเลิกซ่อม">ยกเลิกซ่อม</option>
-  </select>
-</div>
 
 
       <!-- เลือกช่างผู้รับผิดชอบ (จำกัด 3 คน) -->
@@ -258,7 +243,31 @@
         <div id="partsContainer"></div>
         <button type="button" id="btnAddPart" class="mt-2 w-full max-w-xs">+ เพิ่มอะไหล่</button>
       </div>
+ 
+      <!-- วันที่แจ้งซ่อม -->
+      <div>
+        <label for="dateReport">วันที่แจ้งซ่อม</label>
+        <input type="datetime-local" id="dateReport" name="วันที่แจ้งซ่อม" required />
+      </div>
 
+      <!-- วันที่ซ่อมเสร็จ -->
+      <div>
+        <label for="dateFinish">วันที่ซ่อมเสร็จ</label>
+        <input type="datetime-local" id="dateFinish" name="วันที่ซ่อมเสร็จ" />
+      </div>
+  
+<div>
+  <label for="machineStatus">สถานะเครื่อง</label>
+  <select id="machineStatus" name="สถานะเครื่อง" required>
+        <option value="ซ่อมเสร็จ">ซ่อมเสร็จ</option>
+        <option value="รออะไหล่">รออะไหล่</option>
+        <option value="อยู่ระหว่างซ่อม">อยู่ระหว่างซ่อม</option>
+        <option value="ยกเลิกซ่อม">ยกเลิกซ่อม</option>
+  </select>
+</div>
+
+
+  <!-- ตัวอย่างที่เพิ่ม -->
       <!-- ปุ่มบันทึก -->
       <div class="text-center">
         <button type="submit" class="w-full max-w-sm">✅ บันทึกข้อมูล</button>
@@ -517,6 +526,8 @@
   document.getElementById("repairForm").onsubmit = async e => {
     e.preventDefault();
     const form = e.target;
+   
+    const comment = document.getElementById("repairComment").value.trim();
 
     const dataMain = {};
     const fd = new FormData(form);
@@ -527,6 +538,7 @@
         dataMain[k] = v;
       }
     }
+    
 
     const selectedTechs = Array.from(form.querySelectorAll('input[name="ช่างผู้รับผิดชอบ"]:checked')).map(i => i.value);
     if (selectedTechs.length === 0) {
@@ -570,7 +582,9 @@
       for (let empCode of selectedTechs) {
         let techData = {
           "เลขที่ใบแจ้งซ่อม": dataMain["เลขที่ใบแจ้งซ่อม"],
-          "EmpCode": empCode
+          "EmpCode": empCode,
+          "การแก้ไขความคิดเห็น": comment  // <<< ส่งค่าคอมเมนต์ไปที่ตาราง RepairTechnicians
+     
         };
         let resTech = await fetch(`${apiBase}RepairTechnicians/Add`, {
           method: "POST",
