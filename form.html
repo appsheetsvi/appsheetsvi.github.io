@@ -227,6 +227,14 @@
         <input type="datetime-local" id="dateFinish" name="วันที่ซ่อมเสร็จ" />
       </div>
   <!-- ตัวอย่างที่เพิ่ม -->
+ <<div>
+  <label for="jobTypeSelect">ชนิดงาน</label>
+  <select id="jobTypeSelect" name="ชนิดงาน" required>
+    <option value="">-- เลือกชนิดงาน --</option>
+  </select>
+</div>
+
+
 <div>
   <label for="machineStatus">สถานะเครื่อง</label>
   <select id="machineStatus" name="สถานะเครื่อง" required>
@@ -298,6 +306,20 @@
       sel.appendChild(opt);
     });
   }
+
+ async function loadJobTypes() {
+  const list = await fetchFromTable("MachineJobType");
+  const sel = document.getElementById("jobTypeSelect");
+  sel.innerHTML = `<option value="">-- เลือกชนิดงาน --</option>`;
+  list.forEach(jt => {
+    const opt = document.createElement("option");
+    opt.value = jt.JobCode || jt['รหัสงาน'] || jt.Code || "";    // รหัสงาน
+    opt.textContent = jt.JobName || jt['ชนิดงาน'] || jt.Name || "";  // ชนิดงาน
+    sel.appendChild(opt);
+  });
+}
+
+
 
   async function loadMachinesByDept(deptCode) {
     const list = await fetchFromTable("MachineMaster");
@@ -635,6 +657,7 @@
     await loadUnits();
     await loadTechnicians();
     await generateNextRequestNumber();
+    await loadJobTypes();  // <-- เพิ่มตรงนี้
   }
 
   init();
