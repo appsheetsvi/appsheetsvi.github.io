@@ -393,23 +393,32 @@
 
 
   function filterAutocomplete(inputId, ulId, hiddenId, mode) {
-    const val = document.getElementById(inputId).value.toLowerCase();
-    if (!val) {
-      document.getElementById(ulId).classList.remove("show");
-      document.getElementById(hiddenId).value = "";
-      return;
-    }
-    let filtered;
-    if(mode === 'name'){
-      filtered = machineList.filter(m => (m["รายชื่อเครื่องจักร1"] || "").toLowerCase().includes(val));
-    } else if(mode === 'code'){
-      filtered = machineList.filter(m =>
-        (m["รหัสเครื่อง"] || "").toLowerCase().includes(val) ||
-        (m["รายชื่อเครื่องจักร1"] || "").toLowerCase().includes(val)
-      );
-    }
-    renderAutocomplete(filtered, ulId, inputId, hiddenId, mode);
+  const val = document.getElementById(inputId).value.toLowerCase();
+  if (!val) {
+    document.getElementById(ulId).classList.remove("show");
+    document.getElementById(hiddenId).value = "";
+    return;
   }
+
+  let filtered;
+
+  if (mode === 'name') {
+    filtered = machineList.filter(m => (m["รายชื่อเครื่องจักร1"] || "").toLowerCase().includes(val));
+  } else if (mode === 'code') {
+    // อ่านชื่อเครื่องจักร1 ที่เลือกจากช่อง machineSearch1
+    const selectedName = document.getElementById("machineSearch1").value.trim();
+
+    filtered = machineList.filter(m => {
+      const matchCodeOrName = (m["รหัสเครื่อง"] || "").toLowerCase().includes(val) ||
+                              (m["รายชื่อเครื่องจักร1"] || "").toLowerCase().includes(val);
+      // กรองเฉพาะเครื่องที่อยู่ในรายชื่อเครื่องจักร1 ที่เลือก
+      const matchNameSelected = selectedName ? (m["รายชื่อเครื่องจักร1"] === selectedName) : true;
+      return matchCodeOrName && matchNameSelected;
+    });
+  }
+  renderAutocomplete(filtered, ulId, inputId, hiddenId, mode);
+}
+
 
   async function loadUnits() {
     const list = await fetchFromTable("Unit");
