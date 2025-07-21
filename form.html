@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
@@ -162,6 +161,17 @@
       color: #64748b;
       user-select: none;
     }
+
+    /* Custom grid layout for paired fields */
+    .form-row {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .form-row > div {
+      flex: 1 1 48%;
+      min-width: 220px;
+    }
   </style>
 </head>
 <body>
@@ -175,32 +185,41 @@
         <input id="requestNo" name="เลขที่ใบแจ้งซ่อม" readonly placeholder="ระบบจะรันเลขให้" />
       </div>
 
-      <!-- หน่วยงาน -->
-      <div>
-        <label for="deptSelect">หน่วยงาน</label>
-        <select id="deptSelect" name="หน่วยงาน" required>
-          <option value="">-- เลือกหน่วยงาน --</option>
-        </select>
+      <!-- หน่วยงาน และ ชนิดงาน -->
+      <div class="form-row">
+        <div>
+          <label for="deptSelect">หน่วยงาน</label>
+          <select id="deptSelect" name="หน่วยงาน" required>
+            <option value="">-- เลือกหน่วยงาน --</option>
+          </select>
+        </div>
+        <div>
+          <label for="jobTypeSelect">ชนิดงาน</label>
+          <select id="jobTypeSelect" name="ชนิดงาน" required>
+            <option value="">-- เลือกชนิดงาน --</option>
+          </select>
+        </div>
       </div>
 
-      <!-- รายชื่อเครื่องจักร1 (searchable) -->
-      <div>
-        <label for="machineSearch1">รายชื่อเครื่องจักร1</label>
-        <div class="select-searchable">
-          <input type="text" id="machineSearch1" placeholder="🔍 พิมพ์รายชื่อเครื่องจักร1..." autocomplete="off" />
-          <ul id="machineList1"></ul>
+      <!-- รหัสเครื่อง และ รายชื่อเครื่องจักร1 -->
+      <div class="form-row">
+        
+        <div>
+          <label for="machineSearch1">รายชื่อเครื่องจักร1</label>
+          <div class="select-searchable">
+            <input type="text" id="machineSearch1" placeholder="🔍 พิมพ์รายชื่อเครื่องจักร1..." autocomplete="off" />
+            <ul id="machineList1"></ul>
+          </div>
+          <input type="hidden" id="machineCodeHidden1" name="รหัสเครื่อง" />
         </div>
-        <input type="hidden" id="machineCodeHidden1" name="รหัสเครื่อง" />
-      </div>
-
-      <!-- รหัสเครื่อง (searchable) -->
-      <div>
-        <label for="machineSearchCode">รหัสเครื่อง</label>
-        <div class="select-searchable">
-          <input type="text" id="machineSearchCode" placeholder="🔍 พิมพ์ชื่อหรือรหัสเครื่อง..." autocomplete="off" />
-          <ul id="machineListCode"></ul>
+       <div>
+          <label for="machineSearchCode">รหัสเครื่อง</label>
+          <div class="select-searchable">
+            <input type="text" id="machineSearchCode" placeholder="🔍 พิมพ์ชื่อหรือรหัสเครื่อง..." autocomplete="off" />
+            <ul id="machineListCode"></ul>
+          </div>
+          <input type="hidden" id="machineCodeHiddenCode" name="รหัสเครื่อง" required />
         </div>
-        <input type="hidden" id="machineCodeHiddenCode" name="รหัสเครื่อง" required />
       </div>
 
       <!-- รายละเอียดอาการเสีย -->
@@ -215,21 +234,11 @@
         <textarea id="causeAnalysis" name="วิเคราะห์สาเหตุ" rows="3" placeholder="กรอกวิเคราะห์สาเหตุ"></textarea>
       </div>
 
-  <!-- การแก้ไขความคิดเห็น -->
-<div>
-  <label for="repairComment">การแก้ไขความคิดเห็น</label>
-  <textarea id="repairComment" name="การแก้ไขความคิดเห็น" rows="3" placeholder="กรอกความคิดเห็นการแก้ไข"></textarea>
-</div>
-
-
- <<div>
-  <label for="jobTypeSelect">ชนิดงาน</label>
-  <select id="jobTypeSelect" name="ชนิดงาน" required>
-    <option value="">-- เลือกชนิดงาน --</option>
-  </select>
-</div>
-
-
+      <!-- การแก้ไขความคิดเห็น -->
+      <div>
+        <label for="repairComment">การแก้ไขความคิดเห็น</label>
+        <textarea id="repairComment" name="การแก้ไขความคิดเห็น" rows="3" placeholder="กรอกความคิดเห็นการแก้ไข"></textarea>
+      </div>
 
       <!-- เลือกช่างผู้รับผิดชอบ (จำกัด 3 คน) -->
       <div>
@@ -243,37 +252,35 @@
         <div id="partsContainer"></div>
         <button type="button" id="btnAddPart" class="mt-2 w-full max-w-xs">+ เพิ่มอะไหล่</button>
       </div>
- 
-      <!-- วันที่แจ้งซ่อม -->
-      <div>
-        <label for="dateReport">วันที่แจ้งซ่อม</label>
-        <input type="datetime-local" id="dateReport" name="วันที่แจ้งซ่อม" required />
+
+      <!-- วันที่แจ้งซ่อม กับ วันที่ซ่อมเสร็จ -->
+      <div class="form-row">
+        <div>
+          <label for="dateReport">วันที่แจ้งซ่อม</label>
+          <input type="datetime-local" id="dateReport" name="วันที่แจ้งซ่อม" required />
+        </div>
+        <div>
+          <label for="dateFinish">วันที่ซ่อมเสร็จ</label>
+          <input type="datetime-local" id="dateFinish" name="วันที่ซ่อมเสร็จ" />
+        </div>
       </div>
 
-      <!-- วันที่ซ่อมเสร็จ -->
+      <!-- สถานะเครื่อง -->
       <div>
-        <label for="dateFinish">วันที่ซ่อมเสร็จ</label>
-        <input type="datetime-local" id="dateFinish" name="วันที่ซ่อมเสร็จ" />
+        <label for="machineStatus">สถานะเครื่อง</label>
+        <select id="machineStatus" name="สถานะเครื่อง" required>
+          <option value="ซ่อมเสร็จ">ซ่อมเสร็จ</option>
+          <option value="รออะไหล่">รออะไหล่</option>
+          <option value="อยู่ระหว่างซ่อม">อยู่ระหว่างซ่อม</option>
+          <option value="ยกเลิกซ่อม">ยกเลิกซ่อม</option>
+        </select>
       </div>
-  
-<div>
-  <label for="machineStatus">สถานะเครื่อง</label>
-  <select id="machineStatus" name="สถานะเครื่อง" required>
-        <option value="ซ่อมเสร็จ">ซ่อมเสร็จ</option>
-        <option value="รออะไหล่">รออะไหล่</option>
-        <option value="อยู่ระหว่างซ่อม">อยู่ระหว่างซ่อม</option>
-        <option value="ยกเลิกซ่อม">ยกเลิกซ่อม</option>
-  </select>
-</div>
 
-
-  <!-- ตัวอย่างที่เพิ่ม -->
       <!-- ปุ่มบันทึก -->
       <div class="text-center">
         <button type="submit" class="w-full max-w-sm">✅ บันทึกข้อมูล</button>
         <p class="footer-text">เวอร์ชันระบบ: <strong>1.1</strong></p>
       </div>
-
     </form>
   </main>
 
