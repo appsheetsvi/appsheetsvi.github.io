@@ -1,10 +1,11 @@
 <html lang="th">
-<head>
+<head class="bg-blue-600 text-white p-4 shadow">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ฟอร์มแจ้งซ่อมเครื่องจักร พร้อมช่างและอะไหล่</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Sarabun&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
       font-family: 'Sarabun', sans-serif;
@@ -173,10 +174,56 @@
       min-width: 220px;
     }
   </style>
+  <!-- ลบส่วนนี้ทิ้งทั้งหมด -->
+
+  <div class="container mx-auto flex justify-between items-center">
+    <h1 class="text-xl font-semibold">ระบบแจ้งซ่อมออนไลน์</h1>
+    <button onclick="window.location.href='login.html'" class="bg-red-500 hover:bg-red-700 text-white font-bold py-1 px-3 rounded">
+      Home
+    </button>
+  </div>
+
+
 </head>
 <body>
+<nav class="bg-white shadow-md fixed w-full z-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between h-16">
+      <!-- โลโก้ -->
+      <div class="flex items-center">
+        <img src="https://cdn-icons-png.flaticon.com/512/847/847969.png" alt="Logo" class="h-8 w-8 mr-2">
+        <span class="font-semibold text-lg text-gray-800">ระบบแจ้งซ่อม</span>
+      </div>
+
+      <!-- เมนู -->
+      <div class="hidden md:flex space-x-4 items-center">
+        <a href="#" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium">หน้าหลัก</a>
+        <a href="#" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium">รายการแจ้งซ่อม</a>
+        <a href="#" class="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium">แบบประเมิน</a>
+      </div>
+
+      <!-- ปุ่มเมนูมือถือ -->
+      <div class="md:hidden flex items-center">
+        <button id="mobile-menu-button" class="focus:outline-none">
+          <svg class="h-6 w-6 text-gray-800" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- เมนูสำหรับมือถือ -->
+  <div id="mobile-menu" class="md:hidden hidden px-4 pb-3 space-y-1 bg-white shadow">
+    <a href="#" class="block text-gray-700 hover:text-blue-600 px-3 py-2 text-base font-medium">หน้าหลัก</a>
+    <a href="#" class="block text-gray-700 hover:text-blue-600 px-3 py-2 text-base font-medium">รายการแจ้งซ่อม</a>
+    <a href="#" class="block text-gray-700 hover:text-blue-600 px-3 py-2 text-base font-medium">แบบประเมิน</a>
+  </div>
+</nav>
+
   <main>
-    <h1 class="text-center text-3xl mb-8">📋 ฟอร์มแจ้งซ่อมเครื่องจักร</h1>
+    <h1 class="text-center text-3xl mb-8"></h1>
     <form id="repairForm" class="space-y-6" autocomplete="off">
 
       <!-- เลขที่ใบแจ้งซ่อม -->
@@ -285,6 +332,7 @@
   </main>
 
 <script>
+  
   const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
   const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
   const apiBase = `https://api.appsheet.com/api/v2/apps/${appId}/tables/`;
@@ -656,6 +704,13 @@
       return;
     }
     await loadMachinesByDept(dept);
+  });
+
+   const menuBtn = document.getElementById('mobile-menu-button');
+  const menu = document.getElementById('mobile-menu');
+
+  menuBtn.addEventListener('click', () => {
+    menu.classList.toggle('hidden');
   });
 
   // เมื่อพิมพ์ใน input รายชื่อเครื่องจักร1
