@@ -2,417 +2,393 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
-<title>รายละเอียดช่าง</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>จัดการรายการช่างและอะไหล่ (รวมบันทึก)</title>
 <style>
-  body {
-    font-family: 'Sarabun', sans-serif;
-    background: #f7f9fc;
-    margin: 0;
-    padding: 0.5rem;
+  body { font-family: 'Sarabun', sans-serif; background:#f9f9f9; padding: 1rem; }
+  h1 { color: #2563eb; }
+  table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+  th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+  th { background: #2563eb; color: white; }
+  button {
+    padding: 6px 10px; margin: 2px; cursor: pointer; border-radius: 4px;
+    border: none; font-weight: 600;
   }
-
-  form {
-    background: #fff;
-    padding: 0.75rem;
-    border-radius: 6px;
-    max-width: 100%;
-    margin: auto;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  button.edit-btn { background: #2563eb; color: white; }
+  #modalOverlay {
+    display:none; position:fixed; inset:0;
+    background:rgba(0,0,0,0.4);
+    justify-content:center; align-items:center; z-index:1000;
   }
-
-  label {
-    font-weight: 600;
-    display: block;
-    margin-bottom: 0.2rem;
-    font-size: 0.85rem;
+  #modalOverlay.show { display:flex; }
+  #modal {
+    background:white; padding:1rem 1.5rem; border-radius: 10px;
+    width: 90%; max-width: 500px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    max-height: 90vh; overflow-y: auto;
   }
-
-  input[type=text],
-  input[type=datetime-local],
-  select,
-  textarea {
-    width: 100%;
-    padding: 0.3rem 0.5rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-family: 'Sarabun', sans-serif;
-    font-size: 0.85rem;
+  #modal h3 { margin-top:0; color:#2563eb; }
+  #modal label { display:block; margin-top: 0.5rem; font-weight: 600; }
+  #modal input, #modal textarea {
+    width: 100%; padding: 0.4rem; border-radius: 6px; border: 1px solid #ccc;
+    margin-top: 0.3rem; font-family: inherit;
     box-sizing: border-box;
   }
-
-  textarea {
-    min-height: 60px;
-    resize: vertical;
+  #modal textarea { resize: vertical; }
+  #modal fieldset {
+    border: 1px solid #2563eb;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    padding: 0.7rem 1rem;
   }
-
-  .form-row {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    margin-bottom: 0.75rem;
-  }
-
-  .form-group {
-    flex: 1 1 100%;
-    min-width: 100%;
-  }
-
-  button {
-    background: #1976d2;
-    color: white;
-    border: none;
-    padding: 0.45rem 1rem;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 0.9rem;
-  }
-
-  button:hover {
-    background: #125aa0;
-  }
-
-  #partsContainer .part-row {
-    display: flex;
-    gap: 0.4rem;
-    margin-bottom: 0.4rem;
-    flex-wrap: wrap;
-    align-items: center;
-  }
-
-  #partsContainer input {
-    flex: 1 1 120px;
-    min-width: 90px;
-  }
-
-  #partsContainer input.qty {
-    max-width: 70px;
-  }
-
-  #partsContainer button.remove-btn {
-    background: #d32f2f;
-    width: 26px;
-    height: 26px;
-    border-radius: 3px;
-    font-size: 1rem;
+  #modal legend {
     font-weight: 700;
-    color: white;
-    line-height: 1;
+    color: #2563eb;
+    padding: 0 0.5rem;
+  }
+  #modalButtons {
+    margin-top: 1rem; text-align: right;
+  }
+  #modalButtons button {
+    margin-left: 0.5rem; padding: 0.5rem 1rem; border: none; border-radius: 6px; font-weight: 600;
+  }
+  #modalButtons button.save-btn { background: #2563eb; color: white; }
+  #modalButtons button.cancel-btn { background: #ddd; color: #333; }
+  #modalButtons button.save-btn:hover { background: #1e40af; }
+  #modalButtons button.cancel-btn:hover { background: #bbb; }
+
+  #partsContainer > div {
+    border: 1px solid #ccc;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    border-radius: 6px;
+    position: relative;
+  }
+  #partsContainer button.remove-part-btn {
+    position: absolute;
+    top: 0.2rem; right: 0.2rem;
+    background: #c00; color: #fff; border:none; border-radius:4px;
+    font-weight: 700;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    padding: 0 6px;
   }
-
-  @media (max-width: 480px) {
-    .form-row {
-      flex-direction: column;
-      gap: 0.4rem;
-    }
-
-    .form-group {
-      min-width: 100%;
-    }
-
-    input, select, textarea {
-      font-size: 0.85rem;
-    }
-
-    button {
-      font-size: 0.85rem;
-      padding: 0.4rem 0.9rem;
-    }
-
-    #partsContainer .part-row input {
-      flex: 1 1 100%;
-      min-width: 100%;
-    }
-
-    #partsContainer button.remove-btn {
-      margin-top: 0.25rem;
-    }
+  #addPartBtn {
+    background: #10b981; color: white; border:none; border-radius: 6px;
+    padding: 0.4rem 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
   }
-
+  #addPartBtn:hover {
+    background: #0f9e6e;
+  }
 </style>
 </head>
 <body>
 
-<form id="techForm">
-  <div class="form-row">
-    <div class="form-group">
-      <label>เลขที่ใบแจ้งซ่อม</label>
-      <input type="text" id="requestNumber" name="เลขที่ใบแจ้งซ่อม" readonly required />
-    </div>
-  </div>
+<h1>จัดการรายการช่างและอะไหล่</h1>
 
-  <fieldset style="border:1px solid #ccc; border-radius:8px; padding: 1rem; margin-bottom: 1rem;">
-    <legend style="font-weight: 600; color:#1976d2;">รายละเอียดช่าง</legend>
+<table id="techniciansTable">
+  <thead>
+    <tr>
+      <th>เลขที่ใบแจ้งซ่อม</th>
+      <th>รหัสพนักงาน (EmpCode)</th>
+      <th>การแก้ไขความคิดเห็น</th>
+      <th>เวลาเริ่ม</th>
+      <th>เวลาจบ</th>
+      <th>สถานะงาน</th>
+      <th>จัดการ</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
 
-    <div class="form-row">
-      <div class="form-group" style="flex: 1 1 100%;">
+<!-- Modal แก้ไขข้อมูลช่างและอะไหล่ -->
+<div id="modalOverlay">
+  <div id="modal">
+    <h3 id="modalTitle">แก้ไขรายการช่างและอะไหล่</h3>
+    <form id="modalForm">
+      <fieldset>
+        <legend>ข้อมูลช่าง (RepairTechnicians)</legend>
+        <label>เลขที่ใบแจ้งซ่อม</label>
+        <input type="text" name="tech_เลขที่ใบแจ้งซ่อม" readonly />
+        <label>รหัสพนักงาน (EmpCode)</label>
+        <input type="text" name="tech_EmpCode" readonly />
         <label>การแก้ไขความคิดเห็น</label>
-        <textarea name="การแก้ไขความคิดเห็น" rows="3"></textarea>
-      </div>
-    </div>
-
-    <div>
-      <label>รายการอะไหล่ที่ใช้</label>
-      <div id="partsContainer"></div>
-      <button type="button" onclick="addPart()">+ เพิ่มอะไหล่</button>
-    </div>
-
-    <div class="form-row" style="margin-top:1rem;">
-      <div class="form-group">
+        <textarea name="tech_การแก้ไขความคิดเห็น" rows="3"></textarea>
         <label>เวลาเริ่ม</label>
-        <input type="datetime-local" name="เวลาเริ่ม" />
-      </div>
-      <div class="form-group">
+        <input type="datetime-local" name="tech_เวลาเริ่ม" />
         <label>เวลาจบ</label>
-        <input type="datetime-local" name="เวลาจบ" />
-      </div>
-      <div class="form-group">
+        <input type="datetime-local" name="tech_เวลาจบ" />
         <label>สถานะของงานช่าง</label>
-        <select name="สถานะของงานช่าง">
-          <option value="">-- เลือก --</option>
-          <option value="อยู่ระหว่างดำเนินการ">อยู่ระหว่างดำเนินการ</option>
-          <option value="ซ่อมเสร็จ">ซ่อมเสร็จ</option>
-          <option value="รออะไหล่">รออะไหล่</option>
-          <option value="ยกเลิก">ยกเลิก</option>
-        </select>
-      </div>
-    </div>
-  </fieldset>
+        <input type="text" name="tech_สถานะของงานช่าง" />
+      </fieldset>
 
-  <div style="text-align:center;">
-    <button type="submit">✅ บันทึกข้อมูล</button>
+      <fieldset>
+        <legend>รายการอะไหล่ (RepairParts)</legend>
+        <div id="partsContainer"></div>
+        <button type="button" id="addPartBtn">+ เพิ่มรายการอะไหล่</button>
+      </fieldset>
+    </form>
+    <div id="modalButtons">
+      <button type="button" class="cancel-btn" onclick="closeModal()">ยกเลิก</button>
+      <button type="submit" form="modalForm" class="save-btn">บันทึก</button>
+    </div>
   </div>
-</form>
+</div>
 
 <script>
   const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
   const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
-  const baseUrl = `https://api.appsheet.com/api/v2/apps/${appId}/tables/`;
 
-  // อ่านค่า EmpCode user ที่ login จาก localStorage
-  const user = JSON.parse(localStorage.getItem("user"));
-  if (!user || !user.EmpCode) {
-    alert("กรุณาเข้าสู่ระบบก่อน");
-    window.location.href = "login.html";
-  }
+  const urlParams = new URLSearchParams(window.location.search);
+  const requestNumber = urlParams.get("request") || "";
+  const loginEmpCode = localStorage.getItem("EmpCode") || urlParams.get("empcode") || "";
 
-  // อ่าน requestNumber จาก URL parameter ?request=xxxxx
-  function getRequestNumberFromURL() {
-    const params = new URLSearchParams(window.location.search);
-    return params.get("request") || "";
-  }
+  let techniciansData = [];
+  let partsData = [];
+  let currentParts = [];
 
-  // ฟังก์ชันเพิ่ม input อะไหล่
-  function addPart(name = "", qty = "", unit = "") {
-    const container = document.getElementById("partsContainer");
-    const div = document.createElement("div");
-    div.className = "part-row";
-    div.innerHTML = `
-      <input type="text" name="รายการอะไหล่[]" placeholder="ชื่ออะไหล่" value="${name}" required />
-      <input type="number" name="จำนวน[]" class="qty" placeholder="จำนวน" min="1" value="${qty}" required />
-      <input type="text" name="หน่วย[]" placeholder="หน่วย" value="${unit}" required />
-      <button type="button" class="remove-btn" title="ลบอะไหล่" onclick="this.parentElement.remove()">×</button>
-    `;
-    container.appendChild(div);
-  }
-
-  // โหลดข้อมูล RepairTechnicians ตามเลขที่ใบแจ้งซ่อมและ EmpCode
-  async function loadRepairTechnician(requestNumber, empCode) {
-    const res = await fetch(`${baseUrl}RepairTechnicians/Find`, {
+  // โหลดข้อมูลช่าง
+  async function fetchTechnicians() {
+    const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/RepairTechnicians/Find`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "ApplicationAccessKey": apiKey,
-      },
-      body: JSON.stringify({
-        Filter: [
-          { Column: "เลขที่ใบแจ้งซ่อม", Expression: "Equals", Value: requestNumber },
-          { Column: "EmpCode", Expression: "Equals", Value: empCode },
-        ],
-      }),
+      headers: {"Content-Type": "application/json", "ApplicationAccessKey": apiKey},
+      body: JSON.stringify({})
     });
-
-    if (!res.ok) return null;
-
     const data = await res.json();
-    if (data.length === 0) return null;
-
-    return data[0];
+    return data || [];
   }
 
-  // โหลดข้อมูล RepairParts ตามเลขที่ใบแจ้งซ่อมและ EmpCode
-  async function loadRepairParts(requestNumber, empCode) {
-    const res = await fetch(`${baseUrl}RepairParts/Find`, {
+  // โหลดข้อมูลอะไหล่
+  async function fetchParts() {
+    const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/RepairParts/Find`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "ApplicationAccessKey": apiKey,
-      },
-      body: JSON.stringify({
-        Filter: [
-          { Column: "เลขที่ใบแจ้งซ่อม", Expression: "Equals", Value: requestNumber },
-          { Column: "EmpCode", Expression: "Equals", Value: empCode },
-        ],
-      }),
+      headers: {"Content-Type": "application/json", "ApplicationAccessKey": apiKey},
+      body: JSON.stringify({})
     });
-
-    if (!res.ok) return [];
-
-    return await res.json();
+    const data = await res.json();
+    return data || [];
   }
 
-  // กำหนดค่าลงฟอร์มจาก RepairTechnician data
-  function populateTechnicianForm(data) {
-    if (!data) return;
-
-    const form = document.getElementById("techForm");
-    form.elements["การแก้ไขความคิดเห็น"].value = data["การแก้ไขความคิดเห็น"] || "";
-    form.elements["เวลาเริ่ม"].value = data["เวลาเริ่ม"] ? data["เวลาเริ่ม"].slice(0,16) : "";
-    form.elements["เวลาจบ"].value = data["เวลาจบ"] ? data["เวลาจบ"].slice(0,16) : "";
-    form.elements["สถานะของงานช่าง"].value = data["สถานะของงานช่าง"] || "";
+  // แปลงวันที่จาก "24/7/2568 20:48:00" เป็น datetime-local
+  function formatDateTimeLocal(str) {
+    if(!str) return "";
+    let [datePart, timePart] = str.split(" ");
+    if(!timePart) timePart = "00:00:00";
+    let [d,m,y] = datePart.split("/");
+    y = parseInt(y) - 543;
+    d = d.padStart(2,"0");
+    m = m.padStart(2,"0");
+    return `${y}-${m}-${d}T${timePart.substr(0,5)}`;
   }
 
-  // กำหนดอะไหล่ลงฟอร์ม
-  function populateParts(parts) {
-    const container = document.getElementById("partsContainer");
-    container.innerHTML = "";
-    if (!parts || parts.length === 0) {
-      addPart(); // เพิ่มบรรทัดเปล่าไว้ 1 แถว
+  // แปลง datetime-local เป็น "dd/mm/yyyy HH:mm:ss" พร้อมปี พ.ศ.
+  function formatDateTimeThai(str) {
+    if(!str) return "";
+    let [date, time] = str.split("T");
+    let [y,m,d] = date.split("-");
+    y = parseInt(y) + 543;
+    return `${d}/${m}/${y} ${time}:00`;
+  }
+
+  function renderTechnicians() {
+    const tbody = document.querySelector("#techniciansTable tbody");
+    tbody.innerHTML = "";
+    let filtered = techniciansData.filter(r => r["เลขที่ใบแจ้งซ่อม"] === requestNumber && r.EmpCode === loginEmpCode);
+    if(filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center">ไม่มีข้อมูลช่างสำหรับพนักงานนี้</td></tr>`;
       return;
     }
-    parts.forEach(p => {
-      addPart(p["รายการอะไหล่"], p["จำนวน"], p["หน่วย"]);
+    filtered.forEach(row => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${row["เลขที่ใบแจ้งซ่อม"]}</td>
+        <td>${row.EmpCode}</td>
+        <td>${row["การแก้ไขความคิดเห็น"] || ""}</td>
+        <td>${row["เวลาเริ่ม"] || ""}</td>
+        <td>${row["เวลาจบ"] || ""}</td>
+        <td>${row["สถานะของงานช่าง"] || ""}</td>
+        <td><button class="edit-btn" onclick="openEditCombined('${row.ID}')">แก้ไข</button></td>
+      `;
+      tbody.appendChild(tr);
     });
   }
 
-  // ฟังก์ชันบันทึกข้อมูล (Add หรือ Edit)
-  async function saveData(formData, userEmpCode) {
-    // เตรียมข้อมูล RepairTechnicians
-    const techData = {
-      "เลขที่ใบแจ้งซ่อม": formData.get("เลขที่ใบแจ้งซ่อม"),
-      EmpCode: userEmpCode,
-      "การแก้ไขความคิดเห็น": formData.get("การแก้ไขความคิดเห็น")?.trim() || "",
-      "เวลาเริ่ม": formData.get("เวลาเริ่ม") || null,
-      "เวลาจบ": formData.get("เวลาจบ") || null,
-      "สถานะของงานช่าง": formData.get("สถานะของงานช่าง") || "",
-    };
-
-    // เตรียมข้อมูล RepairParts
-    const partNames = formData.getAll("รายการอะไหล่[]");
-    const partQtys = formData.getAll("จำนวน[]");
-    const partUnits = formData.getAll("หน่วย[]");
-    const partsToSave = [];
-
-    for (let i = 0; i < partNames.length; i++) {
-      if (partNames[i].trim() === "") continue;
-      partsToSave.push({
-        "เลขที่ใบแจ้งซ่อม": techData["เลขที่ใบแจ้งซ่อม"],
-        EmpCode: userEmpCode,
-        "รายการอะไหล่": partNames[i].trim(),
-        จำนวน: partQtys[i],
-        หน่วย: partUnits[i].trim(),
-      });
+  // เปิด modal แก้ไขแบบรวมช่างและอะไหล่
+  async function openEditCombined(idTech) {
+    const tech = techniciansData.find(t => t.ID === idTech);
+    if(!tech) {
+      alert("ไม่พบข้อมูลช่าง");
+      return;
     }
+    // ดึงอะไหล่ที่ตรงกับเลขที่ใบแจ้งซ่อม และ EmpCode ของช่าง
+    currentParts = partsData.filter(p => p["เลขที่ใบแจ้งซ่อม"] === tech["เลขที่ใบแจ้งซ่อม"] && p.EmpCode === tech.EmpCode);
+    if(currentParts.length === 0) currentParts = [{}]; // ให้มีช่องว่าง 1 ช่องถ้าไม่มีอะไหล่
 
-    // ฟังก์ชันช่วยทำ POST action
-    async function postAction(table, action, rows) {
-      const resp = await fetch(`${baseUrl}${table}/Action`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "ApplicationAccessKey": apiKey,
-        },
-        body: JSON.stringify({
-          Action: action,
-          Properties: { Locale: "th-TH" },
-          Rows: rows,
-        }),
-      });
-      if (!resp.ok) throw new Error(`Error ${action} on ${table}`);
-      return await resp.json();
+    openModalCombined(tech, currentParts);
+  }
+
+  // เปิด modal และใส่ข้อมูลลงฟอร์ม
+  function openModalCombined(techData, parts) {
+    const modalOverlay = document.getElementById("modalOverlay");
+    const form = document.getElementById("modalForm");
+    modalOverlay.classList.add("show");
+
+    form.reset();
+
+    form["tech_เลขที่ใบแจ้งซ่อม"].value = techData["เลขที่ใบแจ้งซ่อม"] || "";
+    form["tech_EmpCode"].value = techData.EmpCode || "";
+    form["tech_การแก้ไขความคิดเห็น"].value = techData["การแก้ไขความคิดเห็น"] || "";
+    form["tech_เวลาเริ่ม"].value = techData["เวลาเริ่ม"] ? formatDateTimeLocal(techData["เวลาเริ่ม"]) : "";
+    form["tech_เวลาจบ"].value = techData["เวลาจบ"] ? formatDateTimeLocal(techData["เวลาจบ"]) : "";
+    form["tech_สถานะของงานช่าง"].value = techData["สถานะของงานช่าง"] || "";
+
+    form.dataset.techId = techData.ID || "";
+
+    currentParts = parts;
+    renderPartsInputs();
+  }
+
+  function closeModal() {
+    document.getElementById("modalOverlay").classList.remove("show");
+  }
+
+  // แสดง input อะไหล่ใน modal
+  function renderPartsInputs() {
+    const container = document.getElementById("partsContainer");
+    container.innerHTML = "";
+    currentParts.forEach((part, idx) => {
+      const div = document.createElement("div");
+      div.innerHTML = `
+        <label>รายการอะไหล่</label>
+        <input type="text" name="part_รายการอะไหล่_${idx}" value="${part["รายการอะไหล่"] || ""}" required />
+        <label>จำนวน</label>
+        <input type="number" name="part_จำนวน_${idx}" min="1" value="${part["จำนวน"] || 1}" required />
+        <label>หน่วย</label>
+        <input type="text" name="part_หน่วย_${idx}" value="${part["หน่วย"] || ""}" />
+        <button type="button" class="remove-part-btn" onclick="removePartItem(${idx})">x</button>
+      `;
+      div.style.position = "relative";
+      div.style.border = "1px solid #ddd";
+      div.style.padding = "0.5rem";
+      div.style.marginBottom = "0.5rem";
+      div.style.borderRadius = "6px";
+      container.appendChild(div);
+    });
+  }
+
+  function addPartItem() {
+    currentParts.push({});
+    renderPartsInputs();
+  }
+
+  function removePartItem(index) {
+    currentParts.splice(index, 1);
+    renderPartsInputs();
+  }
+
+  document.getElementById("addPartBtn").addEventListener("click", addPartItem);
+
+  // บันทึกข้อมูลช่างและอะไหล่พร้อมกัน
+  document.getElementById("modalForm").addEventListener("submit", async e => {
+    e.preventDefault();
+    const form = e.target;
+    const techId = form.dataset.techId;
+
+    // ข้อมูลช่าง
+    const rowTech = {
+      "เลขที่ใบแจ้งซ่อม": form["tech_เลขที่ใบแจ้งซ่อม"].value,
+      "EmpCode": form["tech_EmpCode"].value,
+      "การแก้ไขความคิดเห็น": form["tech_การแก้ไขความคิดเห็น"].value,
+      "เวลาเริ่ม": formatDateTimeThai(form["tech_เวลาเริ่ม"].value),
+      "เวลาจบ": formatDateTimeThai(form["tech_เวลาจบ"].value),
+      "สถานะของงานช่าง": form["tech_สถานะของงานช่าง"].value,
+    };
+    if(techId) rowTech.ID = techId;
+
+    // ข้อมูลอะไหล่
+    const partsCount = currentParts.length;
+    let rowParts = [];
+    for(let i=0; i<partsCount; i++){
+      const part = {
+        "เลขที่ใบแจ้งซ่อม": rowTech["เลขที่ใบแจ้งซ่อม"],
+        "EmpCode": rowTech.EmpCode,
+        "รายการอะไหล่": form[`part_รายการอะไหล่_${i}`].value,
+        "จำนวน": Number(form[`part_จำนวน_${i}`].value),
+        "หน่วย": form[`part_หน่วย_${i}`].value,
+      };
+      if(currentParts[i] && currentParts[i].ID){
+        part.ID = currentParts[i].ID;
+      }
+      rowParts.push(part);
     }
 
     try {
-      // บันทึก RepairTechnicians: ถ้ามีอยู่แล้ว edit, ถ้าไม่มี add
-      const existingTech = await loadRepairTechnician(techData["เลขที่ใบแจ้งซ่อม"], userEmpCode);
-      if (existingTech) {
-        techData.ID = existingTech.ID; // ต้องใส่ ID สำหรับแก้ไข
-        await postAction("RepairTechnicians", "Edit", [techData]);
-      } else {
-        await postAction("RepairTechnicians", "Add", [techData]);
+      // บันทึกช่าง
+      const resTech = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/RepairTechnicians/Action?applicationAccessKey=${apiKey}`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          Action: techId ? "Edit" : "Add",
+          Properties: { Locale: "th-TH" },
+          Rows: [rowTech]
+        })
+      });
+      const resultTech = await resTech.json();
+      if(resultTech.Result !== "Success"){
+        alert("บันทึกข้อมูลช่างไม่สำเร็จ");
+        console.error(resultTech);
+        return;
       }
 
-      // ดึง RepairParts เก่า
-      const oldParts = await loadRepairParts(techData["เลขที่ใบแจ้งซ่อม"], userEmpCode);
-      const oldPartsMap = new Map();
-      oldParts.forEach(p => {
-        const key = `${p["รายการอะไหล่"]}`;
-        oldPartsMap.set(key, p);
-      });
-
-      // แยกเพิ่มกับแก้ไข parts
-      const partsToAdd = [];
-      const partsToEdit = [];
-      partsToSave.forEach(p => {
-        if (oldPartsMap.has(p["รายการอะไหล่"])) {
-          p.ID = oldPartsMap.get(p["รายการอะไหล่"]).ID;
-          partsToEdit.push(p);
-        } else {
-          partsToAdd.push(p);
+      // บันทึกอะไหล่ทีละรายการ
+      for(const partRow of rowParts){
+        const isEdit = !!partRow.ID;
+        const resPart = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/RepairParts/Action?applicationAccessKey=${apiKey}`, {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({
+            Action: isEdit ? "Edit" : "Add",
+            Properties: { Locale: "th-TH" },
+            Rows: [partRow]
+          })
+        });
+        const resultPart = await resPart.json();
+        if(resultPart.Result !== "Success"){
+          alert(`บันทึกอะไหล่ไม่สำเร็จ: ${partRow["รายการอะไหล่"]}`);
+          console.error(resultPart);
+          return;
         }
-      });
-
-      // แก้ไขอะไหล่เก่า
-      for (const p of partsToEdit) {
-        await postAction("RepairParts", "Edit", [p]);
-      }
-      // เพิ่มอะไหล่ใหม่
-      if (partsToAdd.length > 0) {
-        await postAction("RepairParts", "Add", partsToAdd);
       }
 
-      alert("✅ บันทึกข้อมูลเรียบร้อยแล้ว");
-      // อาจจะกลับไปหน้ารายการ หรือโหลดข้อมูลใหม่
-      // window.location.href = "list.html";
-    } catch (error) {
-      alert("❌ เกิดข้อผิดพลาด: " + error.message);
-      console.error(error);
+      alert("บันทึกข้อมูลช่างและอะไหล่สำเร็จ");
+      closeModal();
+      await loadAllData();
+
+    } catch(err) {
+      alert("เกิดข้อผิดพลาดในการบันทึก: " + err.message);
+      console.error(err);
     }
-  }
-
-  // โหลดข้อมูลและแสดงฟอร์ม
-  async function init() {
-    const requestNumber = getRequestNumberFromURL();
-    if (!requestNumber) {
-      alert("ไม่พบเลขที่ใบแจ้งซ่อม (requestNumber)");
-      return;
-    }
-    document.getElementById("requestNumber").value = requestNumber;
-
-    // โหลด RepairTechnicians
-    const techData = await loadRepairTechnician(requestNumber, user.EmpCode);
-    if (techData) {
-      populateTechnicianForm(techData);
-    }
-
-    // โหลด RepairParts
-    const parts = await loadRepairParts(requestNumber, user.EmpCode);
-    populateParts(parts);
-  }
-
-  document.getElementById("techForm").addEventListener("submit", async e => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    await saveData(formData, user.EmpCode);
   });
 
-  // เริ่มต้น
-  init();
+  async function loadAllData() {
+    techniciansData = await fetchTechnicians();
+    partsData = await fetchParts();
+    renderTechnicians();
+  }
+
+  window.addEventListener("DOMContentLoaded", () => {
+    if(!requestNumber) {
+      alert("กรุณาระบุเลขที่ใบแจ้งซ่อมใน URL เช่น ?request=2506095");
+      return;
+    }
+    if(!loginEmpCode) {
+      alert("ไม่พบรหัสพนักงานล็อกอิน (EmpCode)");
+      return;
+    }
+    loadAllData();
+  });
 </script>
+
 </body>
 </html>
