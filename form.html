@@ -174,19 +174,21 @@
         <input id="requestNo" name="เลขที่ใบแจ้งซ่อม" readonly placeholder="ระบบจะรันเลขให้" />
       </div>
 
-      <!-- หน่วยงาน -->
+      <!-- หน่วยงาน autocomplete -->
       <div>
-        <label for="deptSelect">หน่วยงาน</label>
-        <select id="deptSelect" name="หน่วยงาน" required>
-          <option value="">-- เลือกหน่วยงาน --</option>
-        </select>
+        <label for="deptSearch">หน่วยงาน</label>
+        <div class="select-searchable">
+          <input type="text" id="deptSearch" placeholder="🔍 พิมพ์ค้นหาแผนก..." autocomplete="off" required />
+          <ul id="deptList"></ul>
+        </div>
+        <input type="hidden" id="deptCodeHidden" name="หน่วยงาน" required />
       </div>
 
       <!-- รหัสเครื่อง (searchable) -->
       <div>
         <label for="machineSearch">รหัสเครื่อง</label>
         <div class="select-searchable">
-          <input type="text" id="machineSearch" placeholder="🔍 พิมพ์ชื่อหรือรหัสเครื่อง..." />
+          <input type="text" id="machineSearch" placeholder="🔍 พิมพ์ชื่อหรือรหัสเครื่อง..." autocomplete="off" />
           <ul id="machineList"></ul>
         </div>
         <input type="hidden" id="machineCodeHidden" name="รหัสเครื่อง" required />
@@ -204,10 +206,33 @@
         <textarea id="causeAnalysis" name="วิเคราะห์สาเหตุ" rows="3" placeholder="กรอกวิเคราะห์สาเหตุ"></textarea>
       </div>
 
+      <!-- การแก้ไขความคิดเห็น -->
+      <div>
+        <label for="repairComment">การแก้ไขความคิดเห็น</label>
+        <textarea id="repairComment" name="การแก้ไขความคิดเห็น" rows="3" placeholder="กรอกความคิดเห็นหลังซ่อม"></textarea>
+      </div>
+
+      <!-- สถานะเครื่อง -->
+      <div>
+        <label for="machineStatus">สถานะเครื่อง</label>
+        <select id="machineStatus" name="สถานะเครื่อง">
+          <option value="">-- เลือกสถานะ --</option>
+          <option value="ซ่อมเสร็จ">ซ่อมเสร็จ</option>
+          <option value="รอดำเนินการ">รอดำเนินการ</option>
+          <option value="ยกเลิก">ยกเลิก</option>
+        </select>
+      </div>
+
       <!-- วันที่แจ้งซ่อม -->
       <div>
         <label for="dateReport">วันที่แจ้งซ่อม</label>
         <input type="datetime-local" id="dateReport" name="วันที่แจ้งซ่อม" required />
+      </div>
+
+      <!-- วันที่ซ่อมเสร็จ -->
+      <div>
+        <label for="dateFinish">วันที่ซ่อมเสร็จ</label>
+        <input type="datetime-local" id="dateFinish" name="วันที่ซ่อมเสร็จ" />
       </div>
 
       <!-- เลือกช่างผู้รับผิดชอบ (จำกัด 3 คน) -->
@@ -238,8 +263,9 @@
   const apiBase = `https://api.appsheet.com/api/v2/apps/${appId}/tables/`;
 
   let machineList = [];
-  let unitList = [];
+  let deptList = [];
   let empList = [];
+  let unitList = [];
 
   async function fetchFromTable(table, filter = {}) {
     try {
@@ -259,18 +285,60 @@
     }
   }
 
+  // 1. โหลดหน่วยงาน (Department) ใช้ NickName
   async function loadDepartments() {
     const list = await fetchFromTable("Department");
-    const sel = document.getElementById("deptSelect");
-    sel.innerHTML = `<option value="">-- เลือกหน่วยงาน --</option>`;
-    list.forEach(d => {
-      const opt = document.createElement("option");
-      opt.value = d.DeptCode;
-      opt.textContent = d.DeptNameEng || d.DeptName || d.DeptCode;
-      sel.appendChild(opt);
-    });
+    deptList = list;
+    renderDeptList([]);
   }
 
+  function renderDeptList(filtered) {
+    const ul = document.getElementById("deptList");
+    ul.innerHTML = "";
+    if (filtered.length === 0) {
+      ul.classList.remove("show");
+      return;
+    }
+    filtered.forEach(d => {
+      const li = document.createElement("li");
+      li.textContent = d.NickName || d.DeptName || d.DeptCode;
+      li.dataset.code = d.DeptCode;
+      li.onclick = () => {
+        document.getElementById("deptSearch").value = li.textContent;
+        document.getElementById("deptCodeHidden").value = li.dataset.code;
+        ul.classList.remove("show");
+        loadMachinesByDept(li.dataset.code);
+        document.getElementById("machineSearch").value = "";
+        document.getElementById("machineCodeHidden").value = "";
+      };
+      ul.appendChild(li);
+    });
+    ul.classList.add("show");
+  }
+
+  document.getElementById("deptSearch").addEventListener("input", e => {
+    const val = e.target.value.toLowerCase();
+    if (!val) {
+      renderDeptList([]);
+      document.getElementById("deptCodeHidden").value = "";
+      return;
+    }
+    const filtered = deptList.filter(d =>
+      (d.NickName || d.DeptName || "").toLowerCase().includes(val)
+    );
+    renderDeptList(filtered);
+  });
+
+  // ซ่อน autocomplete list หน่วยงาน เมื่อคลิกนอก
+  document.addEventListener("click", e => {
+    const ds = document.getElementById("deptSearch");
+    const dl = document.getElementById("deptList");
+    if (!ds.contains(e.target) && !dl.contains(e.target)) {
+      dl.classList.remove("show");
+    }
+  });
+
+  // 2. โหลดเครื่องจักรตามหน่วยงาน
   async function loadMachinesByDept(deptCode) {
     const list = await fetchFromTable("MachineMaster");
     machineList = list.filter(m => m.DeptCode === deptCode);
@@ -310,23 +378,23 @@
     }
   }
 
-  async function loadUnits() {
-    const list = await fetchFromTable("Unit");
-    unitList = list.map(u => u.Unit);
-  }
+  // ซ่อน autocomplete list เครื่องจักร เมื่อคลิกนอก
+  document.addEventListener("click", e => {
+    const ms = document.getElementById("machineSearch");
+    const ml = document.getElementById("machineList");
+    if (!ms.contains(e.target) && !ml.contains(e.target)) {
+      ml.classList.remove("show");
+    }
+  });
 
+  // 3. โหลดพนักงานช่าง (Emp) เฉพาะแผนก A12 และสถานะ EmpStatus=0
   async function loadTechnicians() {
     const allEmps = await fetchFromTable("Emp");
-    console.log("Emp data:", allEmps);
-
-    const filtered = allEmps.filter(emp => {
+    empList = allEmps.filter(emp => {
       const deptMatch = emp.DeptCode && emp.DeptCode.toString().toUpperCase() === "A12";
       const statusMatch = emp.EmpStatus === 0 || emp.EmpStatus === "0";
       return deptMatch && statusMatch;
     });
-
-    console.log("Filtered technicians:", filtered);
-    empList = filtered;
 
     const container = document.getElementById("techCheckboxes");
     container.innerHTML = "";
@@ -346,126 +414,166 @@
       checkbox.name = "ช่างผู้รับผิดชอบ";
       checkbox.value = emp.EmpCode;
       checkbox.id = id;
-      checkbox.className = "form-checkbox h-5 w-5 text-blue-600";
-
-      const span = document.createElement("span");
-      span.textContent = `${emp.TitleName || ""} ${emp.EmpName || ""} ${emp.LastName || ""}`;
-      span.className = "text-gray-700";
 
       label.appendChild(checkbox);
+
+      const span = document.createElement("span");
+      span.textContent = emp.EmpName;
       label.appendChild(span);
+
       container.appendChild(label);
     });
 
-    // จำกัดเลือกได้ไม่เกิน 3 คน
-    container.querySelectorAll('input[type="checkbox"]').forEach(chk => {
-      chk.addEventListener('change', e => {
-        const checkedCount = container.querySelectorAll('input[type="checkbox"]:checked').length;
-        if (checkedCount > 3) {
+    // จำกัดเลือกได้สูงสุด 3 ช่าง
+    container.addEventListener("change", e => {
+      if (e.target.name === "ช่างผู้รับผิดชอบ") {
+        const checkedBoxes = container.querySelectorAll('input[name="ช่างผู้รับผิดชอบ"]:checked');
+        if (checkedBoxes.length > 3) {
           e.target.checked = false;
           alert("เลือกช่างได้สูงสุด 3 คนเท่านั้น");
         }
-      });
+      }
     });
   }
 
+  // 4. ส่วนจัดการรายการอะไหล่
+  const partsContainer = document.getElementById("partsContainer");
+  const btnAddPart = document.getElementById("btnAddPart");
+
+  // ตัวอย่างหน่วย (อาจโหลดจากตาราง Unit ได้)
+  unitList = ["ชิ้น", "ชุด", "กล่อง", "แพ็ค"];
+
   function createPartRow() {
-    const div = document.createElement("div");
-    div.className = "parts-row";
+    const row = document.createElement("div");
+    row.className = "parts-row";
 
-    const partInput = document.createElement("input");
-    partInput.type = "text";
-    partInput.name = "รายการอะไหล่";
-    partInput.placeholder = "รายการอะไหล่";
-    partInput.required = true;
+    const inputName = document.createElement("input");
+    inputName.type = "text";
+    inputName.name = "รายการอะไหล่";
+    inputName.placeholder = "ชื่ออะไหล่";
+    inputName.required = true;
+    inputName.className = "rounded border border-blue-300 px-2 py-1";
 
-    const qtyInput = document.createElement("input");
-    qtyInput.type = "number";
-    qtyInput.name = "จำนวน";
-    qtyInput.min = "1";
-    qtyInput.value = 1;
-    qtyInput.required = true;
+    const inputQty = document.createElement("input");
+    inputQty.type = "number";
+    inputQty.name = "จำนวน";
+    inputQty.min = "1";
+    inputQty.placeholder = "จำนวน";
+    inputQty.required = true;
+    inputQty.className = "rounded border border-blue-300 px-2 py-1 w-24";
 
-    const unitSelect = document.createElement("select");
-    unitSelect.name = "หน่วย";
-    unitSelect.required = true;
+    const selectUnit = document.createElement("select");
+    selectUnit.name = "หน่วย";
+    selectUnit.required = true;
+    selectUnit.className = "rounded border border-blue-300 px-2 py-1 w-28";
+
     unitList.forEach(u => {
-      const opt = document.createElement("option");
-      opt.value = u;
-      opt.textContent = u;
-      unitSelect.appendChild(opt);
+      const option = document.createElement("option");
+      option.value = u;
+      option.textContent = u;
+      selectUnit.appendChild(option);
     });
 
     const btnRemove = document.createElement("button");
     btnRemove.type = "button";
     btnRemove.className = "btn-remove-part";
-    btnRemove.textContent = "x";
-    btnRemove.title = "ลบรายการอะไหล่";
-    btnRemove.onclick = () => div.remove();
+    btnRemove.textContent = "✖";
+    btnRemove.title = "ลบรายการนี้";
+    btnRemove.onclick = () => row.remove();
 
-    div.appendChild(partInput);
-    div.appendChild(qtyInput);
-    div.appendChild(unitSelect);
-    div.appendChild(btnRemove);
+    row.appendChild(inputName);
+    row.appendChild(inputQty);
+    row.appendChild(selectUnit);
+    row.appendChild(btnRemove);
 
-    return div;
+    return row;
   }
 
-  function addPartRow() {
-    const container = document.getElementById("partsContainer");
-    container.appendChild(createPartRow());
+  btnAddPart.onclick = () => {
+    partsContainer.appendChild(createPartRow());
+  };
+
+  // ฟังก์ชันช่วยแปลงวันที่แบบ datetime-local เป็น ISO string
+  function toISOStringFromLocalDatetime(localDatetime) {
+    if (!localDatetime) return "";
+    // localDatetime รูปแบบ yyyy-MM-ddTHH:mm
+    const dt = new Date(localDatetime);
+    if (isNaN(dt)) return "";
+    return dt.toISOString();
   }
 
+  // โหลดเลขที่ใบแจ้งซ่อมรันอัตโนมัติ (ตัวอย่าง)
   async function generateNextRequestNumber() {
+    // ลองดึงเลขล่าสุดจาก Machinesymptom แล้ว +1 (ง่ายๆ)
     const list = await fetchFromTable("Machinesymptom");
-    const nums = list
-      .map(r => r["เลขที่ใบแจ้งซ่อม"])
-      .filter(n => /^\d+$/.test(n))
-      .map(n => parseInt(n));
-    const next = Math.max(...nums, 0) + 1;
-    document.getElementById("requestNo").value = String(next);
+    if (list.length === 0) {
+      document.getElementById("requestNo").value = "0001";
+      return;
+    }
+    // สมมติเลขที่ใบแจ้งซ่อมเป็นตัวเลขล้วน
+    let maxNo = 0;
+    list.forEach(item => {
+      const num = parseInt(item["เลขที่ใบแจ้งซ่อม"], 10);
+      if (!isNaN(num) && num > maxNo) maxNo = num;
+    });
+    let nextNo = (maxNo + 1).toString().padStart(4, "0");
+    document.getElementById("requestNo").value = nextNo;
   }
 
-  function toISOStringFromLocalDatetime(s) {
-    if (!s) return null;
-    const d = new Date(s);
-    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString();
-  }
-
+  // ฟอร์ม submit
   document.getElementById("repairForm").onsubmit = async e => {
     e.preventDefault();
-    const form = e.target;
 
-    const dataMain = {};
+    // อ่านข้อมูลฟอร์มหลัก
+    const form = e.target;
     const fd = new FormData(form);
-    for (let [k, v] of fd.entries()) {
-      if (k === "วันที่แจ้งซ่อม") {
+
+    // สร้าง object ส่ง Machinesymptom
+    const dataMain = {};
+    for (const [k, v] of fd.entries()) {
+      if (["วันที่แจ้งซ่อม", "วันที่ซ่อมเสร็จ"].includes(k)) {
         dataMain[k] = toISOStringFromLocalDatetime(v);
-      } else if (!["ช่างผู้รับผิดชอบ", "รายการอะไหล่", "จำนวน", "หน่วย"].includes(k)) {
-        dataMain[k] = v;
+      } else {
+        dataMain[k] = v.trim();
       }
     }
 
-    const selectedTechs = Array.from(form.querySelectorAll('input[name="ช่างผู้รับผิดชอบ"]:checked')).map(i => i.value);
-    if (selectedTechs.length === 0) {
+    // เช็คช่างที่เลือก
+    const checkedTechs = Array.from(form.querySelectorAll('input[name="ช่างผู้รับผิดชอบ"]:checked')).map(chk => chk.value);
+    if (checkedTechs.length === 0) {
       alert("กรุณาเลือกช่างผู้รับผิดชอบอย่างน้อย 1 คน");
       return;
     }
+    if (checkedTechs.length > 3) {
+      alert("เลือกช่างได้สูงสุด 3 คนเท่านั้น");
+      return;
+    }
 
-    const partsEls = document.querySelectorAll("#partsContainer > .parts-row");
-    if (partsEls.length === 0) {
+    // ดึงข้อมูลอะไหล่
+    const partRows = Array.from(partsContainer.querySelectorAll(".parts-row"));
+    if (partRows.length === 0) {
       alert("กรุณาเพิ่มรายการอะไหล่อย่างน้อย 1 รายการ");
       return;
     }
 
     const partsData = [];
     let validParts = true;
-    partsEls.forEach(row => {
+    partRows.forEach(row => {
       const item = row.querySelector('input[name="รายการอะไหล่"]').value.trim();
-      const qty = row.querySelector('input[name="จำนวน"]').value;
-      const unit = row.querySelector('select[name="หน่วย"]').value;
+      const qty = row.querySelector('input[name="จำนวน"]').value.trim();
+      const unit = row.querySelector('select[name="หน่วย"]').value.trim();
       if (!item || !qty || !unit) validParts = false;
-      partsData.push({ "รายการอะไหล่": item, "จำนวน": parseInt(qty), "หน่วย": unit });
+
+      // ใช้ EmpCode ตัวแรกที่เลือกเป็นค่า EmpCode ของอะไหล่
+      const empCode = checkedTechs[0];
+
+      partsData.push({
+        "เลขที่ใบแจ้งซ่อม": dataMain["เลขที่ใบแจ้งซ่อม"],
+        "รายการอะไหล่": item,
+        "จำนวน": parseInt(qty),
+        "หน่วย": unit,
+        "EmpCode": empCode
+      });
     });
     if (!validParts) {
       alert("กรุณากรอกข้อมูลอะไหล่ให้ครบถ้วน");
@@ -473,24 +581,27 @@
     }
 
     try {
-      // บันทึกข้อมูลหลัก Machinesymptom (เพิ่มฟิลด์ วิเคราะห์สาเหตุ)
-      let resMain = await fetch(`${apiBase}Machinesymptom/Add`, {
+      // บันทึกข้อมูลหลัก Machinesymptom
+      let resMain = await fetch(`${apiBase}Machinesymptom/Action`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "ApplicationAccessKey": apiKey
         },
-        body: JSON.stringify({ Action: "Add", Rows: [dataMain] })
+        body: JSON.stringify({
+          Action: "Add",
+          Rows: [dataMain]
+        })
       });
-      if (!resMain.ok) throw "บันทึกข้อมูลหลักไม่สำเร็จ";
+      if (!resMain.ok) throw new Error("บันทึกข้อมูลหลักไม่สำเร็จ");
 
-      // บันทึกข้อมูลช่าง RepairTechnicians (ส่งช่างที่เลือกได้)
-      for (let empCode of selectedTechs) {
-        let techData = {
+      // บันทึกช่าง RepairTechnicians
+      for (const empCode of checkedTechs) {
+        const techData = {
           "เลขที่ใบแจ้งซ่อม": dataMain["เลขที่ใบแจ้งซ่อม"],
-          "EmpCode": empCode
+          EmpCode: empCode
         };
-        let resTech = await fetch(`${apiBase}RepairTechnicians/Add`, {
+        const resTech = await fetch(`${apiBase}RepairTechnicians/Action`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -498,81 +609,44 @@
           },
           body: JSON.stringify({ Action: "Add", Rows: [techData] })
         });
-        if (!resTech.ok) throw "บันทึกข้อมูลช่างไม่สำเร็จ";
+        if (!resTech.ok) throw new Error("บันทึกข้อมูลช่างไม่สำเร็จ");
       }
 
-      // บันทึกข้อมูลอะไหล่ RepairParts
-      for (let part of partsData) {
-        let partData = {
-          "เลขที่ใบแจ้งซ่อม": dataMain["เลขที่ใบแจ้งซ่อม"],
-          "รายการอะไหล่": part["รายการอะไหล่"],
-          "จำนวน": part["จำนวน"],
-          "หน่วย": part["หน่วย"]
-        };
-        let resPart = await fetch(`${apiBase}RepairParts/Add`, {
+      // บันทึกอะไหล่ RepairParts
+      for (const part of partsData) {
+        const resPart = await fetch(`${apiBase}RepairParts/Action`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "ApplicationAccessKey": apiKey
           },
-          body: JSON.stringify({ Action: "Add", Rows: [partData] })
+          body: JSON.stringify({ Action: "Add", Rows: [part] })
         });
-        if (!resPart.ok) throw "บันทึกข้อมูลอะไหล่ไม่สำเร็จ";
+        if (!resPart.ok) throw new Error("บันทึกข้อมูลอะไหล่ไม่สำเร็จ");
       }
 
       alert("บันทึกข้อมูลสำเร็จแล้ว");
       form.reset();
+      partsContainer.innerHTML = "";
       document.getElementById("machineCodeHidden").value = "";
-      document.getElementById("machineList").classList.remove("show");
-      document.getElementById("partsContainer").innerHTML = "";
       await generateNextRequestNumber();
 
-    } catch (error) {
-      alert("เกิดข้อผิดพลาด: " + error);
-      console.error(error);
+    } catch (err) {
+      alert("เกิดข้อผิดพลาด: " + err.message);
+      console.error(err);
     }
   };
 
-  // เมื่อเลือกหน่วยงาน เปลี่ยน list เครื่องจักร
-  document.getElementById("deptSelect").addEventListener("change", async e => {
-    const dept = e.target.value;
-    if (!dept) {
-      machineList = [];
-      document.getElementById("machineList").classList.remove("show");
-      document.getElementById("machineSearch").value = "";
-      document.getElementById("machineCodeHidden").value = "";
-      return;
-    }
-    await loadMachinesByDept(dept);
-    document.getElementById("machineSearch").value = "";
-    document.getElementById("machineCodeHidden").value = "";
-  });
-
-  // เมื่อพิมพ์ใน input เครื่องจักร
-  document.getElementById("machineSearch").addEventListener("input", filterMachines);
-
-  // เมื่อคลิกนอก autocomplete list ซ่อน list
-  document.addEventListener("click", e => {
-    const ms = document.getElementById("machineSearch");
-    const ml = document.getElementById("machineList");
-    if (!ms.contains(e.target) && !ml.contains(e.target)) {
-      ml.classList.remove("show");
-    }
-  });
-
-  // ปุ่มเพิ่มอะไหล่
-  document.getElementById("btnAddPart").addEventListener("click", addPartRow);
-
-  // โหลดข้อมูลเริ่มต้น
-  async function init() {
+  // เรียกโหลดข้อมูลตอนเริ่มต้น
+  (async () => {
     await loadDepartments();
-    await loadUnits();
     await loadTechnicians();
     await generateNextRequestNumber();
-  }
+  })();
 
-  init();
-
+  // เชื่อมฟังก์ชันค้นหาเครื่องจักร
+  document.getElementById("machineSearch").addEventListener("input", filterMachines);
 </script>
+
 </body>
 </html>
