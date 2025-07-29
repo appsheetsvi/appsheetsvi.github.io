@@ -564,17 +564,17 @@
       const unit = row.querySelector('select[name="หน่วย"]').value.trim();
       if (!item || !qty || !unit) validParts = false;
 
-      // ใช้ EmpCode ตัวแรกที่เลือกเป็นค่า EmpCode ของอะไหล่
-      const empCode = checkedTechs[0];
-
-      partsData.push({
-        "เลขที่ใบแจ้งซ่อม": dataMain["เลขที่ใบแจ้งซ่อม"],
-        "รายการอะไหล่": item,
-        "จำนวน": parseInt(qty),
-        "หน่วย": unit,
-        "EmpCode": empCode
-      });
+// สำหรับทุกช่างที่เลือก ให้สร้างรายการอะไหล่แยกกันทีละชิ้น
+  checkedTechs.forEach(empCode => {
+    partsData.push({
+      "เลขที่ใบแจ้งซ่อม": dataMain["เลขที่ใบแจ้งซ่อม"],
+      "รายการอะไหล่": item,
+      "จำนวน": parseInt(qty),
+      "หน่วย": unit,
+      "EmpCode": empCode
     });
+  });
+});
     if (!validParts) {
       alert("กรุณากรอกข้อมูลอะไหล่ให้ครบถ้วน");
       return;
