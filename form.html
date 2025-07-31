@@ -204,15 +204,7 @@
         <input id="requestNo" name="เลขที่ใบแจ้งซ่อม" readonly placeholder="ระบบจะรันเลขให้" />
       </div>
 
-      <!-- หน่วยงาน -->
-      <div>
-        <label for="deptSelect">หน่วยงาน</label>
-        <select id="deptSelect" name="หน่วยงาน" required>
-          <option value="">-- เลือกหน่วยงาน --</option>
-        </select>
-      </div>
-
-      <!-- ลำดับความสำคัญ -->
+   <!-- ลำดับความสำคัญ -->
       <div>
         <label class="block text-sm font-medium text-blue-700">ลำดับความสำคัญ</label>
         <select name="ลำดับความสำคัญ" class="mt-1 w-full px-3 py-2 border border-blue-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>
@@ -223,6 +215,16 @@
           <option value="ไม่เร่งด่วน">⏳ ไม่เร่งด่วน</option>
         </select>
       </div>
+
+      <!-- หน่วยงาน -->
+      <div>
+        <label for="deptSelect">หน่วยงาน</label>
+        <select id="deptSelect" name="หน่วยงาน" required>
+          <option value="">-- เลือกหน่วยงาน --</option>
+        </select>
+      </div>
+
+   
 
       <!-- รหัสเครื่อง (searchable) -->
       <div>
@@ -246,11 +248,13 @@
         <textarea id="causeAnalysis" name="วิเคราะห์สาเหตุ" rows="3" placeholder="กรอกวิเคราะห์สาเหตุ"></textarea>
       </div>
 
-      <!-- วันที่แจ้งซ่อม -->
+
+ <!-- การแก้ไขความคิดเห็น -->
       <div>
-        <label for="dateReport">วันที่แจ้งซ่อม</label>
-        <input type="datetime-local" id="dateReport" name="วันที่แจ้งซ่อม" required />
+        <label for="commentEdit">การแก้ไขความคิดเห็น</label>
+        <textarea id="commentEdit" name="การแก้ไขความคิดเห็น" rows="3" placeholder="ใส่ความคิดเห็นสำหรับช่าง"></textarea>
       </div>
+
 
       <!-- เลือกช่างผู้รับผิดชอบ -->
       <div>
@@ -270,6 +274,25 @@
         <div id="partsContainer"></div>
         <button type="button" id="btnAddPart" class="mt-2">+ เพิ่มอะไหล่</button>
       </div>
+
+ <!-- วันที่แจ้งซ่อม -->
+      <div>
+        <label for="dateReport">วันที่แจ้งซ่อม</label>
+        <input type="datetime-local" id="dateReport" name="วันที่แจ้งซ่อม" required />
+      </div>
+
+      <!-- วันที่ซ่อมเสร็จ -->
+      <div>
+        <label for="dateFinish">วันที่ซ่อมเสร็จ</label>
+        <input type="datetime-local" id="dateFinish" name="วันที่ซ่อมเสร็จ" />
+      </div>
+  <div class="mb-4">
+  <label class="inline-flex items-center">
+    <input type="checkbox" id="machineStatusCheckbox" class="form-checkbox h-5 w-5 text-blue-600" />
+    <span class="ml-2">ไม่จบ</span>
+  </label>
+</div>
+
 
       <!-- ปุ่มบันทึก -->
       <div class="text-center">
@@ -572,7 +595,9 @@
           "รหัสเครื่อง": form["รหัสเครื่อง"].value,
           "รายละเอียดอาการเสีย": form["รายละเอียดอาการเสีย"].value,
           "วิเคราะห์สาเหตุ": form["วิเคราะห์สาเหตุ"].value || "",
-          "วันที่แจ้งซ่อม": form["วันที่แจ้งซ่อม"].value
+          "วันที่แจ้งซ่อม": form["วันที่แจ้งซ่อม"].value,
+         "วันที่ซ่อมเสร็จ": form["วันที่ซ่อมเสร็จ"].value,
+         "สถานะเครื่อง": document.getElementById("machineStatusCheckbox").checked ? "ไม่จบ" : "งานจบ"
         };
 
         // ตรวจสอบฟิลด์บังคับ
