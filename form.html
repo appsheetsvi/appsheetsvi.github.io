@@ -243,6 +243,26 @@
   let partsMasterList = [];
   let partsSelected = [];
 
+async function generateNextRequestNumber() {
+    const list = await fetchFromTable("Machinesymptom");
+    const nums = list
+      .map(r => r["เลขที่ใบแจ้งซ่อม"])
+      .filter(n => /^\d+$/.test(n))
+      .map(n => parseInt(n));
+    const next = Math.max(...nums, 0) + 1;
+    document.getElementById("requestNo").value = String(next);
+  }
+
+  function toISOStringFromLocalDatetime(s) {
+    if (!s) return null;
+    const d = new Date(s);
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString();
+  }
+
+
+
+
+
   // Fetch data from a table with optional filter
   async function fetchFromTable(table, filter = {}) {
     try {
@@ -587,6 +607,7 @@
       form.reset();
       partsSelected = [];
       renderPartsList(partsSelected);
+      await generateNextRequestNumber();
       // สร้างเลขที่ใบแจ้งซ่อมใหม่
       const newReqNo = await generateRequestNo();
       form["เลขที่ใบแจ้งซ่อม"].value = newReqNo;
@@ -604,8 +625,8 @@
     await loadDepartments();
     await loadTechnicians();
     await loadPartsMaster();
-    const reqNo = await generateRequestNo();
-    document.getElementById("requestNo").value = reqNo;
+    await generateNextRequestNumber();
+   
   }
 
   // เรียก init ตอนโหลดหน้า
