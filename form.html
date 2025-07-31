@@ -248,14 +248,6 @@
         <textarea id="causeAnalysis" name="วิเคราะห์สาเหตุ" rows="3" placeholder="กรอกวิเคราะห์สาเหตุ"></textarea>
       </div>
 
-
- <!-- การแก้ไขความคิดเห็น -->
-      <div>
-        <label for="commentEdit">การแก้ไขความคิดเห็น</label>
-        <textarea id="commentEdit" name="การแก้ไขความคิดเห็น" rows="3" placeholder="ใส่ความคิดเห็นสำหรับช่าง"></textarea>
-      </div>
-
-
       <!-- เลือกช่างผู้รับผิดชอบ -->
       <div>
         <label>เลือกช่างผู้รับผิดชอบ</label>
@@ -268,12 +260,14 @@
         <textarea id="commentEdit" name="การแก้ไขความคิดเห็น" rows="3" placeholder="ใส่ความคิดเห็นสำหรับช่าง"></textarea>
       </div>
 
-      <!-- รายการอะไหล่ -->
-      <div>
-        <label>รายการอะไหล่ที่ใช้</label>
-        <div id="partsContainer"></div>
-        <button type="button" id="btnAddPart" class="mt-2">+ เพิ่มอะไหล่</button>
-      </div>
+    <div id="partsSection" class="border p-4 rounded bg-white shadow mt-6">
+  <h2 class="text-lg font-semibold mb-2">รายการอะไหล่</h2>
+  <div id="partRows" class="space-y-2">
+    <!-- จะเติมรายการตรงนี้ -->
+  </div>
+  <button type="button" onclick="addPartRow()" class="mt-2 px-3 py-1 bg-blue-500 text-white rounded">+ เพิ่มอะไหล่</button>
+</div>
+
 
  <!-- วันที่แจ้งซ่อม -->
       <div>
@@ -571,6 +565,52 @@
 
     // กดปุ่มเพิ่มอะไหล่
     document.getElementById("btnAddPart").addEventListener("click", () => addNewPart());
+
+
+
+// 3. ส่ง RepairParts
+const partRows = document.querySelectorAll("#partRows > div");
+for (const row of partRows) {
+  const partItem = row.querySelector(".part-item").value;
+  const partQty = row.querySelector(".part-qty").value;
+  const partUnit = row.querySelector(".part-unit").value;
+
+  if (!partItem || !partQty) continue;
+
+  const partData = {
+    "เลขที่ใบแจ้งซ่อม": requestNumber,
+    "EmpCode": empCode,
+    "รายการอะไหล่": partItem,
+    "จำนวน": parseFloat(partQty),
+    "หน่วย": partUnit
+  };
+
+  await fetch(`${apiBase}/tables/RepairParts/Action`, {
+    method: "POST",
+    headers: {
+      "ApplicationAccessKey": apiKey,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ Action: "Add", Properties: {}, Rows: [partData] })
+  });
+}
+
+
+
+
+ function addPartRow() {
+    const container = document.getElementById("partRows");
+    const row = document.createElement("div");
+    row.className = "grid grid-cols-3 gap-2";
+
+    row.innerHTML = `
+      <input type="text" placeholder="รายการอะไหล่" class="part-item border rounded p-1" />
+      <input type="number" placeholder="จำนวน" class="part-qty border rounded p-1" />
+      <input type="text" placeholder="หน่วย" class="part-unit border rounded p-1" />
+    `;
+
+    container.appendChild(row);
+  }
 
     // ฟอร์ม submit
     document.getElementById("repairForm").addEventListener("submit", async e => {
