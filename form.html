@@ -191,7 +191,7 @@ document.querySelector('input[name="สถานะเครื่อง"][value
   function filterMachines() {
     const val = document.getElementById("machineSearch").value.toLowerCase();
     const filtered = machineList.filter(m => {
-      return (m["รหัสเครื่อง"] + " " + m["รายชื่อเครื่องจักร"]).toLowerCase().includes(val);
+      return (m["รหัสเครื่อง"] + " " + m["รายชื่อเครื่องจักร1"]).toLowerCase().includes(val);
     });
     renderMachineList(filtered);
   }
