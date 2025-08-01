@@ -45,15 +45,6 @@
         <input name="เลขที่ใบแจ้งซ่อม" readonly class="w-full border rounded p-2 bg-gray-100" />
       </div>
 
-     <!-- ชนิดงาน -->
-<div>
-  <label class="font-semibold">ชนิดงาน</label>
-  <select name="ชนิดงาน" id="jobTypeSelect" required class="w-full border rounded p-2">
-    <option value="">-- เลือกชนิดงาน --</option>
-  </select>
-</div>
-
-    
       <div>
         <label class="font-semibold">หน่วยงาน</label>
         <select name="หน่วยงาน" id="deptSelect" required class="w-full border rounded p-2"></select>
@@ -158,20 +149,6 @@
       sel.appendChild(opt);
     });
   }
-
-// โหลดชนิดงานจากตาราง MachineJobType
-async function loadJobTypes() {
-  const list = await fetchFromTable("MachineJobType");
-  const sel = document.getElementById("jobTypeSelect");
-  list.forEach(jt => {
-    const opt = document.createElement("option");
-    // สมมติว่า MachineJobType มีฟิลด์ชื่อ "JobTypeCode" และ "JobTypeName"
-    opt.value = jt.JobTypeCode || jt["JobTypeCode"] || jt["ชนิดงานรหัส"] || jt["Code"] || "";
-    opt.textContent = jt.JobTypeName || jt["JobTypeName"] || jt["ชนิดงานชื่อ"] || jt["Name"] || opt.value;
-    sel.appendChild(opt);
-  });
-}
-
 
   async function loadMachinesByDept(deptCode) {
     const list = await fetchFromTable("MachineMaster");
@@ -447,7 +424,6 @@ async function loadJobTypes() {
     await loadDepartments();
     await loadUnits();
     await loadTechnicians();
-    await loadJobTypes();  // <-- เพิ่มตรงนี้
     await generateNextRequestNumber();
     addPartRow();
   }
