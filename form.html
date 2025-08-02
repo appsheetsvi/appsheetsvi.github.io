@@ -30,8 +30,15 @@
       background: #b91c1c;
     }
     .tech-checkboxes {
-      max-height: 120px; overflow-y: auto; border: 1px solid #ccc; border-radius: 6px; padding: 8px;
+      max-height: 350px; overflow-y: auto; border: 1px solid #ccc; border-radius: 6px; padding: 8px;
       background: white;
+    }
+    .tech-checkboxes > div {
+      margin-bottom: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 8px;
+      background: #fafafa;
     }
   </style>
 </head>
@@ -70,17 +77,7 @@
       </div>
 
       <div>
-        <label class="font-semibold">การแก้ไข</label>
-        <textarea name="การแก้ไขความคิดเห็น" class="w-full border rounded p-2" rows="2"></textarea>
-      </div>
-
-      
-      
-
-      
-
-      <div>
-        <label class="font-semibold">เลือกช่างผู้รับผิดชอบ (เลือกได้หลายคน)</label>
+        <label class="font-semibold">เลือกช่างผู้รับผิดชอบ (เลือกได้สูงสุด 3 คน)</label>
         <div id="techCheckboxes" class="tech-checkboxes"></div>
       </div>
 
@@ -89,29 +86,6 @@
         <div id="partsContainer"></div>
         <button type="button" id="btnAddPart" class="mt-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">+ เพิ่มอะไหล่</button>
       </div>
-
-     <div>
-        <label class="font-semibold">วันที่แจ้งซ่อม</label>
-        <input type="datetime-local" name="วันที่แจ้งซ่อม" required class="w-full border rounded p-2" />
-      </div>
-
-      <div>
-        <label class="font-semibold">วันที่ซ่อมเสร็จ</label>
-        <input type="datetime-local" name="วันที่ซ่อมเสร็จ" class="w-full border rounded p-2" />
-      </div>
-
-      <div>
-	    <label class="font-semibold">สถานะเครื่อง</label>
-     <label class="inline-flex items-center mr-6">
-       <input type="checkbox" name="สถานะเครื่อง" value="จบงาน" class="mr-2" checked />
-       จบงาน
-      </label>
-      <label class="inline-flex items-center">
-       <input type="checkbox" name="สถานะเครื่อง" value="ไม่จบงาน" class="mr-2" />
-       ไม่จบงาน
-      </label>
-     </div>
-
 
       <div class="text-center mt-6">
         <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-lg text-lg">✅ บันทึกข้อมูล</button>
@@ -144,10 +118,6 @@
     }
     return await res.json();
   }
-
-
-document.querySelector('input[name="สถานะเครื่อง"][value="จบงาน"]').checked = true;
-
 
   async function loadDepartments() {
     const list = await fetchFromTable("Department");
@@ -201,7 +171,6 @@ document.querySelector('input[name="สถานะเครื่อง"][value
     unitList = list.map(u => u.Unit);
   }
 
-   // 3. โหลดพนักงานช่าง (Emp) เฉพาะแผนก A12 และสถานะ EmpStatus=0
   async function loadTechnicians() {
     const allEmps = await fetchFromTable("Emp");
     empList = allEmps.filter(emp => {
@@ -220,6 +189,11 @@ document.querySelector('input[name="สถานะเครื่อง"][value
 
     empList.forEach(emp => {
       const id = `emp_${emp.EmpCode}`;
+
+      const wrapper = document.createElement("div");
+      wrapper.className = "mb-3 border rounded p-2 bg-gray-50";
+
+      // checkbox + name
       const label = document.createElement("label");
       label.className = "inline-flex items-center space-x-2 cursor-pointer";
 
@@ -235,7 +209,59 @@ document.querySelector('input[name="สถานะเครื่อง"][value
       span.textContent = emp.EmpName;
       label.appendChild(span);
 
-      container.appendChild(label);
+      wrapper.appendChild(label);
+
+      // textarea สำหรับ "การแก้ไขความคิดเห็น"
+      const textarea = document.createElement("textarea");
+      textarea.name = `comment_${emp.EmpCode}`;
+      textarea.placeholder = "การแก้ไขความคิดเห็นของช่างนี้";
+      textarea.rows = 2;
+      textarea.className = "w-full mt-1 border rounded p-2 text-sm";
+      wrapper.appendChild(textarea);
+
+      // input เวลาเริ่ม
+      const startLabel = document.createElement("label");
+      startLabel.textContent = "เวลาเริ่ม:";
+      startLabel.className = "block mt-2 font-semibold text-sm";
+      wrapper.appendChild(startLabel);
+
+      const startInput = document.createElement("input");
+      startInput.type = "datetime-local";
+      startInput.name = `start_${emp.EmpCode}`;
+      startInput.className = "w-full border rounded p-2 text-sm";
+      wrapper.appendChild(startInput);
+
+      // input เวลาจบ
+      const endLabel = document.createElement("label");
+      endLabel.textContent = "เวลาจบ:";
+      endLabel.className = "block mt-2 font-semibold text-sm";
+      wrapper.appendChild(endLabel);
+
+      const endInput = document.createElement("input");
+      endInput.type = "datetime-local";
+      endInput.name = `end_${emp.EmpCode}`;
+      endInput.className = "w-full border rounded p-2 text-sm";
+      wrapper.appendChild(endInput);
+
+      // select สถานะของงานช่าง
+      const statusLabel = document.createElement("label");
+      statusLabel.textContent = "สถานะของงานช่าง:";
+      statusLabel.className = "block mt-2 font-semibold text-sm";
+      wrapper.appendChild(statusLabel);
+
+      const statusSelect = document.createElement("select");
+      statusSelect.name = `status_${emp.EmpCode}`;
+      statusSelect.className = "w-full border rounded p-2 text-sm";
+
+      ["", "จบงาน", "ไม่จบงาน"].forEach(val => {
+        const opt = document.createElement("option");
+        opt.value = val;
+        opt.textContent = val || "-- เลือกสถานะ --";
+        statusSelect.appendChild(opt);
+      });
+      wrapper.appendChild(statusSelect);
+
+      container.appendChild(wrapper);
     });
 
     // จำกัดเลือกได้สูงสุด 3 ช่าง
@@ -323,19 +349,28 @@ document.querySelector('input[name="สถานะเครื่อง"][value
     const fd = new FormData(form);
     const dataMain = {};
     for (let [k,v] of fd.entries()) {
-      if (["วันที่แจ้งซ่อม","วันที่ซ่อมเสร็จ"].includes(k)) {
-        dataMain[k] = toISOStringFromLocalDatetime(v);
-      } else if (!["ช่างผู้รับผิดชอบ","รายการอะไหล่","จำนวน","หน่วย"].includes(k)) {
+      if (!k.startsWith("comment_") && !k.startsWith("start_") && !k.startsWith("end_") && !k.startsWith("status_") && !["ช่างผู้รับผิดชอบ","รายการอะไหล่","จำนวน","หน่วย"].includes(k)) {
         dataMain[k] = v;
       }
     }
 
+    // รายชื่อช่างที่เลือก
     const selectedTechs = Array.from(form.querySelectorAll('input[name="ช่างผู้รับผิดชอบ"]:checked')).map(i => i.value);
     if(selectedTechs.length === 0) {
       alert("กรุณาเลือกช่างผู้รับผิดชอบอย่างน้อย 1 คน");
       return;
     }
 
+    // อ่านข้อมูลของแต่ละช่าง
+    const techDataList = selectedTechs.map(empCode => ({
+      EmpCode: empCode,
+      comment: form.querySelector(`textarea[name="comment_${empCode}"]`).value.trim(),
+      start: toISOStringFromLocalDatetime(form.querySelector(`input[name="start_${empCode}"]`).value),
+      end: toISOStringFromLocalDatetime(form.querySelector(`input[name="end_${empCode}"]`).value),
+      status: form.querySelector(`select[name="status_${empCode}"]`).value
+    }));
+
+    // ตรวจสอบอะไหล่
     const partsEls = document.querySelectorAll("#partsContainer > .parts-row");
     if(partsEls.length === 0) {
       alert("กรุณาเพิ่มรายการอะไหล่อย่างน้อย 1 รายการ");
@@ -368,12 +403,17 @@ document.querySelector('input[name="สถานะเครื่อง"][value
       });
       if(!resMain.ok) throw "บันทึกข้อมูลหลักไม่สำเร็จ";
 
-      // บันทึก RepairTechnicians สำหรับช่างทุกคน
-      for (const empCode of selectedTechs) {
+      // บันทึก RepairTechnicians สำหรับช่างแต่ละคน
+      for (const tech of techDataList) {
         const techData = {
           "เลขที่ใบแจ้งซ่อม": dataMain["เลขที่ใบแจ้งซ่อม"],
-          "EmpCode": empCode
+          "EmpCode": tech.EmpCode,
+          "การแก้ไขความคิดเห็น": tech.comment,
+          "เวลาเริ่ม": tech.start,
+          "เวลาจบ": tech.end,
+          "สถานะของงานช่าง": tech.status
         };
+
         const resTech = await fetch(`${apiBase}RepairTechnicians/Add`, {
           method: "POST",
           headers: {
@@ -382,18 +422,18 @@ document.querySelector('input[name="สถานะเครื่อง"][value
           },
           body: JSON.stringify({ Action: "Add", Rows: [techData] })
         });
-        if(!resTech.ok) throw `บันทึกช่าง ${empCode} ไม่สำเร็จ`;
+        if(!resTech.ok) throw `บันทึกช่าง ${tech.EmpCode} ไม่สำเร็จ`;
       }
 
       // บันทึก RepairParts สำหรับช่างทุกคนและอะไหล่แต่ละรายการ
-      for (const empCode of selectedTechs) {
+      for (const tech of techDataList) {
         for (const part of partsData) {
           const partData = {
             "เลขที่ใบแจ้งซ่อม": dataMain["เลขที่ใบแจ้งซ่อม"],
             "รายการอะไหล่": part["รายการอะไหล่"],
             "จำนวน": part["จำนวน"],
             "หน่วย": part["หน่วย"],
-            "EmpCode": empCode
+            "EmpCode": tech.EmpCode
           };
           const resPart = await fetch(`${apiBase}RepairParts/Add`, {
             method: "POST",
@@ -403,7 +443,7 @@ document.querySelector('input[name="สถานะเครื่อง"][value
             },
             body: JSON.stringify({ Action: "Add", Rows: [partData] })
           });
-          if(!resPart.ok) throw `บันทึกอะไหล่ ${part["รายการอะไหล่"]} สำหรับช่าง ${empCode} ไม่สำเร็จ`;
+          if(!resPart.ok) throw `บันทึกอะไหล่ ${part["รายการอะไหล่"]} สำหรับช่าง ${tech.EmpCode} ไม่สำเร็จ`;
         }
       }
 
@@ -416,30 +456,42 @@ document.querySelector('input[name="สถานะเครื่อง"][value
     }
   };
 
-  document.getElementById("deptSelect").addEventListener("change", async e => {
-    const dept = e.target.value;
-    document.getElementById("machineSearch").value = "";
-    document.getElementById("machineCodeHidden").value = "";
-    if (!dept) {
-      machineList = [];
-      renderMachineList([]);
-      return;
-    }
-    await loadMachinesByDept(dept);
-  });
+  // เพิ่มบรรทัดอะไหล่ใหม่เมื่อกดปุ่ม
+  document.getElementById("btnAddPart").onclick = addPartRow;
 
-  document.getElementById("machineSearch").addEventListener("input", filterMachines);
-  document.getElementById("btnAddPart").addEventListener("click", addPartRow);
-
+  // โหลดข้อมูลเริ่มต้น
   async function init() {
     await loadDepartments();
     await loadUnits();
     await loadTechnicians();
     await generateNextRequestNumber();
     addPartRow();
+
+    // เชื่อม event input search เครื่องจักร
+    document.getElementById("machineSearch").addEventListener("input", filterMachines);
+
+    // กดที่พื้นที่ว่างจะปิด dropdown รายชื่อเครื่อง
+    document.addEventListener("click", e => {
+      if (!document.getElementById("machineSearch").contains(e.target)) {
+        document.getElementById("machineList").classList.add("hidden");
+      }
+    });
+
+    // โหลดเครื่องจักรตามหน่วยงานที่เลือก
+    document.getElementById("deptSelect").addEventListener("change", async e => {
+      const val = e.target.value;
+      if(val) await loadMachinesByDept(val);
+      else {
+        machineList = [];
+        document.getElementById("machineList").innerHTML = "";
+        document.getElementById("machineList").classList.add("hidden");
+      }
+      document.getElementById("machineSearch").value = "";
+      document.getElementById("machineCodeHidden").value = "";
+    });
   }
   init();
-
 </script>
+
 </body>
 </html>
