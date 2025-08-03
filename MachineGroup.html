@@ -2,9 +2,9 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>เพิ่มเครื่องจักรใหม่</title>
-  <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet" />
   <style>
     body {
       font-family: 'Kanit', sans-serif;
@@ -57,26 +57,13 @@
   <h1>📦 เพิ่มข้อมูลเครื่องจักร</h1>
   <form id="machineForm">
     <label>รหัสเครื่อง (Auto)</label>
-    <input type="text" id="machineCode" disabled placeholder="กำลังโหลด...">
+    <input type="text" id="machineCode" disabled placeholder="กำลังโหลด..." />
 
-    <label>รายชื่อเครื่องจักร</label>
-    <input type="text" id="machineName" required>
+    <label>รายชื่อเครื่องจักร(ค้นหาหน้าโปรแกรมแจ้งซ่อม)</label>
+    <input type="text" id="machineName1" required />
 
-    <label>ชั้น (เช่น 1, 2, 3.5)</label>
-    <input type="text" id="floor" placeholder="กรอกเฉพาะตัวเลข เช่น 1 หรือ 2.5" required>
-
-    <label>สถานะ</label>
-    <select id="status" required>
-      <option value="">-- เลือกสถานะ --</option>
-      <option value="ใช้งาน">ใช้งาน</option>
-      <option value="ไม่ใช้งาน">ไม่ใช้งาน</option>
-      <option value="ซ่อมบำรุง">ซ่อมบำรุง</option>
-    </select>
-
-    <label>รหัสงาน</label>
-    <select id="jobCode" required>
-      <option value="">-- เลือกรหัสงาน --</option>
-    </select>
+    <label>รายชื่อเครื่องจักร(แบบเต็ม)</label>
+    <input type="text" id="machineName" required />
 
     <label>แผนก / หน่วยงาน</label>
     <select id="deptCode" required>
@@ -96,10 +83,11 @@
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "ApplicationAccessKey": apiKey
+          "ApplicationAccessKey": apiKey,
         },
-        body: JSON.stringify({})
+        body: JSON.stringify({}),
       });
+      if (!res.ok) throw new Error(`Failed to fetch table ${tableName}`);
       return res.json();
     }
 
@@ -107,49 +95,52 @@
       try {
         const data = await fetchTable("MachineMaster");
         const codes = data.map(d => d["รหัสเครื่อง"]).filter(Boolean);
-        const maxNum = Math.max(...codes.map(c => parseInt(c.split("-")[1] || "0")));
+        if (codes.length === 0) {
+          document.getElementById("machineCode").value = "MC-1";
+          return;
+        }
+        const maxNum = Math.max(...codes.map(c => {
+          const parts = c.split("-");
+          const numPart = parts.length > 1 ? parts[1] : "0";
+          return parseInt(numPart) || 0;
+        }));
         const nextCode = `MC-${maxNum + 1}`;
         document.getElementById("machineCode").value = nextCode;
-      } catch {
+      } catch (error) {
         document.getElementById("machineCode").value = "⚠️ โหลดรหัสล้มเหลว";
+        console.error(error);
       }
     }
 
-    async function loadDropdowns() {
-      const jobs = await fetchTable("MachineJobType");
-      const depts = await fetchTable("Department");
-
-      const jobSelect = document.getElementById("jobCode");
-      jobs.forEach(j => {
-        const opt = document.createElement("option");
-        opt.value = j["รหัสงาน"];
-        opt.textContent = `${j["รหัสงาน"]} - ${j["ชนิดงาน"]}`;
-        jobSelect.appendChild(opt);
-      });
-
-      const deptSelect = document.getElementById("deptCode");
-      depts.forEach(d => {
-        const opt = document.createElement("option");
-        opt.value = d["DeptCode"];
-        opt.textContent = `${d["DeptCode"]} - ${d["DeptNameEng"] || d["DeptName"]}`;
-        deptSelect.appendChild(opt);
-      });
+    async function loadDepartments() {
+      try {
+        const depts = await fetchTable("Department");
+        const deptSelect = document.getElementById("deptCode");
+        depts.forEach(d => {
+          const opt = document.createElement("option");
+          opt.value = d["DeptCode"];
+          // แสดงชื่อ DeptNameEng ถ้ามี ถ้าไม่มีใช้ DeptName
+          opt.textContent = d["DeptNameEng"] || d["DeptName"] || d["DeptCode"];
+          deptSelect.appendChild(opt);
+        });
+      } catch (error) {
+        console.error("โหลดข้อมูลแผนกผิดพลาด", error);
+      }
     }
 
-    document.getElementById("machineForm").addEventListener("submit", async (e) => {
+    document.getElementById("machineForm").addEventListener("submit", async e => {
       e.preventDefault();
+
       const code = document.getElementById("machineCode").value;
+      const name1 = document.getElementById("machineName1").value.trim();
       const name = document.getElementById("machineName").value.trim();
-      const floor = document.getElementById("floor").value.trim();
-      const status = document.getElementById("status").value;
-      const job = document.getElementById("jobCode").value;
       const deptCode = document.getElementById("deptCode").value;
+      const deptText = document.getElementById("deptCode").selectedOptions[0].text;
 
-      const deptName = document.getElementById("deptCode").selectedOptions[0].text.split(" - ")[1] || "";
-
-      if (!code || !name || !floor || !status || !job || !deptCode || !deptName) {
-        document.getElementById("message").style.color = "red";
-        document.getElementById("message").textContent = "❌ กรุณากรอกข้อมูลให้ครบถ้วน";
+      if (!code || !name1 || !name || !deptCode) {
+        const msg = document.getElementById("message");
+        msg.style.color = "red";
+        msg.textContent = "❌ กรุณากรอกข้อมูลให้ครบถ้วน";
         return;
       }
 
@@ -158,39 +149,45 @@
         Properties: {},
         Rows: [{
           "รหัสเครื่อง": code,
+          "รายชื่อเครื่องจักร1": name1,
           "รายชื่อเครื่องจักร": name,
-          "ชั้น": `FL.${floor}`,
-          "สถานะ": status,
-          "รหัสงาน": job,
           "DeptCode": deptCode,
-          "แผนก": deptName
+          "แผนก": deptText
         }]
       };
 
-      const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineMaster/Action`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "ApplicationAccessKey": apiKey
-        },
-        body: JSON.stringify(payload)
-      });
+      try {
+        const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineMaster/Action`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "ApplicationAccessKey": apiKey,
+          },
+          body: JSON.stringify(payload),
+        });
 
-      if (res.ok) {
-        document.getElementById("message").style.color = "green";
-        document.getElementById("message").textContent = "✅ บันทึกข้อมูลเรียบร้อย";
-        document.getElementById("machineForm").reset();
-        await generateMachineCode();
-      } else {
-        const errorText = await res.text();
-        document.getElementById("message").style.color = "red";
-        document.getElementById("message").textContent = `❌ บันทึกไม่สำเร็จ: ${errorText}`;
+        if (res.ok) {
+          const msg = document.getElementById("message");
+          msg.style.color = "green";
+          msg.textContent = "✅ บันทึกข้อมูลเรียบร้อย";
+          document.getElementById("machineForm").reset();
+          await generateMachineCode();
+        } else {
+          const errorText = await res.text();
+          const msg = document.getElementById("message");
+          msg.style.color = "red";
+          msg.textContent = `❌ บันทึกไม่สำเร็จ: ${errorText}`;
+        }
+      } catch (error) {
+        const msg = document.getElementById("message");
+        msg.style.color = "red";
+        msg.textContent = `❌ เกิดข้อผิดพลาด: ${error.message}`;
       }
     });
 
     (async function init() {
       await generateMachineCode();
-      await loadDropdowns();
+      await loadDepartments();
     })();
   </script>
 </body>
