@@ -82,6 +82,7 @@
   .status.อยู่ระหว่างดำเนินการ { background: #bfdbfe; color: #1e40af; }
   .status.ยกเลิกซ่อม { background: #fecaca; color: #991b1b; }
   .status.ไม่จบงาน { background: #fbbf24; color: #92400e; }
+  .status.จบงาน { background: #34d399; color: #065f46; }
 
   #noData {
     text-align: center;
@@ -148,15 +149,15 @@
 <table id="dataTable" style="display:none;">
   <thead>
     <tr>
-      <th>ที่/ใบแจ้งซ่อม</th>
+      <th>เลขที่/ใบแจ้งซ่อม</th>
       <th>ว/ด/ป</th>
       <th>แผนก</th>
       <th>ชื่อเครื่อง</th>
       <th>ปัญหา/อาการ</th>
-      <th>ช่าง</th>
       <th>การแก้ไข</th>
       <th>เวลาที่ใช้(นาที/ชั่วโมง)</th>
-      <th>สถานะงาน</th>
+      <th>ผู้แก้</th>
+      <th>สถานะ</th>
     </tr>
   </thead>
   <tbody id="tableBody"></tbody>
@@ -314,42 +315,58 @@ function calcDurationMinutes(start, end) {
   return Math.round(diffMs / 60000);
 }
 
-function renderTableByTechnician(dataFilter = null) {
+// ฟังก์ชันแสดงตารางโดยกลุ่มเลขที่/ใบแจ้งซ่อม แสดงเลขที่แค่แถวแรก
+function renderTableGroupedRequestNoShowDuplicate(requestFilter = null) {
   const table = document.getElementById("dataTable");
   const tbody = document.getElementById("tableBody");
   const noData = document.getElementById("noData");
 
   tbody.innerHTML = "";
 
-  const allRows = [];
+  const groupedData = {};
 
   Object.keys(repairTechniciansMap).forEach(requestNumber => {
-    if(dataFilter && !dataFilter.includes(requestNumber)) return;
+    if (requestFilter && !requestFilter.includes(requestNumber)) return;
 
     const techList = repairTechniciansMap[requestNumber];
     const mainData = cacheData.find(row => row["เลขที่ใบแจ้งซ่อม"] === requestNumber);
     if (!mainData) return;
 
-    techList.forEach(tech => {
+    groupedData[requestNumber] = {
+      mainData,
+      techList
+    };
+  });
+
+  const allRows = [];
+
+  Object.entries(groupedData).forEach(([requestNumber, group]) => {
+    const { mainData, techList } = group;
+
+    techList.forEach((tech, index) => {
       const empName = empMap[tech.EmpCode] || tech.EmpCode;
       const comment = tech["การแก้ไขความคิดเห็น"] || "-";
-      const startTime = tech["เวลาเริ่ม"];
       const durationMinutes = calcDurationMinutes(tech["เวลาเริ่ม"], tech["เวลาจบ"]);
       const durationFormatted = formatDuration(durationMinutes);
-      const statusText = tech["สถานะของงานช่าง"] || "-";
-      const statusClass = statusText.replace(/\s/g, "");
+
+      let statusTextRaw = tech["สถานะของงานช่าง"] || "-";
+      let statusText = statusTextRaw;
+      if (statusTextRaw === "จบงาน") statusText = "แล้วเสร็จ";
+      else if (statusTextRaw === "ไม่จบงาน") statusText = "ไม่เสร็จ";
+
+      const statusClass = statusTextRaw.replace(/\s/g, "");
 
       allRows.push(`
         <tr>
-          <td data-label="ที่/ใบแจ้งซ่อม">${requestNumber}</td>
-          <td data-label="ว/ด/ป">${formatDateTH(startTime)}</td>
+          <td data-label="เลขที่/ใบแจ้งซ่อม">${index === 0 ? requestNumber : ""}</td>
+          <td data-label="ว/ด/ป">${formatDateTH(tech["เวลาเริ่ม"]) || "-"}</td>
           <td data-label="แผนก">${departmentsMap[mainData["หน่วยงาน"]] || "-"}</td>
           <td data-label="ชื่อเครื่อง">${machinesMap[mainData["รหัสเครื่อง"]] || "-"}</td>
           <td data-label="ปัญหา/อาการ">${mainData["รายละเอียดอาการเสีย"] || "-"}</td>
-          <td data-label="ช่าง">${empName}</td>
           <td data-label="การแก้ไข">${comment}</td>
           <td data-label="เวลาที่ใช้(นาที/ชั่วโมง)">${durationFormatted}</td>
-          <td data-label="สถานะงาน"><span class="status ${statusClass}">${statusText}</span></td>
+          <td data-label="ผู้แก้">${empName}</td>
+          <td data-label="สถานะ"><span class="status ${statusClass}">${statusText}</span></td>
         </tr>
       `);
     });
@@ -383,14 +400,14 @@ function searchData() {
 
   const filteredRequestNumbers = filteredRequests.map(r => r["เลขที่ใบแจ้งซ่อม"]);
 
-  renderTableByTechnician(filteredRequestNumbers);
+  renderTableGroupedRequestNoShowDuplicate(filteredRequestNumbers);
 }
 
 function resetSearch() {
   document.getElementById("searchDepartment").value = "";
   document.getElementById("searchDateFrom").value = "";
   document.getElementById("searchDateTo").value = "";
-  renderTableByTechnician();
+  renderTableGroupedRequestNoShowDuplicate();
 }
 
 window.addEventListener("DOMContentLoaded", async () => {
@@ -399,7 +416,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   await fetchEmp();
   await fetchRepairTechnicians();
   await fetchRepairRequests();
-  renderTableByTechnician();
+  renderTableGroupedRequestNoShowDuplicate();
 });
 </script>
 
