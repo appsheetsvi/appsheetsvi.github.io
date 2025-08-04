@@ -208,22 +208,37 @@
       textarea.className = "w-full mt-2 border rounded p-2 text-sm";
       wrapper.appendChild(textarea);
 
-      // input datetime เริ่ม
-      const start = document.createElement("input");
-      start.type = "datetime-local";
-      start.name = `start_${emp.EmpCode}`;
-      start.className = "w-full mt-2 border rounded p-2 text-sm";
-      start.placeholder = "วันที่เริ่ม";
+      // container สำหรับวันที่เริ่ม - วันที่จบ
+      const dateContainer = document.createElement("div");
+      dateContainer.className = "flex gap-4 mt-2 flex-wrap";
 
-      // input datetime จบ
-      const end = document.createElement("input");
-      end.type = "datetime-local";
-      end.name = `end_${emp.EmpCode}`;
-      end.className = "w-full mt-2 border rounded p-2 text-sm";
-      end.placeholder = "วันที่จบ";
+      const startWrapper = document.createElement("div");
+      startWrapper.className = "flex flex-col flex-1 min-w-[120px]";
+      const startLabel = document.createElement("label");
+      startLabel.textContent = "วันที่เริ่ม";
+      startLabel.className = "text-xs font-semibold mb-1";
+      const startInput = document.createElement("input");
+      startInput.type = "datetime-local";
+      startInput.name = `start_${emp.EmpCode}`;
+      startInput.className = "border rounded p-2 text-sm";
+      startWrapper.appendChild(startLabel);
+      startWrapper.appendChild(startInput);
 
-      wrapper.appendChild(start);
-      wrapper.appendChild(end);
+      const endWrapper = document.createElement("div");
+      endWrapper.className = "flex flex-col flex-1 min-w-[120px]";
+      const endLabel = document.createElement("label");
+      endLabel.textContent = "วันที่จบ";
+      endLabel.className = "text-xs font-semibold mb-1";
+      const endInput = document.createElement("input");
+      endInput.type = "datetime-local";
+      endInput.name = `end_${emp.EmpCode}`;
+      endInput.className = "border rounded p-2 text-sm";
+      endWrapper.appendChild(endLabel);
+      endWrapper.appendChild(endInput);
+
+      dateContainer.appendChild(startWrapper);
+      dateContainer.appendChild(endWrapper);
+      wrapper.appendChild(dateContainer);
 
       // สถานะงานช่าง แบบ radio button
       const statusLabel = document.createElement("div");
