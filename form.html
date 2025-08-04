@@ -60,6 +60,26 @@
     #deptList, #machineList {
       display: none;
     }
+
+    /* ปรับขนาดช่องกรอกเล็กลง พร้อมสีพื้นหลัง และ focus */
+    input, textarea, select {
+      font-size: 0.875rem; /* text-sm */
+      padding: 0.375rem 0.5rem; /* p-1.5 */
+      background-color: #eff6ff; /* bg-blue-50 */
+      border: 1px solid #cbd5e0; /* border-gray-300 */
+      border-radius: 0.375rem; /* rounded-md */
+      transition: 0.2s;
+    }
+    input:focus, textarea:focus, select:focus {
+      outline: none;
+      border-color: #3b82f6; /* focus:ring-blue-500 */
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.4);
+      background-color: #ffffff;
+    }
+    /* ช่อง textarea ความสูงเล็กลง */
+    textarea {
+      min-height: 3rem;
+    }
   </style>
 </head>
 <body>
@@ -68,12 +88,12 @@
     <form id="repairForm" class="grid grid-cols-1 gap-6" autocomplete="off">
       <div>
         <label class="font-semibold">เลขที่ใบแจ้งซ่อม</label>
-        <input name="เลขที่ใบแจ้งซ่อม" readonly class="w-full border rounded p-2 bg-gray-100" />
+        <input name="เลขที่ใบแจ้งซ่อม" readonly class="w-full bg-gray-100" />
       </div>
       <div>
         <label for="deptSearch" class="font-semibold">หน่วยงาน</label>
         <div class="relative">
-          <input type="text" id="deptSearch" placeholder="🔍 พูดชื่อย่อค้นหาแผนก..." class="w-full border rounded p-2" required />
+          <input type="text" id="deptSearch" placeholder="🔍 พิมพ์ค้นหาแผนก..." class="w-full" required />
           <ul id="deptList"></ul>
         </div>
         <input type="hidden" id="deptCodeHidden" name="หน่วยงาน" required />
@@ -81,21 +101,21 @@
       <div>
         <label class="font-semibold">รายชื่อเครื่อง</label>
         <div class="relative">
-          <input type="text" id="machineSearch" placeholder="🔍 พูดชื่อย่อรายชื่อเครื่อง..." class="w-full border rounded p-2" required />
+          <input type="text" id="machineSearch" placeholder="🔍 พิมพ์ชื่อย่อเครื่อง..." class="w-full" required />
           <ul id="machineList" class="absolute"></ul>
         </div>
         <input type="hidden" name="รหัสเครื่อง" id="machineCodeHidden" required />
       </div>
       <div>
         <label class="font-semibold">รายละเอียด/อาการเสีย</label>
-        <textarea name="รายละเอียดอาการเสีย" class="w-full border rounded p-2" rows="3" required></textarea>
+        <textarea name="รายละเอียดอาการเสีย" class="w-full" rows="3" required></textarea>
       </div>
       <div>
         <label class="font-semibold">วิเคราะห์สาเหตุ</label>
-        <textarea name="วิเคราะห์สาเหตุ" class="w-full border rounded p-2" rows="2"></textarea>
+        <textarea name="วิเคราะห์สาเหตุ" class="w-full" rows="2"></textarea>
       </div>
       <div>
-        <label class="font-semibold">เลือกช่างผู้รับผิดชอบ</label>
+        <label class="font-semibold">เลือกช่างผู้รับผิดชอบ (สูงสุด 3 คน)</label>
         <div id="techCheckboxes" class="tech-checkboxes"></div>
       </div>
       <div>
@@ -235,7 +255,7 @@
         const comment = document.createElement("textarea");
         comment.name = `comment_${emp.EmpCode}`;
         comment.placeholder = "ความคิดเห็น";
-        comment.className = "w-full mt-2 border rounded p-2 text-sm";
+        comment.className = "w-full mt-2 text-sm";
         wrapper.appendChild(comment);
 
         const dates = document.createElement("div");
@@ -245,7 +265,7 @@
           const box = document.createElement("div");
           box.className = "flex flex-col flex-1 min-w-[120px]";
           box.innerHTML = `<label class="text-xs font-semibold mb-1">วันที่${type === "start" ? "เริ่ม" : "จบ"}</label>
-            <input type="datetime-local" name="${type}_${emp.EmpCode}" class="border rounded p-2 text-sm" />`;
+            <input type="datetime-local" name="${type}_${emp.EmpCode}" class="text-sm" />`;
           dates.appendChild(box);
         });
 
@@ -284,9 +304,9 @@
       const div = document.createElement("div");
       div.className = "parts-row";
       div.innerHTML = `
-        <input type="text" name="รายการอะไหล่" placeholder="รายการอะไหล่" class="border rounded p-2" />
-        <input type="number" name="จำนวน" min="1" value="1" class="border rounded p-2" />
-        <input type="text" name="หน่วย" placeholder="หน่วย" class="border rounded p-2" />
+        <input type="text" name="รายการอะไหล่" placeholder="รายการอะไหล่" />
+        <input type="number" name="จำนวน" min="1" value="1" />
+        <input type="text" name="หน่วย" placeholder="หน่วย" />
         <button type="button" class="btn-remove-part" title="ลบ">x</button>`;
       div.querySelector("button").onclick = () => div.remove();
       return div;
@@ -300,6 +320,12 @@
       const requestNumber = formData.get("เลขที่ใบแจ้งซ่อม");
       if (!requestNumber) {
         alert("เลขที่ใบแจ้งซ่อมไม่ถูกต้อง");
+        return;
+      }
+
+      const selectedTechs = formData.getAll("ช่างผู้รับผิดชอบ");
+      if (selectedTechs.length === 0) {
+        alert("กรุณาเลือกช่างอย่างน้อย 1 คน");
         return;
       }
 
@@ -338,33 +364,27 @@
         Rows: technicians
       };
 
-      // 3. RepairParts (ตามโครงสร้างใหม่: มี EmpCode และ Seq)
-    const partsRows = document.querySelectorAll(".parts-row");
-    const parts = [];
-    const selectedTechs = formData.getAll("ช่างผู้รับผิดชอบ");
-
-selectedTechs.forEach(empCode => {
-  let seq = 1;
-  partsRows.forEach(div => {
-    const partName = div.querySelector('input[name="รายการอะไหล่"]').value.trim();
-    const qty = div.querySelector('input[name="จำนวน"]').value.trim();
-    const unit = div.querySelector('input[name="หน่วย"]').value.trim();
-    if (partName) {
-      parts.push({
-        "เลขที่ใบแจ้งซ่อม": requestNumber,
-        "EmpCode": empCode,
-        "Seq": seq++,
-        "รายการอะไหล่": partName,
-        "จำนวน": qty,
-        "หน่วย": unit
+      // 3. RepairParts (เพิ่ม EmpCode ตามช่างที่เลือก + Seq)
+      const partsRows = document.querySelectorAll(".parts-row");
+      const parts = [];
+      selectedTechs.forEach(empCode => {
+        let seq = 1;
+        partsRows.forEach(div => {
+          const partName = div.querySelector('input[name="รายการอะไหล่"]').value.trim();
+          const qty = div.querySelector('input[name="จำนวน"]').value.trim();
+          const unit = div.querySelector('input[name="หน่วย"]').value.trim();
+          if (partName) {
+            parts.push({
+              "เลขที่ใบแจ้งซ่อม": requestNumber,
+              "EmpCode": empCode,
+              "Seq": seq++,
+              "รายการอะไหล่": partName,
+              "จำนวน": qty,
+              "หน่วย": unit
+            });
+          }
+        });
       });
-    }
-  });
-});
-
-
-
-
       const payloadParts = {
         Action: "Add",
         Properties: {},
@@ -413,27 +433,27 @@ selectedTechs.forEach(empCode => {
 
         // รีเซ็ตฟอร์มและเตรียมฟิลด์ใหม่
         $("repairForm").reset();
-        await generateNextRequestNumber();
         $("partsContainer").innerHTML = "";
-        $("partsContainer").appendChild(createPartRow());
+        await generateNextRequestNumber();
       } catch (err) {
-        alert("เกิดข้อผิดพลาด: " + err.message);
+        alert(err.message || "เกิดข้อผิดพลาดในการบันทึกข้อมูล");
       }
     }
 
-    $("repairForm").addEventListener("submit", e => {
-      e.preventDefault();
-      const formData = new FormData(e.target);
-      submitAllData(formData);
-    });
-
-    (async () => {
-      await loadDepartments();
-      await loadTechnicians();
+    window.onload = async () => {
+      await Promise.all([
+        loadDepartments(),
+        loadTechnicians()
+      ]);
       await generateNextRequestNumber();
-      $("partsContainer").appendChild(createPartRow());
-    })();
+      $("btnAddPart").click(); // เพิ่มแถวอะไหล่แรกให้อัตโนมัติ
+
+      $("repairForm").addEventListener("submit", e => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        submitAllData(fd);
+      });
+    };
   </script>
 </body>
 </html>
-
