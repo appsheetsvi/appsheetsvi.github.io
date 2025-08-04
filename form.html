@@ -73,7 +73,7 @@
       <div>
         <label for="deptSearch" class="font-semibold">หน่วยงาน</label>
         <div class="relative">
-          <input type="text" id="deptSearch" placeholder="🔍 พิมพ์ค้นหาแผนก..." class="w-full border rounded p-2" required />
+          <input type="text" id="deptSearch" placeholder="🔍 พูดชื่อย่อค้นหาแผนก..." class="w-full border rounded p-2" required />
           <ul id="deptList"></ul>
         </div>
         <input type="hidden" id="deptCodeHidden" name="หน่วยงาน" required />
@@ -81,7 +81,7 @@
       <div>
         <label class="font-semibold">รายชื่อเครื่อง</label>
         <div class="relative">
-          <input type="text" id="machineSearch" placeholder="🔍 พิมพ์ชื่อย่อเครื่อง..." class="w-full border rounded p-2" required />
+          <input type="text" id="machineSearch" placeholder="🔍 พูดชื่อย่อรายชื่อเครื่อง..." class="w-full border rounded p-2" required />
           <ul id="machineList" class="absolute"></ul>
         </div>
         <input type="hidden" name="รหัสเครื่อง" id="machineCodeHidden" required />
@@ -95,7 +95,7 @@
         <textarea name="วิเคราะห์สาเหตุ" class="w-full border rounded p-2" rows="2"></textarea>
       </div>
       <div>
-        <label class="font-semibold">เลือกช่างผู้รับผิดชอบ (สูงสุด 3 คน)</label>
+        <label class="font-semibold">เลือกช่างผู้รับผิดชอบ</label>
         <div id="techCheckboxes" class="tech-checkboxes"></div>
       </div>
       <div>
@@ -436,3 +436,4 @@ selectedTechs.forEach(empCode => {
   </script>
 </body>
 </html>
+
