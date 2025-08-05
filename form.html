@@ -112,7 +112,7 @@
       </div>
       <div>
         <label class="font-semibold">วิเคราะห์สาเหตุ</label>
-        <textarea name="วิเคราะห์สาเหตุ" class="w-full" rows="2"></textarea>
+        <textarea name="วิเคราะห์สาเหตุ" class="w-full" rows="2" required></textarea>
       </div>
       <div>
         <label class="font-semibold">เลือกช่างผู้รับผิดชอบ (สูงสุด 3 คน)</label>
@@ -316,83 +316,96 @@
       $("partsContainer").appendChild(createPartRow());
     });
 
+    function resetSubmitButton() {
+      $("submitBtn").disabled = false;
+      $("submitBtn").textContent = "✅ บันทึกข้อมูล";
+    }
+
     async function submitAllData(formData) {
-      const requestNumber = formData.get("เลขที่ใบแจ้งซ่อม");
-      if (!requestNumber) {
+      $("submitBtn").disabled = true;
+      $("submitBtn").textContent = "กำลังบันทึก...";
+
+      if (!formData.get("เลขที่ใบแจ้งซ่อม")) {
         alert("เลขที่ใบแจ้งซ่อมไม่ถูกต้อง");
+        resetSubmitButton();
+        return;
+      }
+      if (!formData.get("หน่วยงาน")) {
+        alert("กรุณาเลือกหน่วยงาน");
+        resetSubmitButton();
+        return;
+      }
+      if (!formData.get("รหัสเครื่อง")) {
+        alert("กรุณาเลือกเครื่องจักร");
+        resetSubmitButton();
+        return;
+      }
+      if (!formData.get("รายละเอียดอาการเสีย")) {
+        alert("กรุณากรอกรายละเอียด/อาการเสีย");
+        resetSubmitButton();
+        return;
+      }
+      if (!formData.get("วิเคราะห์สาเหตุ")) {
+        alert("กรุณากรอก วิเคราะห์สาเหตุ");
+        resetSubmitButton();
         return;
       }
 
       const selectedTechs = formData.getAll("ช่างผู้รับผิดชอบ");
       if (selectedTechs.length === 0) {
-        alert("กรุณาเลือกช่างอย่างน้อย 1 คน");
+        alert("กรุณาเลือกช่างผู้รับผิดชอบอย่างน้อย 1 คน");
+        resetSubmitButton();
+        return;
+      }
+      if (selectedTechs.length > 3) {
+        alert("เลือกช่างได้สูงสุด 3 คนเท่านั้น");
+        resetSubmitButton();
         return;
       }
 
-      // 1. Machinesymptom
-      const machineRow = {
-        "เลขที่ใบแจ้งซ่อม": requestNumber,
-        "รหัสเครื่อง": formData.get("รหัสเครื่อง"),
-        "หน่วยงาน": formData.get("หน่วยงาน"),
-        "รายละเอียดอาการเสีย": formData.get("รายละเอียดอาการเสีย"),
-        "วิเคราะห์สาเหตุ": formData.get("วิเคราะห์สาเหตุ") || ""
-      };
-      const payloadMachine = {
-        Action: "Add",
-        Properties: {},
-        Rows: [machineRow]
-      };
+      // ตรวจสอบข้อมูลของช่างแต่ละคนที่ถูกเลือก
+      for (const empCode of selectedTechs) {
+        const comment = formData.get(`comment_${empCode}`) || "";
+        const startDate = formData.get(`start_${empCode}`) || "";
+        const endDate = formData.get(`end_${empCode}`) || "";
+        const status = formData.get(`status_${empCode}`) || "";
 
-      // 2. RepairTechnicians
-      const technicians = [];
-      empList.forEach(emp => {
-        const checked = formData.getAll("ช่างผู้รับผิดชอบ").includes(emp.EmpCode);
-        if (checked) {
-          technicians.push({
-            "เลขที่ใบแจ้งซ่อม": requestNumber,
-            "EmpCode": emp.EmpCode,
-            "การแก้ไขความคิดเห็น": formData.get(`comment_${emp.EmpCode}`) || "",
-            "เวลาเริ่ม": formData.get(`start_${emp.EmpCode}`) || "",
-            "เวลาจบ": formData.get(`end_${emp.EmpCode}`) || "",
-            "สถานะของงานช่าง": formData.get(`status_${emp.EmpCode}`) || ""
-          });
+        if (comment.trim() === "") {
+          alert(`กรุณากรอกความคิดเห็นของช่าง รหัส ${empCode}`);
+          resetSubmitButton();
+          return;
         }
-      });
-      const payloadTech = {
-        Action: "Add",
-        Properties: {},
-        Rows: technicians
-      };
-
-      // 3. RepairParts (เพิ่ม EmpCode ตามช่างที่เลือก + Seq)
-      const partsRows = document.querySelectorAll(".parts-row");
-      const parts = [];
-      selectedTechs.forEach(empCode => {
-        let seq = 1;
-        partsRows.forEach(div => {
-          const partName = div.querySelector('input[name="รายการอะไหล่"]').value.trim();
-          const qty = div.querySelector('input[name="จำนวน"]').value.trim();
-          const unit = div.querySelector('input[name="หน่วย"]').value.trim();
-          if (partName) {
-            parts.push({
-              "เลขที่ใบแจ้งซ่อม": requestNumber,
-              "EmpCode": empCode,
-              "Seq": seq++,
-              "รายการอะไหล่": partName,
-              "จำนวน": qty,
-              "หน่วย": unit
-            });
-          }
-        });
-      });
-      const payloadParts = {
-        Action: "Add",
-        Properties: {},
-        Rows: parts
-      };
+        if (startDate.trim() === "") {
+          alert(`กรุณาเลือกวันที่เริ่มของช่าง รหัส ${empCode}`);
+          resetSubmitButton();
+          return;
+        }
+        if (endDate.trim() === "") {
+          alert(`กรุณาเลือกวันที่จบของช่าง รหัส ${empCode}`);
+          resetSubmitButton();
+          return;
+        }
+        if (status.trim() === "") {
+          alert(`กรุณาเลือกสถานะงานของช่าง รหัส ${empCode}`);
+          resetSubmitButton();
+          return;
+        }
+      }
 
       try {
-        // ส่ง Machinesymptom
+        // ส่งข้อมูล Machinesymptom
+        const machineRow = {
+          "เลขที่ใบแจ้งซ่อม": formData.get("เลขที่ใบแจ้งซ่อม"),
+          "รหัสเครื่อง": formData.get("รหัสเครื่อง"),
+          "หน่วยงาน": formData.get("หน่วยงาน"),
+          "รายละเอียดอาการเสีย": formData.get("รายละเอียดอาการเสีย"),
+          "วิเคราะห์สาเหตุ": formData.get("วิเคราะห์สาเหตุ")
+        };
+        const payloadMachine = {
+          Action: "Add",
+          Properties: {},
+          Rows: [machineRow]
+        };
         let res = await fetch(`${apiBase}Machinesymptom/Action`, {
           method: "POST",
           headers: {
@@ -403,7 +416,25 @@
         });
         if (!res.ok) throw new Error("ส่งข้อมูล Machinesymptom ไม่สำเร็จ");
 
-        // ส่ง RepairTechnicians (ถ้ามี)
+        // ส่งข้อมูล RepairTechnicians
+        const technicians = [];
+        empList.forEach(emp => {
+          if (selectedTechs.includes(emp.EmpCode)) {
+            technicians.push({
+              "เลขที่ใบแจ้งซ่อม": formData.get("เลขที่ใบแจ้งซ่อม"),
+              "EmpCode": emp.EmpCode,
+              "การแก้ไขความคิดเห็น": formData.get(`comment_${emp.EmpCode}`) || "",
+              "เวลาเริ่ม": formData.get(`start_${emp.EmpCode}`) || "",
+              "เวลาจบ": formData.get(`end_${emp.EmpCode}`) || "",
+              "สถานะของงานช่าง": formData.get(`status_${emp.EmpCode}`) || ""
+            });
+          }
+        });
+        const payloadTech = {
+          Action: "Add",
+          Properties: {},
+          Rows: technicians
+        };
         if (technicians.length > 0) {
           res = await fetch(`${apiBase}RepairTechnicians/Action`, {
             method: "POST",
@@ -416,7 +447,32 @@
           if (!res.ok) throw new Error("ส่งข้อมูล RepairTechnicians ไม่สำเร็จ");
         }
 
-        // ส่ง RepairParts (ถ้ามี)
+        // ส่งข้อมูล RepairParts
+        const partsRows = document.querySelectorAll(".parts-row");
+        const parts = [];
+        selectedTechs.forEach(empCode => {
+          let seq = 1;
+          partsRows.forEach(div => {
+            const partName = div.querySelector('input[name="รายการอะไหล่"]').value.trim();
+            const qty = div.querySelector('input[name="จำนวน"]').value.trim();
+            const unit = div.querySelector('input[name="หน่วย"]').value.trim();
+            if (partName) {
+              parts.push({
+                "เลขที่ใบแจ้งซ่อม": formData.get("เลขที่ใบแจ้งซ่อม"),
+                "EmpCode": empCode,
+                "Seq": seq++,
+                "รายการอะไหล่": partName,
+                "จำนวน": qty,
+                "หน่วย": unit
+              });
+            }
+          });
+        });
+        const payloadParts = {
+          Action: "Add",
+          Properties: {},
+          Rows: parts
+        };
         if (parts.length > 0) {
           res = await fetch(`${apiBase}RepairParts/Action`, {
             method: "POST",
@@ -429,31 +485,28 @@
           if (!res.ok) throw new Error("ส่งข้อมูล RepairParts ไม่สำเร็จ");
         }
 
-        alert("บันทึกข้อมูลสำเร็จทั้งหมด");
+        alert("บันทึกข้อมูลสำเร็จ");
+        location.reload();
 
-        // รีเซ็ตฟอร์มและเตรียมฟิลด์ใหม่
-        $("repairForm").reset();
-        $("partsContainer").innerHTML = "";
-        await generateNextRequestNumber();
       } catch (err) {
-        alert(err.message || "เกิดข้อผิดพลาดในการบันทึกข้อมูล");
+        alert(err.message);
+        resetSubmitButton();
       }
     }
 
-    window.onload = async () => {
-      await Promise.all([
-        loadDepartments(),
-        loadTechnicians()
-      ]);
-      await generateNextRequestNumber();
-      $("btnAddPart").click(); // เพิ่มแถวอะไหล่แรกให้อัตโนมัติ
+    document.getElementById("repairForm").addEventListener("submit", e => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      submitAllData(formData);
+    });
 
-      $("repairForm").addEventListener("submit", e => {
-        e.preventDefault();
-        const fd = new FormData(e.target);
-        submitAllData(fd);
-      });
-    };
+    async function init() {
+      await loadDepartments();
+      await generateNextRequestNumber();
+      await loadTechnicians();
+    }
+
+    init();
   </script>
 </body>
 </html>
