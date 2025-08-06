@@ -316,34 +316,23 @@ function calcDurationMinutes(start, end) {
 }
 
 // ฟังก์ชันแสดงตารางโดยกลุ่มเลขที่/ใบแจ้งซ่อม แสดงเลขที่แค่แถวแรก
-function renderTableGroupedRequestNoShowDuplicate(requestFilter = null) {
+function renderTableSortedByStartDate(requestFilter = null) {
   const table = document.getElementById("dataTable");
   const tbody = document.getElementById("tableBody");
   const noData = document.getElementById("noData");
 
   tbody.innerHTML = "";
 
-  const groupedData = {};
+  // รวมข้อมูลแถว RepairTechnicians ที่จะเอามาแสดง
+  let rows = [];
 
-  Object.keys(repairTechniciansMap).forEach(requestNumber => {
+  Object.entries(repairTechniciansMap).forEach(([requestNumber, techList]) => {
     if (requestFilter && !requestFilter.includes(requestNumber)) return;
 
-    const techList = repairTechniciansMap[requestNumber];
     const mainData = cacheData.find(row => row["เลขที่ใบแจ้งซ่อม"] === requestNumber);
     if (!mainData) return;
 
-    groupedData[requestNumber] = {
-      mainData,
-      techList
-    };
-  });
-
-  const allRows = [];
-
-  Object.entries(groupedData).forEach(([requestNumber, group]) => {
-    const { mainData, techList } = group;
-
-    techList.forEach((tech, index) => {
+    techList.forEach(tech => {
       const empName = empMap[tech.EmpCode] || tech.EmpCode;
       const comment = tech["การแก้ไขความคิดเห็น"] || "-";
       const durationMinutes = calcDurationMinutes(tech["เวลาเริ่ม"], tech["เวลาจบ"]);
@@ -356,9 +345,12 @@ function renderTableGroupedRequestNoShowDuplicate(requestFilter = null) {
 
       const statusClass = statusTextRaw.replace(/\s/g, "");
 
-      allRows.push(`
+      rows.push({
+        requestNumber,
+        startDate: new Date(tech["เวลาเริ่ม"]),
+        rowHtml: `
         <tr>
-          <td data-label="เลขที่/ใบแจ้งซ่อม">${index === 0 ? requestNumber : ""}</td>
+          <td data-label="เลขที่/ใบแจ้งซ่อม">${techList.indexOf(tech) === 0 ? requestNumber : ""}</td>
           <td data-label="ว/ด/ป">${formatDateTH(tech["เวลาเริ่ม"]) || "-"}</td>
           <td data-label="แผนก">${departmentsMap[mainData["หน่วยงาน"]] || "-"}</td>
           <td data-label="ชื่อเครื่อง">${machinesMap[mainData["รหัสเครื่อง"]] || "-"}</td>
@@ -368,46 +360,84 @@ function renderTableGroupedRequestNoShowDuplicate(requestFilter = null) {
           <td data-label="ผู้แก้">${empName}</td>
           <td data-label="สถานะ"><span class="status ${statusClass}">${statusText}</span></td>
         </tr>
-      `);
+      `
+      });
     });
   });
 
-  if (allRows.length === 0) {
+  // เรียงจากวันที่ เวลาเริ่ม จากมากไปน้อย
+  rows.sort((a, b) => b.startDate - a.startDate);
+
+  if (rows.length === 0) {
     table.style.display = "none";
     noData.style.display = "block";
   } else {
     table.style.display = "table";
     noData.style.display = "none";
-    tbody.innerHTML = allRows.join("");
+    tbody.innerHTML = rows.map(r => r.rowHtml).join("");
   }
 }
 
 function searchData() {
   const dept = document.getElementById("searchDepartment").value;
-  const from = document.getElementById("searchDateFrom").value;
-  const to = document.getElementById("searchDateTo").value;
+  let from = document.getElementById("searchDateFrom").value;
+  let to = document.getElementById("searchDateTo").value;
 
-  const filteredRequests = cacheData.filter(item => {
-    const d = new Date(item["วันที่แจ้งซ่อม"]);
-    if (isNaN(d)) return false;
+  // กรณีไม่เลือกวันที่ ให้ดึงวันที่ล่าสุดจาก RepairTechnicians เวลาเริ่ม
+  if (!from && !to) {
+    let maxDate = null;
+    Object.values(repairTechniciansMap).forEach(techList => {
+      techList.forEach(tech => {
+        const d = new Date(tech["เวลาเริ่ม"]);
+        if (!isNaN(d)) {
+          if (!maxDate || d > maxDate) maxDate = d;
+        }
+      });
+    });
 
-    let ok = true;
-    if (from) ok = d >= new Date(from + "T00:00:00");
-    if (to && ok) ok = d <= new Date(to + "T23:59:59");
+    if (maxDate) {
+      const yyyy = maxDate.getFullYear();
+      const mm = (maxDate.getMonth() + 1).toString().padStart(2, "0");
+      const dd = maxDate.getDate().toString().padStart(2, "0");
+      from = `${yyyy}-${mm}-${dd}`;
+      to = from;
+      document.getElementById("searchDateFrom").value = from;
+      document.getElementById("searchDateTo").value = to;
+    }
+  }
 
-    return (!dept || item["หน่วยงาน"] === dept) && ok;
+  const filteredRequestNumbersSet = new Set();
+
+  Object.entries(repairTechniciansMap).forEach(([requestNumber, techList]) => {
+    techList.forEach(tech => {
+      const d = new Date(tech["เวลาเริ่ม"]);
+      if (isNaN(d)) return;
+
+      let ok = true;
+      if (from) ok = d >= new Date(from + "T00:00:00");
+      if (to && ok) ok = d <= new Date(to + "T23:59:59");
+
+      if (ok) filteredRequestNumbersSet.add(requestNumber);
+    });
   });
 
-  const filteredRequestNumbers = filteredRequests.map(r => r["เลขที่ใบแจ้งซ่อม"]);
+  let filteredRequestNumbers = Array.from(filteredRequestNumbersSet);
 
-  renderTableGroupedRequestNoShowDuplicate(filteredRequestNumbers);
+  if (dept) {
+    filteredRequestNumbers = filteredRequestNumbers.filter(rqNo => {
+      const mainData = cacheData.find(row => row["เลขที่ใบแจ้งซ่อม"] === rqNo);
+      return mainData && mainData["หน่วยงาน"] === dept;
+    });
+  }
+
+  renderTableSortedByStartDate(filteredRequestNumbers);
 }
 
 function resetSearch() {
   document.getElementById("searchDepartment").value = "";
   document.getElementById("searchDateFrom").value = "";
   document.getElementById("searchDateTo").value = "";
-  renderTableGroupedRequestNoShowDuplicate();
+  renderTableSortedByStartDate();
 }
 
 window.addEventListener("DOMContentLoaded", async () => {
@@ -416,7 +446,7 @@ window.addEventListener("DOMContentLoaded", async () => {
   await fetchEmp();
   await fetchRepairTechnicians();
   await fetchRepairRequests();
-  renderTableGroupedRequestNoShowDuplicate();
+  renderTableSortedByStartDate();
 });
 </script>
 
