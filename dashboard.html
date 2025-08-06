@@ -137,6 +137,15 @@
 <h1>ค้นหาใบแจ้งซ่อมพร้อมรายละเอียดช่าง</h1>
 
 <div class="search-bar">
+  <select id="searchStatus">
+    <option value="">-- สถานะ --</option>
+    <option value="ซ่อมเสร็จ">ซ่อมเสร็จ</option>
+    <option value="รออะไหล่">รออะไหล่</option>
+    <option value="อยู่ระหว่างดำเนินการ">อยู่ระหว่างดำเนินการ</option>
+    <option value="ยกเลิกซ่อม">ยกเลิกซ่อม</option>
+    <option value="ไม่จบงาน">ไม่จบงาน</option>
+    <option value="จบงาน">จบงาน</option>
+  </select>
   <select id="searchDepartment">
     <option value="">-- หน่วยงาน --</option>
   </select>
@@ -175,6 +184,7 @@ let empMap = {};
 let repairTechniciansMap = {};
 let cacheData = [];
 
+// Fetch Departments
 async function fetchDepartments() {
   try {
     const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/Department/Find`, {
@@ -199,6 +209,7 @@ async function fetchDepartments() {
   }
 }
 
+// Fetch Machines
 async function fetchMachines() {
   try {
     const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineMaster/Find`, {
@@ -219,6 +230,7 @@ async function fetchMachines() {
   }
 }
 
+// Fetch Emp
 async function fetchEmp() {
   try {
     const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/Emp/Find`, {
@@ -239,6 +251,7 @@ async function fetchEmp() {
   }
 }
 
+// Fetch RepairTechnicians
 async function fetchRepairTechnicians() {
   try {
     const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/RepairTechnicians/Find`, {
@@ -261,6 +274,7 @@ async function fetchRepairTechnicians() {
   }
 }
 
+// Fetch RepairRequests (Machinesymptom)
 async function fetchRepairRequests() {
   try {
     const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/Machinesymptom/Find`, {
@@ -278,6 +292,7 @@ async function fetchRepairRequests() {
   }
 }
 
+// Format Date to dd/mm/yyyy (ปี พ.ศ.)
 function formatDateTH(dateStr) {
   if (!dateStr) return "-";
   const d = new Date(dateStr);
@@ -297,6 +312,7 @@ function formatDateTH(dateStr) {
   return `${day}/${month}/${yearBE}`;
 }
 
+// Format duration in mins to ชั่วโมง นาที
 function formatDuration(mins) {
   if (mins === null || mins === undefined || isNaN(mins)) return "-";
   if (mins < 60) return `${mins} นาที`;
@@ -305,6 +321,7 @@ function formatDuration(mins) {
   return m === 0 ? `${h} ชม.` : `${h} ชม. ${m} นาที`;
 }
 
+// Calculate difference minutes between two datetime strings
 function calcDurationMinutes(start, end) {
   if (!start || !end) return null;
   const d1 = new Date(start);
@@ -315,15 +332,14 @@ function calcDurationMinutes(start, end) {
   return Math.round(diffMs / 60000);
 }
 
-// ฟังก์ชันแสดงตารางโดยกลุ่มเลขที่/ใบแจ้งซ่อม แสดงเลขที่แค่แถวแรก
-function renderTableSortedByStartDate(requestFilter = null) {
+// Render table with filtering by date, dept, status
+function renderTableSortedByStartDate(requestFilter = null, statusFilter = "") {
   const table = document.getElementById("dataTable");
   const tbody = document.getElementById("tableBody");
   const noData = document.getElementById("noData");
 
   tbody.innerHTML = "";
 
-  // รวมข้อมูลแถว RepairTechnicians ที่จะเอามาแสดง
   let rows = [];
 
   Object.entries(repairTechniciansMap).forEach(([requestNumber, techList]) => {
@@ -333,10 +349,33 @@ function renderTableSortedByStartDate(requestFilter = null) {
     if (!mainData) return;
 
     techList.forEach(tech => {
+      if (statusFilter && statusFilter !== "" && tech["สถานะของงานช่าง"] !== statusFilter) return;
+
       const empName = empMap[tech.EmpCode] || tech.EmpCode;
       const comment = tech["การแก้ไขความคิดเห็น"] || "-";
+
+      const startDateFormatted = formatDateTH(tech["เวลาเริ่ม"]) || "-";
+
+      // เวลาเริ่มและเวลาจบเฉพาะเวลา 24 ชม.
+      const startDate = tech["เวลาเริ่ม"] ? new Date(tech["เวลาเริ่ม"]) : null;
+      const endDate = tech["เวลาจบ"] ? new Date(tech["เวลาจบ"]) : null;
+
+      const formatTime = (date) => {
+        if (!date) return "-";
+        return date.toLocaleTimeString('th-TH', { hour12: false });
+      };
+
+      const timeRange = startDate && endDate
+        ? `${formatTime(startDate)} - ${formatTime(endDate)}`
+        : "-";
+
       const durationMinutes = calcDurationMinutes(tech["เวลาเริ่ม"], tech["เวลาจบ"]);
       const durationFormatted = formatDuration(durationMinutes);
+
+      const timeUsedHtml = `
+        <div style="font-size:0.85rem; text-align:center;">${timeRange}</div>
+        <div style="color:#555; margin-top:4px; font-weight:600; text-align:center;">${durationFormatted}</div>
+      `;
 
       let statusTextRaw = tech["สถานะของงานช่าง"] || "-";
       let statusText = statusTextRaw;
@@ -350,10 +389,9 @@ function renderTableSortedByStartDate(requestFilter = null) {
         startDate: new Date(tech["เวลาเริ่ม"]),
         rowHtml: `
         <tr>
-          <td data-label="ว/ด/ป">${formatDateTH(tech["เวลาเริ่ม"]) || "-"}</td>
-          <td data-label="เวลาที่ใช้">
-            ${formatDateTH(tech["เวลาเริ่ม"]) || "-"} - ${formatDateTH(tech["เวลาจบ"]) || "-"}<br />
-            <small style="color:#555;">${durationFormatted}</small>
+          <td data-label="ว/ด/ป">${startDateFormatted}</td>
+          <td data-label="เวลาที่ใช้" style="text-align:center;">
+            ${timeUsedHtml}
           </td>
           <td data-label="ช่างผู้ทำ">${empName}</td>
           <td data-label="ใบแจ้งซ่อม">${requestNumber}</td>
@@ -363,12 +401,11 @@ function renderTableSortedByStartDate(requestFilter = null) {
           <td data-label="การแก้ไข">${comment}</td>
           <td data-label="สถานะ"><span class="status ${statusClass}">${statusText}</span></td>
         </tr>
-      `
+        `
       });
     });
   });
 
-  // เรียงจากวันที่ เวลาเริ่ม จากมากไปน้อย
   rows.sort((a, b) => b.startDate - a.startDate);
 
   if (rows.length === 0) {
@@ -381,12 +418,14 @@ function renderTableSortedByStartDate(requestFilter = null) {
   }
 }
 
+// Search filter function
 function searchData() {
+  const status = document.getElementById("searchStatus").value;
   const dept = document.getElementById("searchDepartment").value;
   let from = document.getElementById("searchDateFrom").value;
   let to = document.getElementById("searchDateTo").value;
 
-  // กรณีไม่เลือกวันที่ ให้ดึงวันที่ล่าสุดจาก RepairTechnicians เวลาเริ่ม
+  // ถ้าไม่เลือกวันที่ ดึงวันที่ล่าสุดจาก RepairTechnicians
   if (!from && !to) {
     let maxDate = null;
     Object.values(repairTechniciansMap).forEach(techList => {
@@ -433,10 +472,11 @@ function searchData() {
     });
   }
 
-  renderTableSortedByStartDate(filteredRequestNumbers);
+  renderTableSortedByStartDate(filteredRequestNumbers, status);
 }
 
 function resetSearch() {
+  document.getElementById("searchStatus").value = "";
   document.getElementById("searchDepartment").value = "";
   document.getElementById("searchDateFrom").value = "";
   document.getElementById("searchDateTo").value = "";
