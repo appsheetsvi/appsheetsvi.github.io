@@ -77,12 +77,9 @@
     font-size: 0.75rem;
     display: inline-block;
   }
-  .status.ซ่อมเสร็จ { background: #34d399; color: #065f46; }
-  .status.รออะไหล่ { background: #fde68a; color: #92400e; }
-  .status.อยู่ระหว่างดำเนินการ { background: #bfdbfe; color: #1e40af; }
-  .status.ยกเลิกซ่อม { background: #fecaca; color: #991b1b; }
+
   .status.ไม่จบงาน { background: #fbbf24; color: #92400e; }
-  .status.จบงาน { background: #34d399; color: #065f46; }
+  .status.แล้วเสร็จ { background: #34d399; color: #065f46; }
 
   #noData {
     text-align: center;
@@ -134,17 +131,13 @@
 </head>
 <body>
 
-<h1>ค้นหาใบแจ้งซ่อมพร้อมรายละเอียดช่าง</h1>
+<h1>Maintenance Report</h1>
 
 <div class="search-bar">
   <select id="searchStatus">
     <option value="">-- สถานะ --</option>
-    <option value="ซ่อมเสร็จ">ซ่อมเสร็จ</option>
-    <option value="รออะไหล่">รออะไหล่</option>
-    <option value="อยู่ระหว่างดำเนินการ">อยู่ระหว่างดำเนินการ</option>
-    <option value="ยกเลิกซ่อม">ยกเลิกซ่อม</option>
     <option value="ไม่จบงาน">ไม่จบงาน</option>
-    <option value="จบงาน">จบงาน</option>
+    <option value="แล้วเสร็จ">แล้วเสร็จ</option>
   </select>
   <select id="searchDepartment">
     <option value="">-- หน่วยงาน --</option>
@@ -495,3 +488,4 @@ window.addEventListener("DOMContentLoaded", async () => {
 
 </body>
 </html>
+
