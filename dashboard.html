@@ -149,14 +149,14 @@
 <table id="dataTable" style="display:none;">
   <thead>
     <tr>
-      <th>เลขที่/ใบแจ้งซ่อม</th>
       <th>ว/ด/ป</th>
+      <th>เวลาที่ใช้</th>
+      <th>ช่างผู้ทำ</th>
+      <th>ใบแจ้งซ่อม</th>
       <th>แผนก</th>
       <th>ชื่อเครื่อง</th>
-      <th>ปัญหา/อาการ</th>
+      <th>ปัญหาอาการ</th>
       <th>การแก้ไข</th>
-      <th>เวลาที่ใช้(นาที/ชั่วโมง)</th>
-      <th>ผู้แก้</th>
       <th>สถานะ</th>
     </tr>
   </thead>
@@ -350,14 +350,17 @@ function renderTableSortedByStartDate(requestFilter = null) {
         startDate: new Date(tech["เวลาเริ่ม"]),
         rowHtml: `
         <tr>
-          <td data-label="เลขที่/ใบแจ้งซ่อม">${techList.indexOf(tech) === 0 ? requestNumber : ""}</td>
           <td data-label="ว/ด/ป">${formatDateTH(tech["เวลาเริ่ม"]) || "-"}</td>
+          <td data-label="เวลาที่ใช้">
+            ${formatDateTH(tech["เวลาเริ่ม"]) || "-"} - ${formatDateTH(tech["เวลาจบ"]) || "-"}<br />
+            <small style="color:#555;">${durationFormatted}</small>
+          </td>
+          <td data-label="ช่างผู้ทำ">${empName}</td>
+          <td data-label="ใบแจ้งซ่อม">${requestNumber}</td>
           <td data-label="แผนก">${departmentsMap[mainData["หน่วยงาน"]] || "-"}</td>
           <td data-label="ชื่อเครื่อง">${machinesMap[mainData["รหัสเครื่อง"]] || "-"}</td>
-          <td data-label="ปัญหา/อาการ">${mainData["รายละเอียดอาการเสีย"] || "-"}</td>
+          <td data-label="ปัญหาอาการ">${mainData["รายละเอียดอาการเสีย"] || "-"}</td>
           <td data-label="การแก้ไข">${comment}</td>
-          <td data-label="เวลาที่ใช้(นาที/ชั่วโมง)">${durationFormatted}</td>
-          <td data-label="ผู้แก้">${empName}</td>
           <td data-label="สถานะ"><span class="status ${statusClass}">${statusText}</span></td>
         </tr>
       `
