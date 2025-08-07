@@ -55,11 +55,14 @@
       overflow: hidden;
       box-shadow: 0 2px 8px rgb(100 116 139 / 0.1);
       font-size: 0.9rem;
+      table-layout: fixed;
     }
+
     thead {
       background: #2563eb;
       color: white;
     }
+
     th, td {
       padding: 0.5rem 0.75rem;
       border: 1px solid #e2e8f0;
@@ -67,9 +70,25 @@
       vertical-align: middle;
       word-break: break-word;
     }
+table {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-size: 14px;
+}
+
+th:nth-child(1), td:nth-child(1) { width: 70px;  text-align: left;}    /* ว/ด/ป */
+th:nth-child(2), td:nth-child(2) { width: 100px; text-align: center;}  /* เวลาที่ใช้ */
+th:nth-child(3), td:nth-child(3) { width: 60px;  text-align: left;}    /* ช่างผู้ทำ ✅ */
+th:nth-child(4), td:nth-child(4) { width: 70px;  text-align: left;}    /* ใบแจ้งซ่อม ✅ */
+th:nth-child(5), td:nth-child(5) { width: 60px;  text-align: left;}    /* แผนก ✅ */
+th:nth-child(6), td:nth-child(6) { width: 140px; text-align: left; }    /* ชื่อเครื่อง */
+th:nth-child(7), td:nth-child(7) { width: 240px; text-align: left; }    /* ปัญหาอาการ */
+th:nth-child(8), td:nth-child(8) { width: 260px; text-align: left; }    /* การแก้ไข */
+th:nth-child(9), td:nth-child(9) { width: 70px; text-align: center; }  /* สถานะ */
+
     tbody tr:hover {
       background: #f0f9ff;
     }
+
     .status {
       padding: 0.15rem 0.5rem;
       border-radius: 9999px;
@@ -77,6 +96,7 @@
       font-size: 0.75rem;
       display: inline-block;
     }
+
     .status.ซ่อมเสร็จ { background: #34d399; color: #065f46; }
     .status.รออะไหล่ { background: #fde68a; color: #92400e; }
     .status.อยู่ระหว่างดำเนินการ { background: #bfdbfe; color: #1e40af; }
