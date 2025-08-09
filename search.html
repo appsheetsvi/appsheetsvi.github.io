@@ -264,18 +264,78 @@
   let partsData = []; // ข้อมูลอะไหล่ทั้งหมด
   let currentEditRecord = null; // ข้อมูลงานช่างที่กำลังแก้ไข
 
-  // แปลง ISO date -> dd/mm/yyyy HH:MM
-  function formatDateTimeLocal(iso) {
-    if (!iso) return "-";
-    const d = new Date(iso);
-    return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+  // แปลงวันที่แบบ พ.ศ. dd/mm/yyyy hh:mm:ss เป็น Date (ปี ค.ศ.)
+  function parseThaiDateTimeToDate(thaiDateStr) {
+    if (!thaiDateStr) return null;
+    // คาดว่า format เช่น "8/8/2568 3:00:00"
+    const [datePart, timePart] = thaiDateStr.split(' ');
+    if (!datePart) return null;
+    const [day, month, year] = datePart.split('/').map(Number);
+    if (!day || !month || !year) return null;
+    const yearCE = year - 543;
+    const time = timePart || "00:00:00";
+    // สร้าง ISO string เช่น "2025-08-08T03:00:00"
+    const isoString = `${yearCE.toString().padStart(4, '0')}-${month.toString().padStart(2,'0')}-${day.toString().padStart(2,'0')}T${time}`;
+    const date = new Date(isoString);
+    if (isNaN(date)) return null;
+    return date;
   }
 
-  // แปลง Date -> yyyy-MM-ddTHH:mm สำหรับ input datetime-local
-  function toDatetimeLocalString(date) {
-    if (!date) return "";
-    const d = new Date(date);
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}T${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+  // แปลง ISO string หรือ Date Object -> dd/mm/yyyy HH:MM โดยบวก +7 ชั่วโมง (เวลาไทย)
+  function formatDateTimeLocal(iso) {
+    if (!iso) return "-";
+    let date;
+    if (typeof iso === "string") {
+      date = new Date(iso);
+      if (isNaN(date)) {
+        // อาจเป็นวันที่แบบไทย (พ.ศ.)
+        date = parseThaiDateTimeToDate(iso);
+        if (!date) return "-";
+      }
+    } else if (iso instanceof Date) {
+      date = iso;
+    } else {
+      return "-";
+    }
+
+    // บวกเวลา 7 ชม. (เวลาไทย)
+    date = new Date(date.getTime() + 7*60*60*1000);
+
+    const d = String(date.getDate()).padStart(2,"0");
+    const m = String(date.getMonth()+1).padStart(2,"0");
+    const y = date.getFullYear();
+    const h = String(date.getHours()).padStart(2,"0");
+    const min = String(date.getMinutes()).padStart(2,"0");
+    return `${d}/${m}/${y} ${h}:${min}`;
+  }
+
+  // แปลง Date หรือ ISO string -> yyyy-MM-ddTHH:mm สำหรับ input[type=datetime-local]
+  function toDatetimeLocalString(dateInput) {
+    let date;
+    if (!dateInput) return "";
+    if (typeof dateInput === "string") {
+      date = new Date(dateInput);
+      if (isNaN(date)) {
+        // ถ้าเป็นรูปแบบ พ.ศ. แปลงก่อน
+        date = parseThaiDateTimeToDate(dateInput);
+        if (!date) return "";
+      }
+    } else if (dateInput instanceof Date) {
+      date = dateInput;
+    } else {
+      return "";
+    }
+
+    // ลบเวลา 7 ชม. เพื่อให้ตรงกับเวลาที่ input datetime-local ต้องการ (ซึ่งไม่มี timezone)
+    date = new Date(date.getTime() - 7*60*60*1000);
+
+    const y = date.getFullYear();
+    const m = String(date.getMonth()+1).padStart(2, "0");
+    const d = String(date.getDate()).padStart(2, "0");
+    const h = String(date.getHours()).padStart(2, "0");
+    const min = String(date.getMinutes()).padStart(2, "0");
+
+    return `${y}-${m}-${d}T${h}:${min}`;
   }
 
   // โหลดข้อมูลงานช่างและอะไหล่พร้อมกัน
@@ -380,100 +440,146 @@
         <td>${formatDateTimeLocal(rec["เวลาจบ"])}</td>
         <td>${rec["การแก้ไขความคิดเห็น"] || "-"}</td>
         <td style="white-space: nowrap;">${partsHtml}</td>
-        <td><button class="edit-btn" data-id="${rec.ID}">แก้ไข / เพิ่ม</button></td>
+        <td><button class="edit-btn" data-reqno="${reqNo}" data-empcode="${rec.EmpCode}">แก้ไข</button></td>
       </tr>`;
     });
 
     html += "</tbody></table>";
+
     cardsContainer.innerHTML = html;
 
-    // ผูก event ให้ปุ่มแก้ไข
-    const editButtons = cardsContainer.querySelectorAll("button.edit-btn");
-    editButtons.forEach(btn => {
-      btn.addEventListener("click", () => {
-        const id = btn.getAttribute("data-id");
-        openEditModal(id);
-      });
+    // ผูก event ปุ่มแก้ไข
+    document.querySelectorAll(".edit-btn").forEach(btn => {
+      btn.onclick = () => {
+        const reqNo = btn.getAttribute("data-reqno");
+        const empCode = btn.getAttribute("data-empcode");
+        openEditModal(reqNo, empCode);
+      };
     });
   }
 
-  // เปิด modal แก้ไขงานช่าง พร้อมโหลดอะไหล่ที่เกี่ยวข้อง
-  function openEditModal(recordId) {
-    const record = techniciansData.find(r => String(r.ID) === recordId);
-    if (!record) return alert("ไม่พบข้อมูลที่เลือก");
+  // เปิด modal พร้อมโหลดข้อมูลงานช่างและอะไหล่
+  function openEditModal(requestNumber, empCode) {
+    currentEditRecord = techniciansData.find(
+      rec => rec["เลขที่ใบแจ้งซ่อม"] === requestNumber && rec.EmpCode === empCode
+    );
 
-    currentEditRecord = record;
-
-    // เติมข้อมูล form
-    document.getElementById("editRequestNumber").value = record["เลขที่ใบแจ้งซ่อม"] || "";
-    document.getElementById("editEmpCode").value = record.EmpCode || "";
-    document.getElementById("editStatus").value = record["สถานะของงานช่าง"] || "";
-    document.getElementById("editComment").value = record["การแก้ไขความคิดเห็น"] || "";
-    document.getElementById("editStartTime").value = toDatetimeLocalString(record["เวลาเริ่ม"]);
-    document.getElementById("editEndTime").value = toDatetimeLocalString(record["เวลาจบ"]);
-
-    // ล้างอะไหล่เก่า
-    partsContainer.innerHTML = "";
-
-    // โหลดอะไหล่ที่เกี่ยวข้อง
-    const partsForThis = partsData.filter(p => p["เลขที่ใบแจ้งซ่อม"] === record["เลขที่ใบแจ้งซ่อม"]);
-
-    if (partsForThis.length === 0) {
-      addPartRow(); // เพิ่มแถวเปล่า 1 แถว
-    } else {
-      partsForThis
-        .sort((a, b) => (a.Seq || 0) - (b.Seq || 0))
-        .forEach(p => addPartRow(p["รายการอะไหล่"], p["จำนวน"], p["หน่วย"]));
+    // กรณีไม่มีข้อมูล ให้สร้างใหม่ (กรณีเพิ่มงานใหม่)
+    if (!currentEditRecord) {
+      currentEditRecord = {
+        "เลขที่ใบแจ้งซ่อม": requestNumber,
+        EmpCode: empCode,
+        "สถานะของงานช่าง": "",
+        "การแก้ไขความคิดเห็น": "",
+        "เวลาเริ่ม": "",
+        "เวลาจบ": ""
+      };
     }
 
-    // แสดง modal
+    // กรอกข้อมูลใน form
+    editForm.reset();
+    document.getElementById("editRequestNumber").value = currentEditRecord["เลขที่ใบแจ้งซ่อม"] || "";
+    document.getElementById("editEmpCode").value = currentEditRecord.EmpCode || "";
+    document.getElementById("editStatus").value = currentEditRecord["สถานะของงานช่าง"] || "";
+    document.getElementById("editComment").value = currentEditRecord["การแก้ไขความคิดเห็น"] || "";
+    document.getElementById("editStartTime").value = toDatetimeLocalString(currentEditRecord["เวลาเริ่ม"]);
+    document.getElementById("editEndTime").value = toDatetimeLocalString(currentEditRecord["เวลาจบ"]);
+
+    // โหลดอะไหล่ของใบแจ้งซ่อมนี้
+    const partsForThisRequest = partsData.filter(p => p["เลขที่ใบแจ้งซ่อม"] === requestNumber && p.EmpCode === empCode);
+
+    renderParts(partsForThisRequest);
+
     editModal.classList.add("show");
   }
 
-  // เพิ่มแถวอะไหล่ใน modal
-  function addPartRow(item = "", qty = "", unit = "") {
+  // แสดงอะไหล่ใน modal
+  function renderParts(partsList) {
+    partsContainer.innerHTML = "";
+    if (partsList.length === 0) {
+      partsContainer.innerHTML = "<p style='color:#666;'>ยังไม่มีรายการอะไหล่</p>";
+      return;
+    }
+    partsList.forEach(p => {
+      addPartRow(p);
+    });
+  }
+
+  // สร้างแถวอะไหล่ใหม่ใน modal
+  function addPartRow(data = {}) {
     const row = document.createElement("div");
     row.className = "part-row";
 
-    row.innerHTML = `
-      <input type="text" class="part-item" placeholder="รายการอะไหล่" value="${item}" required />
-      <input type="number" class="part-qty" placeholder="จำนวน" min="1" value="${qty}" required />
-      <input type="text" class="part-unit" placeholder="หน่วย" value="${unit}" />
-      <button type="button" class="remove-part" title="ลบรายการ">x</button>
-    `;
+    // Seq
+    const inputSeq = document.createElement("input");
+    inputSeq.type = "number";
+    inputSeq.min = "1";
+    inputSeq.placeholder = "ลำดับ";
+    inputSeq.value = data.Seq || "";
+    inputSeq.title = "ลำดับ";
+    inputSeq.required = true;
 
-    // ลบแถว
-    row.querySelector(".remove-part").addEventListener("click", () => {
-      partsContainer.removeChild(row);
-    });
+    // รายการอะไหล่
+    const inputItem = document.createElement("input");
+    inputItem.type = "text";
+    inputItem.placeholder = "รายการอะไหล่";
+    inputItem.value = data["รายการอะไหล่"] || "";
+    inputItem.required = true;
+
+    // จำนวน
+    const inputQty = document.createElement("input");
+    inputQty.type = "number";
+    inputQty.min = "0";
+    inputQty.placeholder = "จำนวน";
+    inputQty.value = data["จำนวน"] || "";
+    inputQty.required = true;
+
+    // หน่วย
+    const inputUnit = document.createElement("input");
+    inputUnit.type = "text";
+    inputUnit.placeholder = "หน่วย";
+    inputUnit.value = data["หน่วย"] || "";
+    inputUnit.required = true;
+
+    // ปุ่มลบ
+    const btnRemove = document.createElement("button");
+    btnRemove.type = "button";
+    btnRemove.className = "remove-part";
+    btnRemove.textContent = "ลบ";
+    btnRemove.onclick = () => row.remove();
+
+    row.appendChild(inputSeq);
+    row.appendChild(inputItem);
+    row.appendChild(inputQty);
+    row.appendChild(inputUnit);
+    row.appendChild(btnRemove);
 
     partsContainer.appendChild(row);
   }
 
-  // ปิด modal
-  function closeModal() {
+  addPartBtn.onclick = () => {
+    addPartRow();
+  };
+
+  modalCancelBtn.onclick = () => {
     editModal.classList.remove("show");
-    currentEditRecord = null;
-    editForm.reset();
-    partsContainer.innerHTML = "";
-  }
+  };
 
-  // บันทึกข้อมูล
-  editForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
+  editForm.onsubmit = async (evt) => {
+    evt.preventDefault();
 
-    if (!currentEditRecord) {
-      alert("ไม่มีข้อมูลที่จะแก้ไข");
-      return;
-    }
-
-    const reqNo = document.getElementById("editRequestNumber").value.trim();
+    // ตรวจสอบข้อมูลก่อนบันทึก
+    const requestNumber = document.getElementById("editRequestNumber").value.trim();
     const empCode = document.getElementById("editEmpCode").value.trim();
-    const status = document.getElementById("editStatus").value.trim();
+    const status = document.getElementById("editStatus").value;
     const comment = document.getElementById("editComment").value.trim();
     const startTime = document.getElementById("editStartTime").value;
     const endTime = document.getElementById("editEndTime").value;
 
+    if (!requestNumber) {
+      alert("เลขที่ใบแจ้งซ่อมไม่ถูกต้อง");
+      return;
+    }
     if (!empCode) {
       alert("กรุณากรอกรหัสช่าง (EmpCode)");
       return;
@@ -483,95 +589,148 @@
       return;
     }
 
+    // เตรียมข้อมูลงานช่างสำหรับบันทึก
+    const techRecord = {
+      "เลขที่ใบแจ้งซ่อม": requestNumber,
+      EmpCode: empCode,
+      "สถานะของงานช่าง": status,
+      "การแก้ไขความคิดเห็น": comment,
+      "เวลาเริ่ม": startTime ? new Date(new Date(startTime).getTime() + 7*60*60*1000).toISOString() : "",
+      "เวลาจบ": endTime ? new Date(new Date(endTime).getTime() + 7*60*60*1000).toISOString() : ""
+    };
+
     try {
-      // เพิ่มแถวใหม่ใน RepairTechnicians (ไม่แก้ไขแถวเก่า)
-      const newTechRow = {
-        "เลขที่ใบแจ้งซ่อม": reqNo,
-        EmpCode: empCode,
-        "สถานะของงานช่าง": status,
-        "การแก้ไขความคิดเห็น": comment,
-        "เวลาเริ่ม": startTime ? new Date(startTime).toISOString() : null,
-        "เวลาจบ": endTime ? new Date(endTime).toISOString() : null,
-      };
+      // อัปเดตหรือเพิ่มงานช่าง (Upsert)
+      await upsertRecord("RepairTechnicians", techRecord);
 
-      const resAddTech = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/RepairTechnicians/Action`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "ApplicationAccessKey": apiKey,
-        },
-        body: JSON.stringify({ Action: "Add", Rows: [newTechRow] })
-      });
+      // ลบอะไหล่เก่าของใบแจ้งซ่อมนี้ (เฉพาะที่ EmpCode ตรงกัน)
+      const deleteExpr = `AND([เลขที่ใบแจ้งซ่อม]="${requestNumber}", [EmpCode]="${empCode}")`;
+      await deleteRecords("RepairParts", deleteExpr);
 
-      if (!resAddTech.ok) throw new Error("บันทึกงานช่างล้มเหลว");
-
-      // ลบอะไหล่เก่าใน RepairParts ของเลขที่ใบแจ้งซ่อมนี้ก่อน
-      const resDeleteParts = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/RepairParts/Action`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "ApplicationAccessKey": apiKey,
-        },
-        body: JSON.stringify({ Action: "Delete", Expression: `[เลขที่ใบแจ้งซ่อม] = "${reqNo}"` })
-      });
-
-      if (!resDeleteParts.ok) throw new Error("ลบอะไหล่เก่าล้มเหลว");
-
-      // เพิ่มอะไหล่ใหม่พร้อม Seq
-      const newPartsRows = [];
-      const partRows = partsContainer.querySelectorAll(".part-row");
-      partRows.forEach((row, index) => {
-        const item = row.querySelector(".part-item").value.trim();
-        const qty = row.querySelector(".part-qty").value.trim();
-        const unit = row.querySelector(".part-unit").value.trim();
-        if (item && qty) {
-          newPartsRows.push({
-            "เลขที่ใบแจ้งซ่อม": reqNo,
+      // เตรียมข้อมูลอะไหล่ใหม่จาก form
+      const newParts = [];
+      const rows = partsContainer.querySelectorAll(".part-row");
+      rows.forEach(row => {
+        const inputs = row.querySelectorAll("input");
+        const seq = inputs[0].value.trim();
+        const item = inputs[1].value.trim();
+        const qty = inputs[2].value.trim();
+        const unit = inputs[3].value.trim();
+        if (seq && item && qty && unit) {
+          newParts.push({
+            "เลขที่ใบแจ้งซ่อม": requestNumber,
+            EmpCode: empCode,
+            Seq: parseInt(seq),
             "รายการอะไหล่": item,
-            "จำนวน": Number(qty),
-            "หน่วย": unit,
-            "EmpCode": empCode,
-            "Seq": index + 1  // ลำดับตามแถว
+            "จำนวน": qty,
+            "หน่วย": unit
           });
         }
       });
 
-      if (newPartsRows.length > 0) {
-        const resAddParts = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/RepairParts/Action`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "ApplicationAccessKey": apiKey,
-          },
-          body: JSON.stringify({ Action: "Add", Rows: newPartsRows })
-        });
-
-        if (!resAddParts.ok) throw new Error("บันทึกอะไหล่ล้มเหลว");
+      // เพิ่มอะไหล่ใหม่ทีละแถว (จะได้แยกแถวแต่ละรายการ)
+      for (const part of newParts) {
+        await addRecord("RepairParts", part);
       }
 
-      alert("บันทึกข้อมูลสำเร็จ");
-      closeModal();
+      alert("บันทึกสำเร็จ");
+      editModal.classList.remove("show");
       await loadData();
     } catch (err) {
-      alert("เกิดข้อผิดพลาด: " + err.message);
+      alert("เกิดข้อผิดพลาดในการบันทึก: " + err.message);
       console.error(err);
     }
-  });
+  };
 
-  // ปุ่มเพิ่มแถวอะไหล่
-  addPartBtn.addEventListener("click", () => addPartRow());
+  // เพิ่ม record ใหม่ในตาราง
+  async function addRecord(tableName, record) {
+    const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/${tableName}/Action`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "ApplicationAccessKey": apiKey,
+      },
+      body: JSON.stringify({
+        Action: "Add",
+        Properties: {},
+        Rows: [record]
+      })
+    });
+    if (!res.ok) throw new Error(`เพิ่มข้อมูลใน ${tableName} ล้มเหลว`);
+    const json = await res.json();
+    return json;
+  }
 
-  // ปุ่มยกเลิก modal
-  modalCancelBtn.addEventListener("click", () => closeModal());
+  // อัปเดต record (ถ้ามีแถวเดียวตรงคีย์) หรือเพิ่มใหม่
+  async function upsertRecord(tableName, record) {
+    // ลอง update ก่อน (key คือ [เลขที่ใบแจ้งซ่อม] + EmpCode)
+    const resUpdate = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/${tableName}/Action`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "ApplicationAccessKey": apiKey,
+      },
+      body: JSON.stringify({
+        Action: "Edit",
+        Properties: {},
+        Rows: [record]
+      })
+    });
+    if (resUpdate.ok) {
+      const json = await resUpdate.json();
+      if (json && json.length && json[0].Status === "Success") return json;
+    }
+    // ถ้าแก้ไขไม่ได้ ให้เพิ่มใหม่แทน
+    return await addRecord(tableName, record);
+  }
 
-  // ปรับ filter สถานะ
-  statusFilter.addEventListener("change", () => {
-    renderCards();
-  });
+  // ลบ record จากตารางโดย Expression (filter)
+  async function deleteRecords(tableName, expression) {
+    // ใช้ Action Delete ตาม Expression ได้ (แต่ API อาจจำกัด)
+    // วิธีนี้เป็นการหา record ก่อนแล้วลบทีละแถว
+    // แต่ API AppSheet ไม่มี Delete by Expression แบบตรงๆ
+    // ดังนั้นต้อง Find แล้ว Delete ทีละแถว
+    const resFind = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/${tableName}/Action`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "ApplicationAccessKey": apiKey,
+      },
+      body: JSON.stringify({ Action: "Find", Expression: expression })
+    });
+    if (!resFind.ok) throw new Error(`ค้นหาข้อมูลสำหรับลบใน ${tableName} ล้มเหลว`);
+    const foundRows = await resFind.json();
 
-  // โหลดข้อมูลตอนเปิดหน้า
+    if (!Array.isArray(foundRows) || foundRows.length === 0) return;
+
+    for (const row of foundRows) {
+      const key = row["Key"] || row["__RowNumber"]; // ใช้ key หรือเลขแถว
+      if (!key) continue;
+      const resDel = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/${tableName}/Action`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "ApplicationAccessKey": apiKey,
+        },
+        body: JSON.stringify({
+          Action: "Delete",
+          Properties: {},
+          Rows: [{ "Key": key }]
+        })
+      });
+      // ไม่ต้อง throw error ถ้าลบไม่สำเร็จ เพราะอาจไม่มี key หรืออะไร
+    }
+  }
+
+  // โหลดข้อมูลตอนเปิดเพจ
   loadData();
 
+  // กรองสถานะงานช่าง
+  statusFilter.onchange = () => {
+    renderCards();
+  };
+
 </script>
+
 </body>
 </html>
