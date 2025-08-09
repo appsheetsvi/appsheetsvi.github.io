@@ -1,194 +1,230 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ค้นหาใบแจ้งซ่อม (มือถือ + แก้ไขสถานะ)</title>
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun&display=swap" rel="stylesheet" />
-  <style>
-    body {
-      font-family: 'Sarabun', sans-serif;
-      background: #f0f4f8;
-      margin: 0;
-      padding: 1rem;
-      color: #1e293b;
-      font-size: 0.75rem;
-    }
-    h1 {
-      text-align: center;
-      color: #2563eb;
-      margin-bottom: 1rem;
-      font-size: 1.25rem;
-    }
-    .search-bar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.4rem;
-      justify-content: center;
-      margin-bottom: 1rem;
-    }
-    .search-bar select, 
-    .search-bar input[type="date"] {
-      padding: 0.3rem 0.5rem;
-      border-radius: 6px;
-      border: 1px solid #cbd5e1;
-      font-size: 0.75rem;
-      min-width: 100px;
-    }
-    .search-bar button {
-      background: #2563eb;
-      color: white;
-      border: none;
-      padding: 0.35rem 0.8rem;
-      border-radius: 6px;
-      font-weight: 600;
-      cursor: pointer;
-      font-size: 0.75rem;
-    }
-    .search-bar button:hover {
-      background: #1e40af;
-    }
-    #cardsContainer {
-      display: flex;
-      flex-direction: column;
-      gap: 0.8rem;
-    }
-    .card {
-      background: white;
-      border-radius: 10px;
-      padding: 0.8rem 1rem;
-      box-shadow: 0 2px 8px rgba(100, 116, 139, 0.1);
-      font-size: 0.75rem;
-    }
-    .card .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-weight: 700;
-      color: #1e40af;
-    }
-    .card .status {
-      padding: 0.2rem 0.6rem;
-      border-radius: 9999px;
-      font-weight: 600;
-      font-size: 0.7rem;
-      display: inline-block;
-    }
-    .status.ซ่อมเสร็จ { background: #34d399; color: #065f46; }
-    .status.รออะไหล่ { background: #fde68a; color: #92400e; }
-    .status.อยู่ระหว่างซ่อม { background: #bfdbfe; color: #1e40af; }
-    .status.ยกเลิกซ่อม { background: #fecaca; color: #991b1b; }
-    .card .detail { margin-top: 0.3rem; white-space: pre-wrap; color: #475569; }
-    .card .info-row { margin-top: 0.2rem; color: #334155; }
-    .card .date { margin-top: 0.3rem; font-size: 0.7rem; color: #64748b; }
-    button.edit-btn {
-      margin-top: 0.8rem;
-      background: #2563eb;
-      color: white;
-      border: none;
-      padding: 0.3rem 1rem;
-      border-radius: 8px;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 0.75rem;
-    }
-    button.edit-btn:hover { background: #1e40af; }
-    #editModal {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.35);
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-    }
-    #editModal.show { display: flex; }
-    #editModal .modal-content {
-      background: white;
-      border-radius: 12px;
-      padding: 1rem 1.5rem;
-      width: 90%;
-      max-width: 400px;
-      box-shadow: 0 6px 15px rgba(0,0,0,0.2);
-      font-size: 0.8rem;
-    }
-    #editModal h2 {
-      margin-top: 0;
-      color: #2563eb;
-      font-size: 1.1rem;
-    }
-    #editModal label {
-      display: block;
-      margin-top: 0.7rem;
-      font-weight: 600;
-      color: #1e293b;
-    }
-    #editModal input, #editModal select, #editModal textarea {
-      width: 100%;
-      margin-top: 0.3rem;
-      padding: 0.4rem;
-      font-size: 0.75rem;
-      border: 1.5px solid #60a5fa;
-      border-radius: 6px;
-      font-family: inherit;
-      resize: vertical;
-      box-sizing: border-box;
-    }
-    #editModal textarea { min-height: 70px; }
-    #editModal .buttons {
-      margin-top: 1.2rem;
-      text-align: right;
-    }
-    #editModal .buttons button {
-      padding: 0.4rem 1rem;
-      font-weight: 600;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      margin-left: 0.4rem;
-      font-size: 0.75rem;
-    }
-    #editModal .buttons .save-btn { background-color: #2563eb; color: white; }
-    #editModal .buttons .cancel-btn { background-color: #ddd; color: #333; }
-    #editModal .buttons .save-btn:hover { background-color: #1e40af; }
-    #editModal .buttons .cancel-btn:hover { background-color: #bbb; }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>จัดการงานช่าง + บันทึก RepairProgress + อะไหล่</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun&display=swap" rel="stylesheet" />
+<style>
+  /* (เหมือนเดิม) */
+  body {
+    font-family: 'Sarabun', sans-serif;
+    background: #f0f4f8;
+    margin: 0; padding: 1rem;
+    color: #1e293b;
+    font-size: 0.9rem;
+  }
+  h1 {
+    text-align: center;
+    color: #2563eb;
+    margin-bottom: 1rem;
+  }
+  #cardsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-width: 800px;
+    margin: 0 auto 2rem auto;
+  }
+  .card {
+    background: white;
+    border-radius: 10px;
+    padding: 1rem;
+    box-shadow: 0 2px 8px rgba(100,116,139,0.1);
+  }
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 700;
+    color: #1e40af;
+  }
+  .card-body {
+    margin-top: 0.5rem;
+    color: #475569;
+  }
+  button.edit-btn {
+    margin-top: 0.8rem;
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 0.4rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  button.edit-btn:hover {
+    background: #1e40af;
+  }
+  #editModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+  }
+  #editModal.show {
+    display: flex;
+  }
+  #editModal .modal-content {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem 2rem;
+    width: 95%;
+    max-width: 600px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+    font-size: 0.9rem;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  #editModal h2 {
+    margin-top: 0;
+    color: #2563eb;
+    font-size: 1.2rem;
+    text-align: center;
+  }
+  #editModal label {
+    display: block;
+    margin-top: 1rem;
+    font-weight: 600;
+    color: #1e293b;
+  }
+  #editModal input, #editModal select, #editModal textarea {
+    width: 100%;
+    margin-top: 0.3rem;
+    padding: 0.5rem;
+    font-size: 0.9rem;
+    border: 1.5px solid #60a5fa;
+    border-radius: 6px;
+    font-family: inherit;
+    resize: vertical;
+    box-sizing: border-box;
+  }
+  #editModal textarea {
+    min-height: 80px;
+  }
+  #editModal .buttons {
+    margin-top: 1.5rem;
+    text-align: right;
+  }
+  #editModal .buttons button {
+    padding: 0.5rem 1.2rem;
+    font-weight: 600;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    margin-left: 0.5rem;
+    font-size: 0.9rem;
+  }
+  #editModal .buttons .save-btn {
+    background-color: #2563eb;
+    color: white;
+  }
+  #editModal .buttons .cancel-btn {
+    background-color: #ddd;
+    color: #333;
+  }
+  #editModal .buttons .save-btn:hover {
+    background-color: #1e40af;
+  }
+  #editModal .buttons .cancel-btn:hover {
+    background-color: #bbb;
+  }
+  /* อะไหล่ */
+  #partsContainer {
+    margin-top: 1rem;
+    border: 1px solid #60a5fa;
+    border-radius: 8px;
+    padding: 0.5rem;
+    background: #f9fafb;
+  }
+  .part-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.4rem;
+    align-items: center;
+  }
+  .part-row input[type="text"], .part-row input[type="number"] {
+    flex: 1;
+    padding: 0.4rem 0.6rem;
+    border: 1.2px solid #60a5fa;
+    border-radius: 4px;
+  }
+  .part-row input.part-id {
+    display: none;
+  }
+  .part-row button.remove-part {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .part-row button.remove-part:hover {
+    background: #b91c1c;
+  }
+  #addPartBtn {
+    margin-top: 0.5rem;
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 0.4rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  #addPartBtn:hover {
+    background: #1e40af;
+  }
+</style>
 </head>
 <body>
 
-<h1>ค้นหาใบแจ้งซ่อม</h1>
+<h1>จัดการงานช่างและบันทึกประวัติ RepairProgress พร้อมอะไหล่</h1>
 
-<div class="search-bar">
-  <select id="searchDepartment"><option value="">-- หน่วยงาน --</option></select>
-  <input type="date" id="searchDateFrom" />
-  <input type="date" id="searchDateTo" />
-  <button onclick="searchData()">ค้นหา</button>
-  <button onclick="resetSearch()">รีเซ็ต</button>
-</div>
+<div id="cardsContainer">กำลังโหลดข้อมูล...</div>
 
-<div id="cardsContainer"></div>
-
+<!-- Modal แก้ไข/เพิ่มงานช่าง และจัดการอะไหล่ -->
 <div id="editModal">
   <div class="modal-content">
-    <h2>แก้ไขข้อมูลใบแจ้งซ่อม</h2>
+    <h2>แก้ไข/เพิ่มงานช่าง</h2>
     <form id="editForm">
       <label>เลขที่ใบแจ้งซ่อม</label>
-      <input type="text" id="editRequestNumber" disabled />
-      <label>สถานะเครื่อง</label>
-      <select id="editStatus">
+      <input type="text" id="editRequestNumber" readonly />
+
+      <label>รหัสช่าง (EmpCode)</label>
+      <input type="text" id="editEmpCode" required />
+
+      <label>สถานะของงานช่าง</label>
+      <select id="editStatus" required>
+        <option value="">-- เลือกสถานะ --</option>
+        <option value="อยู่ระหว่างดำเนินการ">อยู่ระหว่างดำเนินการ</option>
         <option value="ซ่อมเสร็จ">ซ่อมเสร็จ</option>
         <option value="รออะไหล่">รออะไหล่</option>
-        <option value="อยู่ระหว่างซ่อม">อยู่ระหว่างซ่อม</option>
-        <option value="ยกเลิกซ่อม">ยกเลิกซ่อม</option>
+        <option value="ยกเลิก">ยกเลิก</option>
       </select>
+
       <label>การแก้ไขความคิดเห็น</label>
-      <textarea id="editComment"></textarea>
-      <label>รายการอะไหล่ที่ใช้</label>
-      <input type="text" id="editParts" />
-      <label>จำนวน</label>
-      <input type="number" id="editQuantity" min="0" />
-      <label>วันที่ซ่อมเสร็จ</label>
-      <input type="date" id="editDateFinish" />
+      <textarea id="editComment" placeholder="ระบุรายละเอียดเพิ่มเติม"></textarea>
+
+      <label>เวลาเริ่มงาน</label>
+      <input type="datetime-local" id="editStartTime" />
+
+      <label>เวลาสิ้นสุดงาน</label>
+      <input type="datetime-local" id="editEndTime" />
+
+      <hr style="margin:1rem 0;" />
+
+      <label>รายการอะไหล่</label>
+      <div id="partsContainer">
+        <!-- แถวอะไหล่จะมาแสดงที่นี่ -->
+      </div>
+      <button type="button" id="addPartBtn">+ เพิ่มรายการอะไหล่</button>
+
       <div class="buttons">
         <button type="button" class="cancel-btn" onclick="closeModal()">ยกเลิก</button>
         <button type="submit" class="save-btn">บันทึก</button>
@@ -200,163 +236,314 @@
 <script>
   const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
   const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
-  const departmentsMap = {};
-  let machinesMap = {};
-  let cacheData = [];
-  let currentEditItem = null;
 
-  async function fetchDepartments() {
-    const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/Department/Find`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "ApplicationAccessKey": apiKey },
-      body: JSON.stringify({})
-    });
-    const data = await res.json();
-    const select = document.getElementById("searchDepartment");
-    data.forEach(d => {
-      departmentsMap[d.DeptCode] = d.DeptName;
-      const opt = document.createElement("option");
-      opt.value = d.DeptCode;
-      opt.textContent = d.DeptName;
-      select.appendChild(opt);
-    });
+  let dataList = [];
+  let currentEditId = null;
+  let currentEditData = null;
+
+  const cardsContainer = document.getElementById("cardsContainer");
+  const editModal = document.getElementById("editModal");
+  const editForm = document.getElementById("editForm");
+  const partsContainer = document.getElementById("partsContainer");
+  const addPartBtn = document.getElementById("addPartBtn");
+
+  // โหลดข้อมูล RepairTechnicians ทั้งหมด
+  async function loadRepairTechnicians() {
+    cardsContainer.innerHTML = "กำลังโหลดข้อมูล...";
+    try {
+      const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/RepairTechnicians/Find`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "ApplicationAccessKey": apiKey,
+        },
+        body: JSON.stringify({}) // ดึงทั้งหมด
+      });
+      if (!res.ok) throw new Error("โหลดข้อมูลล้มเหลว");
+      dataList = await res.json();
+      if (!Array.isArray(dataList)) dataList = [];
+
+      if (dataList.length === 0) {
+        cardsContainer.innerHTML = "<p style='text-align:center; color:#666;'>ไม่พบข้อมูลงานช่าง</p>";
+        return;
+      }
+      renderCards(dataList);
+    } catch (error) {
+      cardsContainer.innerHTML = `<p style="text-align:center; color:red;">เกิดข้อผิดพลาด: ${error.message}</p>`;
+      console.error(error);
+    }
   }
 
-  async function fetchMachines() {
-    const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineMaster/Find`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "ApplicationAccessKey": apiKey },
-      body: JSON.stringify({})
-    });
-    const data = await res.json();
-    data.forEach(m => machinesMap[m["รหัสเครื่อง"]] = m["รายชื่อเครื่องจักร"]);
-  }
-
-  async function fetchRepairRequests() {
-    const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/Machinesymptom/Find`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "ApplicationAccessKey": apiKey },
-      body: JSON.stringify({})
-    });
-    const data = await res.json();
-    cacheData = data;
-  }
-
-  function formatDate(dateStr) {
-    const d = new Date(dateStr);
-    return isNaN(d) ? "" : d.toISOString().slice(0, 10);
-  }
-
-  function formatDateTimeTH(isoString) {
-    const date = new Date(isoString);
-    if (isNaN(date)) return "-";
-    const d = date.getDate().toString().padStart(2,"0");
-    const m = (date.getMonth()+1).toString().padStart(2,"0");
-    const y = date.getFullYear();
-    const h = date.getHours().toString().padStart(2,"0");
-    const min = date.getMinutes().toString().padStart(2,"0");
-    return `${d}/${m}/${y} ${h}:${min}`;
-  }
-
-  function renderCards(data) {
-    const container = document.getElementById("cardsContainer");
-    container.innerHTML = "";
-    if (!data.length) return container.innerHTML = "<p style='text-align:center'>ไม่พบข้อมูล</p>";
-    data.forEach(item => {
+  // สร้าง card รายการงานช่าง
+  function renderCards(list) {
+    cardsContainer.innerHTML = "";
+    list.forEach(item => {
       const card = document.createElement("div");
       card.className = "card";
+
+      const startTime = item["เวลาเริ่ม"] ? formatDateTimeLocal(item["เวลาเริ่ม"]) : "-";
+      const endTime = item["เวลาจบ"] ? formatDateTimeLocal(item["เวลาจบ"]) : "-";
+
       card.innerHTML = `
-        <div class="header">
-          <div>เลขที่: <strong>${item["เลขที่ใบแจ้งซ่อม"]}</strong></div>
-          <div class="status ${item["สถานะเครื่อง"]}">${item["สถานะเครื่อง"]}</div>
+        <div class="card-header">
+          <div>เลขที่ใบแจ้งซ่อม: <b>${item["เลขที่ใบแจ้งซ่อม"] || "-"}</b></div>
+          <div>สถานะ: <b>${item["สถานะของงานช่าง"] || "-"}</b></div>
         </div>
-        <div class="detail">${item["รายละเอียดอาการเสีย"] || "-"}</div>
-        <div class="info-row"><strong>หน่วยงาน:</strong> ${departmentsMap[item["หน่วยงาน"]] || "-"}</div>
-        <div class="info-row"><strong>เครื่องจักร:</strong> ${machinesMap[item["รหัสเครื่อง"]] || "-"}</div>
-        <div class="info-row"><strong>การแก้ไขความคิดเห็น:</strong> ${item["การแก้ไขความคิดเห็น"] || "-"}</div>
-        <div class="info-row"><strong>รายการอะไหล่:</strong> ${item["รายการอะไหล่ที่ใช้"] || "-"}</div>
-        <div class="info-row"><strong>จำนวน:</strong> ${item["จำนวน"] || "-"}</div>
-        <div class="date"><strong>แจ้ง:</strong> ${formatDateTimeTH(item["วันที่แจ้งซ่อม"])} | <strong>เสร็จ:</strong> ${formatDateTimeTH(item["วันที่ซ่อมเสร็จ"])}</div>
-        <button class="edit-btn" onclick="openEditModal('${item["เลขที่ใบแจ้งซ่อม"]}')">แก้ไข</button>
+        <div class="card-body">
+          <div><strong>รหัสช่าง:</strong> ${item.EmpCode || "-"}</div>
+          <div><strong>เริ่ม:</strong> ${startTime}</div>
+          <div><strong>จบ:</strong> ${endTime}</div>
+          <div><strong>ความคิดเห็น:</strong><br/>${item["การแก้ไขความคิดเห็น"] || "-"}</div>
+          <button class="edit-btn" onclick="openEditModal('${item.ID}')">แก้ไข / เพิ่มงานใหม่</button>
+        </div>
       `;
-      container.appendChild(card);
+      cardsContainer.appendChild(card);
     });
   }
 
-  async function searchData() {
-    let dept = document.getElementById("searchDepartment").value;
-    let from = document.getElementById("searchDateFrom").value;
-    let to = document.getElementById("searchDateTo").value;
-
-    if (!cacheData.length) await fetchRepairRequests();
-
-    const filtered = cacheData.filter(item => {
-      const d = new Date(item["วันที่แจ้งซ่อม"]);
-      if (isNaN(d)) return false;
-
-      let ok = true;
-      if (from) ok = d >= new Date(from + "T00:00:00");
-      if (to && ok) ok = d <= new Date(to + "T23:59:59");
-      return (!dept || item["หน่วยงาน"] === dept) && ok;
-    });
-
-    renderCards(filtered);
+  // ฟังก์ชันแปลง ISO เป็นวันที่แบบไทย (dd/mm/yyyy HH:MM)
+  function formatDateTimeLocal(isoStr) {
+    try {
+      const d = new Date(isoStr);
+      const dd = String(d.getDate()).padStart(2, "0");
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const yyyy = d.getFullYear();
+      const hh = String(d.getHours()).padStart(2, "0");
+      const min = String(d.getMinutes()).padStart(2, "0");
+      return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
+    } catch {
+      return isoStr;
+    }
   }
 
-  function resetSearch() {
-    document.getElementById("searchDepartment").value = "";
-    document.getElementById("searchDateFrom").value = "";
-    document.getElementById("searchDateTo").value = "";
-    renderCards(cacheData);
+  // ฟังก์ชันแปลง Date เป็นรูปแบบ datetime-local input (yyyy-MM-ddTHH:mm)
+  function toDatetimeLocal(date) {
+    const pad = num => num.toString().padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
   }
 
-  function openEditModal(id) {
-    currentEditItem = cacheData.find(i => i["เลขที่ใบแจ้งซ่อม"] === id);
-    if (!currentEditItem) return;
-    document.getElementById("editRequestNumber").value = currentEditItem["เลขที่ใบแจ้งซ่อม"];
-    document.getElementById("editComment").value = currentEditItem["การแก้ไขความคิดเห็น"] || "";
-    document.getElementById("editParts").value = currentEditItem["รายการอะไหล่ที่ใช้"] || "";
-    document.getElementById("editQuantity").value = currentEditItem["จำนวน"] || "";
-    document.getElementById("editDateFinish").value = formatDate(currentEditItem["วันที่ซ่อมเสร็จ"]);
-    document.getElementById("editStatus").value = currentEditItem["สถานะเครื่อง"] || "ซ่อมเสร็จ";
-    document.getElementById("editModal").classList.add("show");
+  // เปิด modal สำหรับแก้ไข/เพิ่มงานใหม่
+  async function openEditModal(id) {
+    currentEditId = id;
+    currentEditData = dataList.find(d => d.ID === id);
+    if (!currentEditData) {
+      alert("ไม่พบข้อมูลสำหรับแก้ไข");
+      return;
+    }
+
+    // กรอกข้อมูลในฟอร์ม
+    document.getElementById("editRequestNumber").value = currentEditData["เลขที่ใบแจ้งซ่อม"] || "";
+    document.getElementById("editEmpCode").value = currentEditData.EmpCode || "";
+    document.getElementById("editStatus").value = currentEditData["สถานะของงานช่าง"] || "";
+    document.getElementById("editComment").value = currentEditData["การแก้ไขความคิดเห็น"] || "";
+    document.getElementById("editStartTime").value = currentEditData["เวลาเริ่ม"] ? toDatetimeLocal(new Date(currentEditData["เวลาเริ่ม"])) : "";
+    document.getElementById("editEndTime").value = currentEditData["เวลาจบ"] ? toDatetimeLocal(new Date(currentEditData["เวลาจบ"])) : "";
+
+    // โหลดข้อมูลอะไหล่ตามเลขที่ใบแจ้งซ่อม
+    await loadRepairParts(currentEditData["เลขที่ใบแจ้งซ่อม"]);
+
+    editModal.classList.add("show");
   }
 
+  // ปิด modal
   function closeModal() {
-    document.getElementById("editModal").classList.remove("show");
-    currentEditItem = null;
+    editModal.classList.remove("show");
+    currentEditId = null;
+    currentEditData = null;
+    editForm.reset();
+    clearParts();
   }
 
-  document.getElementById("editForm").addEventListener("submit", async e => {
-    e.preventDefault();
-    if (!currentEditItem) return;
-    currentEditItem["การแก้ไขความคิดเห็น"] = document.getElementById("editComment").value;
-    currentEditItem["รายการอะไหล่ที่ใช้"] = document.getElementById("editParts").value;
-    currentEditItem["จำนวน"] = Number(document.getElementById("editQuantity").value) || 0;
-    currentEditItem["วันที่ซ่อมเสร็จ"] = document.getElementById("editDateFinish").value;
-    currentEditItem["สถานะเครื่อง"] = document.getElementById("editStatus").value;
+  // โหลดอะไหล่ RepairParts ตามเลขที่ใบแจ้งซ่อม
+  async function loadRepairParts(requestNumber) {
+    partsContainer.innerHTML = "กำลังโหลดอะไหล่...";
+    try {
+      const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/RepairParts/Find`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "ApplicationAccessKey": apiKey,
+        },
+        body: JSON.stringify({
+          Filter: `[เลขที่ใบแจ้งซ่อม] = '${requestNumber}'`
+        })
+      });
+      if (!res.ok) throw new Error("โหลดอะไหล่ล้มเหลว");
+      const partsData = await res.json();
+      if (!Array.isArray(partsData)) {
+        partsContainer.innerHTML = "<p style='color:#666;'>ไม่พบข้อมูลอะไหล่</p>";
+        return;
+      }
+      renderParts(partsData);
+    } catch (error) {
+      partsContainer.innerHTML = `<p style="color:red;">เกิดข้อผิดพลาด: ${error.message}</p>`;
+      console.error(error);
+    }
+  }
 
-    const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/Machinesymptom/Action`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "ApplicationAccessKey": apiKey },
-      body: JSON.stringify({
-        Action: "Edit",
-        Properties: {},
-        Rows: [currentEditItem]
-      })
+  // แสดงอะไหล่ใน modal
+  function renderParts(parts) {
+    clearParts();
+    parts.forEach(p => {
+      addPartRow(p.ID, p["รายการอะไหล่"], p["จำนวน"], p["หน่วย"]);
+    });
+  }
+
+  // เคลียร์อะไหล่ใน modal
+  function clearParts() {
+    partsContainer.innerHTML = "";
+  }
+
+  // เพิ่มแถวอะไหล่ใน modal
+  function addPartRow(id = "", name = "", qty = "", unit = "") {
+    const row = document.createElement("div");
+    row.className = "part-row";
+
+    row.innerHTML = `
+      <input type="hidden" class="part-id" value="${id}" />
+      <input type="text" class="part-name" placeholder="ชื่ออะไหล่" value="${name}" required />
+      <input type="number" class="part-qty" placeholder="จำนวน" value="${qty}" min="1" required />
+      <input type="text" class="part-unit" placeholder="หน่วย" value="${unit}" required />
+      <button type="button" class="remove-part" title="ลบรายการอะไหล่">X</button>
+    `;
+
+    row.querySelector(".remove-part").addEventListener("click", () => {
+      row.remove();
     });
 
-    alert("บันทึกเรียบร้อย");
-    closeModal();
-    renderCards(cacheData);
+    partsContainer.appendChild(row);
+  }
+
+  addPartBtn.addEventListener("click", () => {
+    addPartRow();
   });
 
-  window.addEventListener("DOMContentLoaded", async () => {
-    await fetchDepartments();
-    await fetchMachines();
-    await fetchRepairRequests();
-    renderCards(cacheData);
+  // บันทึกข้อมูลเมื่อ submit ฟอร์ม
+  editForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    try {
+      const requestNumber = document.getElementById("editRequestNumber").value.trim();
+      const empCodeNew = document.getElementById("editEmpCode").value.trim();
+      const statusNew = document.getElementById("editStatus").value;
+      const commentNew = document.getElementById("editComment").value.trim();
+      const startTimeNew = document.getElementById("editStartTime").value;
+      const endTimeNew = document.getElementById("editEndTime").value;
+
+      if (!empCodeNew || !statusNew) {
+        alert("กรุณากรอกข้อมูลรหัสช่างและสถานะให้ครบถ้วน");
+        return;
+      }
+
+      // เพิ่มแถวใหม่ใน RepairTechnicians เสมอ (ไม่แก้ไขแถวเดิม)
+      const newTechData = {
+        "เลขที่ใบแจ้งซ่อม": requestNumber,
+        EmpCode: empCodeNew,
+        "สถานะของงานช่าง": statusNew,
+        "การแก้ไขความคิดเห็น": commentNew,
+        "เวลาเริ่ม": startTimeNew ? new Date(startTimeNew).toISOString() : null,
+        "เวลาจบ": endTimeNew ? new Date(endTimeNew).toISOString() : null,
+      };
+
+      const resAddTech = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/RepairTechnicians/Action`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "ApplicationAccessKey": apiKey,
+        },
+        body: JSON.stringify({
+          Action: "Add",
+          Rows: [newTechData],
+        }),
+      });
+
+      if (!resAddTech.ok) throw new Error("เพิ่มข้อมูลงานช่างล้มเหลว");
+
+      // เพิ่มแถวใหม่ใน RepairProgress ทุกกรณี
+      const newProgressData = {
+        "เลขที่ใบแจ้งซ่อม": requestNumber,
+        "วันที่อัปเดต": new Date().toISOString(),
+        "สถานะ": statusNew,
+        "รายละเอียดเพิ่มเติม": commentNew,
+        "ผู้แก้ไข": empCodeNew,
+      };
+
+      const resAddProgress = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/RepairProgress/Action`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "ApplicationAccessKey": apiKey,
+        },
+        body: JSON.stringify({
+          Action: "Add",
+          Rows: [newProgressData],
+        }),
+      });
+
+      if (!resAddProgress.ok) throw new Error("เพิ่มประวัติ RepairProgress ล้มเหลว");
+
+      // บันทึกอะไหล่ (เพิ่ม/แก้ไข) โดยไม่ลบข้อมูลเดิม
+      await saveRepairParts(requestNumber);
+
+      alert("บันทึกข้อมูลเรียบร้อยแล้ว");
+      closeModal();
+      await loadRepairTechnicians();
+
+    } catch (error) {
+      alert("เกิดข้อผิดพลาด: " + error.message);
+      console.error(error);
+    }
   });
+
+  // บันทึกอะไหล่ (เพิ่ม/แก้ไข) โดยไม่ลบข้อมูลเดิม
+  async function saveRepairParts(requestNumber) {
+    const rowsToAddOrUpdate = [];
+
+    const partRows = partsContainer.querySelectorAll(".part-row");
+    for (const row of partRows) {
+      const id = row.querySelector(".part-id").value;
+      const name = row.querySelector(".part-name").value.trim();
+      const qty = parseInt(row.querySelector(".part-qty").value);
+      const unit = row.querySelector(".part-unit").value.trim();
+
+      if (!name || !qty || qty <= 0 || !unit) {
+        alert("กรุณากรอกข้อมูลอะไหล่ให้ครบถ้วนและถูกต้อง");
+        throw new Error("ข้อมูลอะไหล่ไม่ครบถ้วน");
+      }
+
+      const rowData = {
+        "เลขที่ใบแจ้งซ่อม": requestNumber,
+        "รายการอะไหล่": name,
+        จำนวน: qty,
+        หน่วย: unit,
+      };
+      if (id) {
+        rowData.ID = id;
+      }
+      rowsToAddOrUpdate.push(rowData);
+    }
+
+    if (rowsToAddOrUpdate.length > 0) {
+      const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/RepairParts/Action`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "ApplicationAccessKey": apiKey,
+        },
+        body: JSON.stringify({
+          Action: "Edit",
+          Rows: rowsToAddOrUpdate,
+        }),
+      });
+      if (!res.ok) throw new Error("บันทึกอะไหล่ล้มเหลว");
+      return res.json();
+    }
+  }
+
+  // โหลดข้อมูลเมื่อเริ่มต้น
+  loadRepairTechnicians();
+
 </script>
+
 </body>
 </html>
