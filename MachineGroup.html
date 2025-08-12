@@ -97,6 +97,45 @@
       border-radius: 6px;
       box-sizing: border-box;
     }
+
+    /* Responsive */
+    @media (max-width: 700px) {
+      body {
+        padding: 1rem;
+      }
+      form, #machineListContainer {
+        padding: 1rem;
+        margin: 1rem auto;
+      }
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+      thead tr {
+        display: none;
+      }
+      tbody tr {
+        margin-bottom: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 0.5rem;
+      }
+      tbody td {
+        border: none;
+        padding: 0.4rem 0.5rem;
+        position: relative;
+        padding-left: 50%;
+        text-align: left;
+      }
+      tbody td::before {
+        position: absolute;
+        top: 0.4rem;
+        left: 0.6rem;
+        width: 45%;
+        white-space: nowrap;
+        font-weight: bold;
+        content: attr(data-label);
+      }
+    }
   </style>
 </head>
 <body>
@@ -128,7 +167,7 @@
   <!-- รายงานแสดงรายการเครื่องจักรทั้งหมด -->
   <div id="machineListContainer">
     <input type="text" id="searchListInput" placeholder="ค้นหาเครื่องจักรในรายงาน..." />
-    <table id="machineListTable">
+    <table id="machineListTable" role="grid" aria-label="รายงานเครื่องจักร">
       <thead>
         <tr>
           <th>รหัสเครื่อง</th>
@@ -261,16 +300,25 @@
     const tbody = document.querySelector("#machineListTable tbody");
     tbody.innerHTML = "";
 
-    const filtered = machinesData.filter(m => {
-      if (!filterText) return true;
-      const ft = filterText.toLowerCase();
-      return (
-        (m["รหัสเครื่อง"] && m["รหัสเครื่อง"].toLowerCase().includes(ft)) ||
-        (m["รายชื่อเครื่องจักร1"] && m["รายชื่อเครื่องจักร1"].toLowerCase().includes(ft)) ||
-        (m["รายชื่อเครื่องจักร"] && m["รายชื่อเครื่องจักร"].toLowerCase().includes(ft)) ||
-        (m["แผนก"] && m["แผนก"].toLowerCase().includes(ft))
-      );
-    });
+    if (!filterText.trim()) {
+      // ถ้าไม่มีข้อความค้นหา ให้ไม่แสดงอะไรเลย
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = 4;
+      td.style.textAlign = "center";
+      td.textContent = "กรุณาพิมพ์คำค้นหาเพื่อแสดงข้อมูล";
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+      return;
+    }
+
+    const ft = filterText.toLowerCase();
+    const filtered = machinesData.filter(m =>
+      (m["รหัสเครื่อง"] && m["รหัสเครื่อง"].toLowerCase().includes(ft)) ||
+      (m["รายชื่อเครื่องจักร1"] && m["รายชื่อเครื่องจักร1"].toLowerCase().includes(ft)) ||
+      (m["รายชื่อเครื่องจักร"] && m["รายชื่อเครื่องจักร"].toLowerCase().includes(ft)) ||
+      (m["แผนก"] && m["แผนก"].toLowerCase().includes(ft))
+    );
 
     if(filtered.length === 0) {
       const tr = document.createElement("tr");
@@ -286,10 +334,10 @@
     filtered.forEach(m => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${m["รหัสเครื่อง"] || ""}</td>
-        <td>${m["รายชื่อเครื่องจักร1"] || ""}</td>
-        <td>${m["รายชื่อเครื่องจักร"] || ""}</td>
-        <td>${m["แผนก"] || ""}</td>
+        <td data-label="รหัสเครื่อง">${m["รหัสเครื่อง"] || ""}</td>
+        <td data-label="รายชื่อเครื่องจักร1">${m["รายชื่อเครื่องจักร1"] || ""}</td>
+        <td data-label="รายชื่อเครื่องจักร">${m["รายชื่อเครื่องจักร"] || ""}</td>
+        <td data-label="แผนก">${m["แผนก"] || ""}</td>
       `;
       tr.addEventListener("click", () => fillMachineData(m));
       tbody.appendChild(tr);
@@ -429,7 +477,7 @@
     await loadDepartments();
     machinesData = await fetchTable("MachineMaster");
     await generateMachineCode();
-    renderMachineList();
+    renderMachineList("");  // ไม่แสดงข้อมูลตอนโหลด
     initAutocomplete();
   })();
 </script>
