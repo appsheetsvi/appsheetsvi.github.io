@@ -292,10 +292,8 @@
       const noData = document.getElementById("noData");
       tbody.innerHTML = "";
 
-      // สร้าง array สำหรับเก็บ rows เพื่อ render
       let rows = [];
 
-      // สร้าง object กลุ่มข้อมูลตามวันที่ (วันเดือนปีแบบไทย) เช่น "10/08/2568"
       const dateGroup = {};
 
       Object.entries(repairTechniciansMap).forEach(([requestNumber, techList]) => {
@@ -333,11 +331,8 @@
         });
       });
 
-      // ตอนนี้ dateGroup คือ { "10/08/2568": { "สมเจตน์": [array items], "ช่าง2": [array items] }, ...}
-
-      // เรียงวันที่ใหม่ → เก่า
+      // เรียงวันที่จากใหม่ไปเก่า
       const sortedDates = Object.keys(dateGroup).sort((a,b) => {
-        // แปลงวันที่ไทยเป็น Date เพื่อเปรียบเทียบ
         const toDate = str => {
           const [d,m,y] = str.split("/");
           return new Date(y-543, m-1, d);
@@ -345,14 +340,22 @@
         return toDate(b) - toDate(a);
       });
 
+      // กำหนดลำดับช่างที่ต้องการ
+      const customEmpOrder = ["เกษม", "เอกพันธ์", "สมเจตน์"];
+
       sortedDates.forEach(dateStr => {
         const empGroup = dateGroup[dateStr];
 
-        // เรียงช่าง A → Z
-        const sortedEmps = Object.keys(empGroup).sort((a,b) => a.localeCompare(b));
+        const sortedEmps = Object.keys(empGroup).sort((a,b) => {
+          const indexA = customEmpOrder.indexOf(a);
+          const indexB = customEmpOrder.indexOf(b);
+          if (indexA === -1 && indexB === -1) return a.localeCompare(b);
+          if (indexA === -1) return 1;
+          if (indexB === -1) return -1;
+          return indexA - indexB;
+        });
 
         sortedEmps.forEach(empName => {
-          // เรียงเวลาที่ใช้ มาก → น้อย
           empGroup[empName].sort((a,b) => b.durationMins - a.durationMins);
 
           empGroup[empName].forEach(item => {
@@ -432,7 +435,7 @@
       await fetchEmp();
       await fetchRepairTechnicians();
       await fetchRepairRequests();
-      renderTableGroupedByDateAndEmp(null, "");
+      resetSearch();
     }
 
     init();
