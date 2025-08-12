@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>เพิ่ม/แก้ไข เครื่องจักร</title>
+  <title>เพิ่ม/แก้ไข เครื่องจักร พร้อมรายงาน</title>
   <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet" />
   <style>
     body {
@@ -61,10 +61,46 @@
     #suggestions div:hover {
       background: #f0f0f0;
     }
+    /* ตารางรายงาน */
+    #machineListContainer {
+      max-width: 800px;
+      margin: 2rem auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 1rem 1rem 2rem 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 1rem;
+    }
+    thead {
+      background-color: #2563eb;
+      color: white;
+    }
+    th, td {
+      padding: 0.6rem 0.8rem;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+    tbody tr:hover {
+      background-color: #f0f4ff;
+      cursor: pointer;
+    }
+    #searchListInput {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+      font-size: 1rem;
+      border: 1.5px solid #93c5fd;
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
   </style>
 </head>
 <body>
-  <h1>📦 เพิ่ม/แก้ไข เครื่องจักร</h1>
+  <h1>📦 เพิ่ม/แก้ไข เครื่องจักร พร้อมรายงาน</h1>
   <form id="machineForm" onsubmit="return false;">
     <label>รหัสเครื่อง</label>
     <input type="text" id="machineCode" placeholder="รหัสเครื่อง (Auto หรือจากข้อมูลเดิม)" readonly />
@@ -88,6 +124,24 @@
     <button id="editBtn" type="button">แก้ไข</button>
     <div class="msg" id="message"></div>
   </form>
+
+  <!-- รายงานแสดงรายการเครื่องจักรทั้งหมด -->
+  <div id="machineListContainer">
+    <input type="text" id="searchListInput" placeholder="ค้นหาเครื่องจักรในรายงาน..." />
+    <table id="machineListTable">
+      <thead>
+        <tr>
+          <th>รหัสเครื่อง</th>
+          <th>รายชื่อเครื่องจักร1</th>
+          <th>รายชื่อเครื่องจักร</th>
+          <th>แผนก</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- แถวข้อมูลจะถูกเติมด้วย JS -->
+      </tbody>
+    </table>
+  </div>
 
 <script>
   const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
@@ -154,6 +208,9 @@
     // แสดงปุ่มแก้ไข ซ่อนปุ่มเพิ่ม
     document.getElementById("editBtn").style.display = "block";
     document.getElementById("addBtn").style.display = "none";
+
+    // Scroll to top ฟอร์มเวลาเลือกแก้ไข
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function resetForm() {
@@ -197,6 +254,45 @@
         suggestionsBox.appendChild(div);
       });
       suggestionsBox.style.display = "block";
+    });
+  }
+
+  function renderMachineList(filterText = "") {
+    const tbody = document.querySelector("#machineListTable tbody");
+    tbody.innerHTML = "";
+
+    const filtered = machinesData.filter(m => {
+      if (!filterText) return true;
+      const ft = filterText.toLowerCase();
+      return (
+        (m["รหัสเครื่อง"] && m["รหัสเครื่อง"].toLowerCase().includes(ft)) ||
+        (m["รายชื่อเครื่องจักร1"] && m["รายชื่อเครื่องจักร1"].toLowerCase().includes(ft)) ||
+        (m["รายชื่อเครื่องจักร"] && m["รายชื่อเครื่องจักร"].toLowerCase().includes(ft)) ||
+        (m["แผนก"] && m["แผนก"].toLowerCase().includes(ft))
+      );
+    });
+
+    if(filtered.length === 0) {
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = 4;
+      td.style.textAlign = "center";
+      td.textContent = "ไม่พบข้อมูลที่ค้นหา";
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+      return;
+    }
+
+    filtered.forEach(m => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${m["รหัสเครื่อง"] || ""}</td>
+        <td>${m["รายชื่อเครื่องจักร1"] || ""}</td>
+        <td>${m["รายชื่อเครื่องจักร"] || ""}</td>
+        <td>${m["แผนก"] || ""}</td>
+      `;
+      tr.addEventListener("click", () => fillMachineData(m));
+      tbody.appendChild(tr);
     });
   }
 
@@ -250,6 +346,7 @@
         machinesData = await fetchTable("MachineMaster");
         resetForm();
         await generateMachineCode();
+        renderMachineList();
       } else {
         msg.style.color = "red";
         msg.textContent = `❌ บันทึกไม่สำเร็จ: ${await res.text()}`;
@@ -310,6 +407,7 @@
         machinesData = await fetchTable("MachineMaster");
         resetForm();
         await generateMachineCode();
+        renderMachineList();
       } else {
         msg.style.color = "red";
         msg.textContent = `❌ แก้ไขไม่สำเร็จ: ${await res.text()}`;
@@ -323,10 +421,15 @@
   document.getElementById("addBtn").addEventListener("click", addMachine);
   document.getElementById("editBtn").addEventListener("click", editMachine);
 
+  document.getElementById("searchListInput").addEventListener("input", e => {
+    renderMachineList(e.target.value);
+  });
+
   (async function init() {
     await loadDepartments();
     machinesData = await fetchTable("MachineMaster");
     await generateMachineCode();
+    renderMachineList();
     initAutocomplete();
   })();
 </script>
