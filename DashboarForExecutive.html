@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ค้นหาใบแจ้งซ่อมพร้อมรายละเอียดช่าง</title>
   <link href="https://fonts.googleapis.com/css2?family=Sarabun&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       font-family: 'Sarabun', sans-serif;
@@ -24,6 +25,7 @@
       gap: 0.5rem;
       justify-content: flex-start;
       margin-bottom: 1rem;
+      align-items: center;
     }
     .search-bar select,
     .search-bar input[type="date"] {
@@ -56,6 +58,7 @@
       box-shadow: 0 2px 8px rgb(100 116 139 / 0.1);
       font-size: 0.9rem;
       table-layout: fixed;
+      margin-bottom: 1rem;
     }
 
     thead {
@@ -76,9 +79,9 @@
     }
 
     th:nth-child(1), td:nth-child(1) { width: 50px;  text-align: left;}    /* ว/ด/ป */
-    th:nth-child(2), td:nth-child(2) { width: 50px; text-align: center;}  /* ช่างผู้ทำ */
-    th:nth-child(3), td:nth-child(3) { width: 70px;  text-align: center;}    /* เวลาที่ใช้ */
-    th:nth-child(4), td:nth-child(4) { width: 50px;  text-align: left;}    /* ใบแจ้งซ่อม */
+    th:nth-child(2), td:nth-child(2) { width: 70px; text-align: center;}  /* ช่างผู้ทำ */
+    th:nth-child(3), td:nth-child(3) { width: 100px;  text-align: center;}    /* เวลา */
+    th:nth-child(4), td:nth-child(4) { width: 70px;  text-align: left;}    /* ใบแจ้งซ่อม */
     th:nth-child(5), td:nth-child(5) { width: 60px;  text-align: left;}    /* แผนก */
     th:nth-child(6), td:nth-child(6) { width: 140px; text-align: left; }    /* ชื่อเครื่อง */
     th:nth-child(7), td:nth-child(7) { width: 240px; text-align: left; }    /* ปัญหาอาการ */
@@ -109,6 +112,30 @@
       margin-top: 2rem;
       color: #64748b;
       font-style: italic;
+    }
+
+    /* กราฟ */
+    #chartsContainer {
+      display: flex;
+      gap: 1rem;
+      justify-content: flex-start;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .chartBox {
+      background: white;
+      border-radius: 10px;
+      padding: 1rem;
+      box-shadow: 0 2px 8px rgb(100 116 139 / 0.1);
+      width: 260px;
+      height: 260px;
+    }
+    .chartTitle {
+      text-align: center;
+      font-weight: 600;
+      color: #1d4ed8;
+      margin-bottom: 0.5rem;
+      font-size: 1.1rem;
     }
 
     @media (max-width: 768px) {
@@ -149,6 +176,15 @@
         width: 45%;
         font-size: 0.85rem;
       }
+
+      #chartsContainer {
+        justify-content: center;
+      }
+      .chartBox {
+        width: 100%;
+        max-width: 350px;
+        height: 320px;
+      }
     }
   </style>
 </head>
@@ -167,6 +203,17 @@
     </select>
     <button onclick="searchData()">ค้นหา</button>
     <button onclick="resetSearch()">รีเซ็ต</button>
+  </div>
+
+  <div id="chartsContainer">
+    <div class="chartBox">
+      <div class="chartTitle">งานซ่อม แยกตามสถานะ</div>
+      <canvas id="statusChart"></canvas>
+    </div>
+    <div class="chartBox">
+      <div class="chartTitle">งานซ่อม แยกตามช่าง</div>
+      <canvas id="empChart"></canvas>
+    </div>
   </div>
 
   <table id="dataTable" style="display:none;">
@@ -197,6 +244,8 @@
     let empMap = {};
     let repairTechniciansMap = {};
     let cacheData = [];
+
+    let statusChart, empChart;
 
     async function fetchDepartments() {
       const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/Department/Find`, {
@@ -285,7 +334,9 @@
       return (!isNaN(d1) && !isNaN(d2)) ? Math.round((d2 - d1) / 60000) : null;
     }
 
-    // เรียงข้อมูล และจัดกลุ่มให้แสดงตามวันที่และช่างเหมือนกัน (ไม่สลับช่างในวันเดียวกัน)
+    // กำหนดลำดับช่างตามที่ขอ
+    const preferredEmpOrder = ["เกษม", "เอกพันธ์", "สมเจตน์"];
+
     function renderTableGroupedByDateAndEmp(requestFilter = null, statusFilter = "") {
       const tbody = document.getElementById("tableBody");
       const table = document.getElementById("dataTable");
@@ -293,7 +344,6 @@
       tbody.innerHTML = "";
 
       let rows = [];
-
       const dateGroup = {};
 
       Object.entries(repairTechniciansMap).forEach(([requestNumber, techList]) => {
@@ -331,7 +381,7 @@
         });
       });
 
-      // เรียงวันที่จากใหม่ไปเก่า
+      // เรียงวันที่ใหม่ → เก่า
       const sortedDates = Object.keys(dateGroup).sort((a,b) => {
         const toDate = str => {
           const [d,m,y] = str.split("/");
@@ -340,27 +390,21 @@
         return toDate(b) - toDate(a);
       });
 
-      // กำหนดลำดับช่างที่ต้องการ
-      const customEmpOrder = ["เกษม", "เอกพันธ์", "สมเจตน์"];
-
       sortedDates.forEach(dateStr => {
         const empGroup = dateGroup[dateStr];
-
+        // เรียงช่างตาม preferred order ที่กำหนดก่อน
         const sortedEmps = Object.keys(empGroup).sort((a,b) => {
-          const indexA = customEmpOrder.indexOf(a);
-          const indexB = customEmpOrder.indexOf(b);
-          if (indexA === -1 && indexB === -1) return a.localeCompare(b);
-          if (indexA === -1) return 1;
-          if (indexB === -1) return -1;
-          return indexA - indexB;
+          const aIndex = preferredEmpOrder.indexOf(a);
+          const bIndex = preferredEmpOrder.indexOf(b);
+          if (aIndex === -1 && bIndex === -1) return a.localeCompare(b);
+          if (aIndex === -1) return 1;
+          if (bIndex === -1) return -1;
+          return aIndex - bIndex;
         });
 
         sortedEmps.forEach(empName => {
           empGroup[empName].sort((a,b) => b.durationMins - a.durationMins);
-
-          empGroup[empName].forEach(item => {
-            rows.push(item);
-          });
+          empGroup[empName].forEach(item => rows.push(item));
         });
       });
 
@@ -373,24 +417,148 @@
         tbody.innerHTML = rows.map(r => `
           <tr>
             <td data-label="ว/ด/ป">${formatDateTH(r.startDate)}</td>
-            <td data-label="ช่างผู้ทำ">${r.empName}</td>
-            <td data-label="เวลาที่ใช้" style="text-align:center;">
+            <td data-label="ช่าง">${r.empName}</td>
+            <td data-label="เวลา" style="text-align:center;">
               <div style="font-size:0.85rem;">${r.timeRange}</div>
               <div style="color:#555; font-weight:600;">${r.durationStr}</div>
             </td>
-            <td data-label="ใบแจ้งซ่อม">${r.requestNumber}</td>
+            <td data-label="เลขที่">${r.requestNumber}</td>
             <td data-label="แผนก">${r.department}</td>
             <td data-label="ชื่อเครื่อง">${r.machineName}</td>
-            <td data-label="ปัญหาอาการ">${r.symptom}</td>
+            <td data-label="ปัญหา">${r.symptom}</td>
             <td data-label="การแก้ไข">${r.comment}</td>
-            <td data-label="สถานะ"><span class="status ${r.statusClass}">${r.statusRaw}</span></td>
+            <td data-label="สถานะ" style="text-align:center;">
+              <span class="status ${r.statusClass}">${r.statusRaw}</span>
+            </td>
           </tr>
         `).join("");
       }
     }
 
+    function getStatusCount(filteredList, statusFilter) {
+      const counts = {};
+      filteredList.forEach(rqNo => {
+        const techs = repairTechniciansMap[rqNo];
+        if (!techs) return;
+        techs.forEach(t => {
+          if (statusFilter && t["สถานะของงานช่าง"] !== statusFilter) return;
+          const st = t["สถานะของงานช่าง"] || "-";
+          counts[st] = (counts[st] || 0) + 1;
+        });
+      });
+      return counts;
+    }
+
+    function getEmpCount(filteredList, statusFilter) {
+      const counts = {};
+      filteredList.forEach(rqNo => {
+        const techs = repairTechniciansMap[rqNo];
+        if (!techs) return;
+        techs.forEach(t => {
+          if (statusFilter && t["สถานะของงานช่าง"] !== statusFilter) return;
+          const empName = empMap[t.EmpCode] || t.EmpCode;
+          counts[empName] = (counts[empName] || 0) + 1;
+        });
+      });
+      return counts;
+    }
+
+    function updateCharts(filtered, statusFilter) {
+      const ctxStatus = document.getElementById("statusChart").getContext("2d");
+      const ctxEmp = document.getElementById("empChart").getContext("2d");
+
+      // สถานะ
+      const statusCount = getStatusCount(filtered, statusFilter);
+      const statusLabels = Object.keys(statusCount);
+      const statusData = statusLabels.map(l => statusCount[l]);
+      const statusColors = statusLabels.map(l => {
+        switch(l) {
+          case "จบงาน": return "#34d399";
+          case "ไม่จบงาน": return "#fbbf24";
+          case "รออะไหล่": return "#fde68a";
+          case "อยู่ระหว่างดำเนินการ": return "#bfdbfe";
+          case "ยกเลิกซ่อม": return "#fecaca";
+          case "ซ่อมเสร็จ": return "#34d399";
+          default: return "#9ca3af";
+        }
+      });
+
+      // ช่าง
+      const empCount = getEmpCount(filtered, statusFilter);
+      const empLabels = Object.keys(empCount);
+      const empData = empLabels.map(l => empCount[l]);
+      const empColors = empLabels.map((_, i) => `hsl(${i * 40 % 360}, 70%, 60%)`);
+
+      if (statusChart) statusChart.destroy();
+      if (empChart) empChart.destroy();
+
+      statusChart = new Chart(ctxStatus, {
+        type: "doughnut",
+        data: {
+          labels: statusLabels,
+          datasets: [{
+            data: statusData,
+            backgroundColor: statusColors,
+            borderWidth: 0,
+          }]
+        },
+        options: {
+          plugins: {
+            legend: {
+              position: "bottom",
+              labels: { font: { size: 12 } }
+            },
+            tooltip: {
+              callbacks: {
+                label: ctx => `${ctx.label}: ${ctx.parsed} งาน`
+              }
+            }
+          },
+          cutout: "70%",
+          responsive: true,
+          maintainAspectRatio: false,
+        }
+      });
+
+      empChart = new Chart(ctxEmp, {
+        type: "doughnut",
+        data: {
+          labels: empLabels,
+          datasets: [{
+            data: empData,
+            backgroundColor: empColors,
+            borderWidth: 0,
+          }]
+        },
+        options: {
+          plugins: {
+            legend: {
+              position: "bottom",
+              labels: { font: { size: 12 } }
+            },
+            tooltip: {
+              callbacks: {
+                label: ctx => `${ctx.label}: ${ctx.parsed} งาน`
+              }
+            }
+          },
+          cutout: "70%",
+          responsive: true,
+          maintainAspectRatio: false,
+        }
+      });
+    }
+
+    function resetSearch() {
+      document.getElementById("searchDateFrom").value = "";
+      document.getElementById("searchDateTo").value = "";
+      document.getElementById("searchDepartment").value = "";
+      document.getElementById("searchStatus").value = "";
+      searchData();
+    }
+
     function searchData() {
-      const status = document.getElementById("searchStatus").value;
+      const status = document.getElementById("searchStatus").value; // ค่าที่เลือก
       const dept = document.getElementById("searchDepartment").value;
       const from = document.getElementById("searchDateFrom").value;
       const to = document.getElementById("searchDateTo").value;
@@ -406,6 +574,9 @@
           if (from) valid = d >= new Date(from + "T00:00:00");
           if (to && valid) valid = d <= new Date(to + "T23:59:59");
 
+          // กรองตามสถานะ "จบงาน" หรือ "ไม่จบงาน" ตาม dropdown
+          if (status && tech["สถานะของงานช่าง"] !== status) valid = false;
+
           if (valid) filteredSet.add(rqNo);
         });
       });
@@ -419,27 +590,19 @@
       }
 
       renderTableGroupedByDateAndEmp(filtered, status);
+      updateCharts(filtered, status);
     }
 
-    function resetSearch() {
-      document.getElementById("searchDateFrom").value = "";
-      document.getElementById("searchDateTo").value = "";
-      document.getElementById("searchDepartment").value = "";
-      document.getElementById("searchStatus").value = "";
-      renderTableGroupedByDateAndEmp(null, "");
-    }
-
-    async function init() {
+    async function loadAllData() {
       await fetchDepartments();
       await fetchMachines();
       await fetchEmp();
       await fetchRepairTechnicians();
       await fetchRepairRequests();
-      resetSearch();
+      searchData();
     }
 
-    init();
-
+    loadAllData();
   </script>
 </body>
 </html>
