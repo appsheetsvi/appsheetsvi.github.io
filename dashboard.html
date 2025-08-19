@@ -9,12 +9,12 @@
 <style>
 body { font-family: 'Sarabun', sans-serif; background:#f0f4f8; margin:0; padding:1rem; color:#1e293b; font-size:0.9rem; }
 h1 { text-align:left; color:#1d4ed8; margin-bottom:1rem; font-size:1.5rem; }
-.chart-wrapper { display:flex; justify-content:center; flex-wrap:wrap; gap:2rem; margin-bottom:2rem; }
-.chart-box { width:260px; max-width:100%; }
+.chart-wrapper { display:flex; justify-content:center; flex-wrap:wrap; gap:1.5rem; margin-bottom:2rem; }
+.chart-box { width:220px; max-width:100%; }
 .search-bar { display:flex; flex-wrap:wrap; gap:0.5rem; justify-content:space-between; margin-bottom:1rem; }
 .search-bar > div { display:flex; gap:0.5rem; flex-wrap:wrap; }
-.search-bar select, .search-bar input[type="date"] { padding:0.4rem 0.6rem; border-radius:6px; border:1px solid #cbd5e1; font-size:0.9rem; min-width:140px; }
-.search-bar button { background:#1d4ed8; color:white; border:none; padding:0.4rem 1rem; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.9rem; }
+.search-bar select, .search-bar input[type="date"] { padding:0.35rem 0.5rem; border-radius:6px; border:1px solid #cbd5e1; font-size:0.9rem; min-width:140px; }
+.search-bar button { background:#1d4ed8; color:white; border:none; padding:0.35rem 0.8rem; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.9rem; }
 .search-bar button:hover { background:#1e40af; }
 table { width:100%; border-collapse:collapse; background:white; border-radius:10px; overflow:hidden; box-shadow:0 2px 8px rgb(100 116 139 / 0.1); font-size:0.9rem; table-layout:fixed; }
 thead { background:#2563eb; color:white; }
@@ -172,46 +172,15 @@ function renderTechnicianChart(filteredData){
     const name=empMap[r.EmpCode]||r.EmpCode;
     counts[name]=(counts[name]||0)+1;
   });
-
   const labels=Object.keys(counts);
   const data=Object.values(counts);
-
+  const colors=labels.map((_,i)=>`hsl(${i*360/labels.length},75%,55%)`);
   const ctx=document.getElementById('technicianChart').getContext('2d');
   if(window.technicianChartInstance) window.technicianChartInstance.destroy();
-
-  const backgroundColors=[
-    '#4f46e5','#3b82f6','#06b6d4','#10b981','#f59e0b','#ef4444','#8b5cf6','#14b8a6','#f43f5e','#f97316'
-  ];
-
   window.technicianChartInstance=new Chart(ctx,{
     type:'doughnut',
-    data:{
-      labels,
-      datasets:[{
-        data,
-        backgroundColor: labels.map((_,i)=>backgroundColors[i % backgroundColors.length]),
-        borderWidth:1
-      }]
-    },
-    options:{
-      responsive:true,
-      cutout: '70%',
-      plugins:{
-        legend:{
-          position:'bottom',
-          labels:{
-            boxWidth:12,
-            padding:10,
-            font:{size:12}
-          }
-        },
-        title:{
-          display:true,
-          text:'งานต่อช่าง',
-          font:{size:16}
-        }
-      }
-    }
+    data:{ labels, datasets:[{ data, backgroundColor:colors, borderColor:'#fff', borderWidth:2 }] },
+    options:{ responsive:true, plugins:{ legend:{ position:'bottom', labels:{boxWidth:12} }, title:{display:true,text:'งานต่อช่าง'} } }
   });
 }
 
@@ -223,11 +192,12 @@ function renderStatusChart(filteredData){
   });
   const labels=Object.keys(counts);
   const data=Object.values(counts);
+  const colors=['#34d399','#fde68a','#bfdbfe','#fecaca','#fbbf24','#2563eb','#6b7280'];
   const ctx=document.getElementById('statusChart').getContext('2d');
   if(window.statusChartInstance) window.statusChartInstance.destroy();
   window.statusChartInstance=new Chart(ctx,{
     type:'doughnut',
-    data:{ labels, datasets:[{ data, backgroundColor:['#34d399','#fde68a','#bfdbfe','#fecaca','#fbbf24','#2563eb','#6b7280'] }] },
+    data:{ labels, datasets:[{ data, backgroundColor:colors }] },
     options:{ responsive:true, plugins:{ legend:{ position:'bottom' }, title:{display:true,text:'สถานะงานช่าง'} } }
   });
 }
@@ -261,8 +231,16 @@ function renderTable(){
     filteredData.push(...filtered);
     filtered.sort((a,b)=>new Date(a["เวลาเริ่ม"])-new Date(b["เวลาเริ่ม"]));
     const main=filtered[0];
-    const names=filtered.map(f=>empMap[f.EmpCode]||f.EmpCode).join(", ");
-    const machineNames=filtered.map(f=>machineMap[f["รหัสเครื่อง"]]||f["รหัสเครื่อง"]).join(", ");
+    const names=filtered.map(f=>empMap[f.EmpCode]||f.EmpCode).join(",");
+    
+    // แก้ตรงนี้ให้ unique และนับจำนวน
+    const machineCounts={};
+    filtered.forEach(f=>{
+      const name=machineMap[f["รหัสเครื่อง"]]||f["รหัสเครื่อง"];
+      machineCounts[name]=(machineCounts[name]||0)+1;
+    });
+    const machineNames=Object.entries(machineCounts).map(([name,count])=> count>1 ? `${name} x${count}` : name).join(", ");
+
     const startDate=formatDateTH(main["เวลาเริ่ม"]);
     const start=new Date(main["เวลาเริ่ม"]);
     const end=new Date(main["เวลาจบ"]);
@@ -336,7 +314,6 @@ async function init(){
   await fetchRepairTechnicians();
   resetSearch();
 }
-
 init();
 </script>
 </body>
