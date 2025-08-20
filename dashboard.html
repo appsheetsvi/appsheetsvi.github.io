@@ -7,93 +7,97 @@
 <link href="https://fonts.googleapis.com/css2?family=Sarabun&display=swap" rel="stylesheet" />
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-body { font-family: 'Sarabun', sans-serif; background:#f0f4f8; margin:0; padding:1rem; color:#1e293b; font-size:0.9rem; }
-h1 { text-align:left; color:#1d4ed8; margin-bottom:1rem; font-size:1.5rem; }
-.chart-wrapper { display:flex; justify-content:center; flex-wrap:wrap; gap:1.5rem; margin-bottom:2rem; }
-.chart-box { width:220px; max-width:100%; }
-.search-bar { display:flex; flex-wrap:wrap; gap:0.5rem; justify-content:space-between; margin-bottom:1rem; }
-.search-bar > div { display:flex; gap:0.5rem; flex-wrap:wrap; }
-.search-bar select, .search-bar input[type="date"] { padding:0.35rem 0.5rem; border-radius:6px; border:1px solid #cbd5e1; font-size:0.9rem; min-width:140px; }
-.search-bar button { background:#1d4ed8; color:white; border:none; padding:0.35rem 0.8rem; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.9rem; }
-.search-bar button:hover { background:#1e40af; }
-table { width:100%; border-collapse:collapse; background:white; border-radius:10px; overflow:hidden; box-shadow:0 2px 8px rgb(100 116 139 / 0.1); font-size:0.9rem; table-layout:fixed; }
-thead { background:#2563eb; color:white; }
-th, td { padding:0.5rem 0.75rem; border:1px solid #e2e8f0; text-align:left; vertical-align:middle; word-break:break-word; }
-th:nth-child(1), td:nth-child(1) { width:50px; }
-th:nth-child(2), td:nth-child(2) { width:100px; text-align:center; }
-th:nth-child(3), td:nth-child(3) { width:50px; }
-th:nth-child(4), td:nth-child(4) { width:50px; }
-th:nth-child(5), td:nth-child(5) { width:90px; }
-th:nth-child(6), td:nth-child(6) { width:150px; }
-th:nth-child(7), td:nth-child(7) { width:160px; }
-th:nth-child(8), td:nth-child(8) { width:300px; }
-th:nth-child(9), td:nth-child(9) { width:50px; text-align:center; }
-tbody tr:hover { background:#f0f9ff; }
-.status { padding:0.15rem 0.5rem; border-radius:9999px; font-weight:600; font-size:0.75rem; display:inline-block; }
-.status.ซ่อมเสร็จ { background:#34d399; color:#065f46; }
-.status.รออะไหล่ { background:#fde68a; color:#92400e; }
-.status.อยู่ระหว่างดำเนินการ { background:#bfdbfe; color:#1e40af; }
-.status.ยกเลิกซ่อม { background:#fecaca; color:#991b1b; }
-.status.ไม่จบงาน { background:#fbbf24; color:#92400e; }
-.status.จบงาน { background:#34d399; color:#065f46; }
-#noData { text-align:center; margin-top:2rem; color:#64748b; font-style:italic; }
-@media (max-width:768px){
-  table, thead, tbody, th, td, tr { display:block; }
-  thead tr { display:none; }
-  tbody tr { margin-bottom:1rem; background:white; box-shadow:0 2px 8px rgb(100 116 139 / 0.1); border-radius:10px; padding:1rem; }
-  tbody td { padding-left:50%; position:relative; border:none; border-bottom:1px solid #e2e8f0; text-align:right; font-size:0.9rem; }
-  tbody td:last-child { border-bottom:none; }
-  tbody td::before { content: attr(data-label); position:absolute; left:1rem; top:50%; transform:translateY(-50%); font-weight:700; color:#334155; text-align:left; white-space:nowrap; width:45%; font-size:0.85rem; }
-}
+  body { font-family: 'Sarabun', sans-serif; background:#f0f4f8; margin:0; padding:1rem; color:#1e293b; font-size:0.9rem; }
+  h1 { text-align:left; color:#1d4ed8; margin:0 0 0.5rem 0; font-size:1.5rem; }
+  .search-bar { display:flex; flex-wrap:wrap; gap:0.5rem; justify-content:space-between; margin-bottom:1rem; }
+  .search-bar > div { display:flex; gap:0.5rem; flex-wrap:wrap; }
+  .search-bar select, .search-bar input[type="date"] { padding:0.35rem 0.5rem; border-radius:6px; border:1px solid #cbd5e1; font-size:0.9rem; min-width:140px; }
+  .search-bar button { background:#1d4ed8; color:white; border:none; padding:0.35rem 0.8rem; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.9rem; }
+  .search-bar button:hover { background:#1e40af; }
+
+  .chart-wrapper { display:flex; justify-content:center; flex-wrap:wrap; gap:1.5rem; margin-bottom:1rem; }
+  .chart-box { width:240px; max-width:100%; padding:0.75rem; }
+
+  table { width:100%; border-collapse:collapse; background:white; border-radius:10px; overflow:hidden; box-shadow:0 2px 8px rgb(100 116 139 / 0.1); font-size:0.9rem; table-layout:fixed; }
+  thead { background:#2563eb; color:white; }
+  th, td { padding:0.5rem 0.75rem; border:1px solid #e2e8f0; text-align:left; vertical-align:middle; word-break:break-word; }
+  th:nth-child(1), td:nth-child(1) { width:30px; }
+  th:nth-child(2), td:nth-child(2) { width:30px; text-align:center; }
+  th:nth-child(3), td:nth-child(3) { width:30px; }
+  th:nth-child(4), td:nth-child(4) { width:40px; }
+  th:nth-child(5), td:nth-child(5) { width:30px; }
+  th:nth-child(6), td:nth-child(6) { width:80px; }
+  th:nth-child(7), td:nth-child(7) { width:120px; }
+  th:nth-child(8), td:nth-child(8) { width:300px; }
+  th:nth-child(9), td:nth-child(9) { width:50px; text-align:center; }
+  tbody tr:hover { background:#f0f9ff; }
+
+  .status { padding:0.15rem 0.5rem; border-radius:9999px; font-weight:600; font-size:0.75rem; display:inline-block; }
+  .status.ซ่อมเสร็จ { background:#34d399; color:#065f46; }
+  .status.รออะไหล่ { background:#fde68a; color:#92400e; }
+  .status.อยู่ระหว่างดำเนินการ { background:#bfdbfe; color:#1e40af; }
+  .status.ยกเลิกซ่อม { background:#fecaca; color:#991b1b; }
+  .status.ไม่จบงาน { background:#fbbf24; color:#92400e; }
+  .status.จบงาน { background:#34d399; color:#065f46; }
+
+  #noData { text-align:center; margin-top:1rem; color:#64748b; font-style:italic; }
+
+  @media (max-width:768px){
+    table, thead, tbody, th, td, tr { display:block; }
+    thead tr { display:none; }
+    tbody tr { margin-bottom:1rem; background:white; box-shadow:0 2px 8px rgb(100 116 139 / 0.1); border-radius:10px; padding:1rem; }
+    tbody td { padding-left:50%; position:relative; border:none; border-bottom:1px solid #e2e8f0; text-align:right; font-size:0.9rem; }
+    tbody td:last-child { border-bottom:none; }
+    tbody td::before { content: attr(data-label); position:absolute; left:1rem; top:50%; transform:translateY(-50%); font-weight:700; color:#334155; text-align:left; white-space:nowrap; width:45%; font-size:0.85rem; }
+  }
 </style>
 </head>
 <body>
-<h1>Maintenance Report</h1>
+  <!-- Row 0: กราฟ Doughnut -->
+  <div class="chart-wrapper">
+    <div class="chart-box"><canvas id="technicianChart"></canvas></div>
+    <div class="chart-box"><canvas id="statusChart"></canvas></div>
+  </div>
 
-<div class="chart-wrapper">
-  <div class="chart-box">
-    <canvas id="technicianChart"></canvas>
-  </div>
-  <div class="chart-box">
-    <canvas id="statusChart"></canvas>
-  </div>
-</div>
+  <!-- Row 1: หัวข้อ -->
+  <h1>Maintenance Report</h1>
 
-<div class="search-bar">
-  <div>
-    <input type="date" id="searchDateFrom" />
-    <input type="date" id="searchDateTo" />
-    <select id="searchDepartment"><option value="">-- หน่วยงาน --</option></select>
-    <select id="searchStatus">
-      <option value="">-- สถานะ --</option>
-      <option value="ไม่จบงาน">ไม่จบงาน</option>
-      <option value="จบงาน">จบงาน</option>
-    </select>
+  <!-- Row 2: ช่องค้นหา -->
+  <div class="search-bar">
+    <div>
+      <input type="date" id="searchDateFrom" />
+      <input type="date" id="searchDateTo" />
+      <select id="searchDepartment"><option value="">-- หน่วยงาน --</option></select>
+      <select id="searchStatus">
+        <option value="">-- สถานะ --</option>
+        <option value="ไม่จบงาน">ไม่จบงาน</option>
+        <option value="จบงาน">จบงาน</option>
+      </select>
+    </div>
+    <div>
+      <button onclick="searchData()">ค้นหา</button>
+      <button onclick="resetSearch()">รีเซ็ต</button>
+      <button onclick="exportCSV()">Export Excel</button>
+    </div>
   </div>
-  <div>
-    <button onclick="searchData()">ค้นหา</button>
-    <button onclick="resetSearch()">รีเซ็ต</button>
-    <button onclick="exportCSV()">Export Excel</button>
-  </div>
-</div>
 
-<table id="dataTable" style="display:none;">
-  <thead>
-    <tr>
-      <th>ว/ด/ป</th>
-      <th>เวลาที่ใช้</th>
-      <th>ช่างผู้ทำ</th>
-      <th>ใบแจ้งซ่อม</th>
-      <th>แผนก</th>
-      <th>รายชื่อเครื่องจักร</th>
-      <th>ปัญหาอาการ</th>
-      <th>การแก้ไข</th>
-      <th>สถานะ</th>
-    </tr>
-  </thead>
-  <tbody id="tableBody"></tbody>
-</table>
-<div id="noData" style="display:none;">ไม่พบข้อมูล</div>
+  <table id="dataTable" style="display:none;">
+    <thead>
+      <tr>
+        <th>ว/ด/ป</th>
+        <th>เวลาที่ใช้</th>
+        <th>ช่างผู้ทำ</th>
+        <th>ใบแจ้งซ่อม</th>
+        <th>แผนก</th>
+        <th>รายชื่อเครื่องจักร</th>
+        <th>ปัญหาอาการ</th>
+        <th>การแก้ไข</th>
+        <th>สถานะ</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+  <div id="noData" style="display:none;">ไม่พบข้อมูล</div>
 
 <script>
 const appId="ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
@@ -108,8 +112,12 @@ async function fetchDepartments(){
   const data=await res.json();
   const select=document.getElementById("searchDepartment");
   data.forEach(d=>{
-    departmentsMap[d.DeptCode]=d.DeptNameEng||d.DeptName||d.DeptCode;
-    const opt=document.createElement("option"); opt.value=d.DeptCode; opt.textContent=departmentsMap[d.DeptCode]; select.appendChild(opt);
+    const code = d.DeptCode || d["รหัสแผนก"] || d["DepartmentID"] || d["รหัส"];
+    const name = d.DeptNameEng || d.DeptName || d["ชื่อแผนก"] || code;
+    if(!code) return;
+    departmentsMap[code]=name;
+    const opt=document.createElement("option");
+    opt.value=code; opt.textContent=name; select.appendChild(opt);
   });
 }
 
@@ -118,7 +126,12 @@ async function fetchEmp(){
     method:"POST", headers:{"Content-Type":"application/json","ApplicationAccessKey":apiKey}, body:JSON.stringify({})
   });
   const data=await res.json();
-  data.forEach(e=>{ empMap[e.EmpCode]=e.EmpName||e.EmpNameEng||e.EmpCode; });
+  data.forEach(e=>{
+    const code = e.EmpCode || e["รหัสพนักงาน"] || e["EmpID"] || e["รหัส"];
+    const name = e.EmpName || e.EmpNameEng || e["ชื่อพนักงาน"] || code;
+    if(!code) return;
+    empMap[code]=name;
+  });
 }
 
 async function fetchMachines(){
@@ -126,7 +139,12 @@ async function fetchMachines(){
     method:"POST", headers:{"Content-Type":"application/json","ApplicationAccessKey":apiKey}, body:JSON.stringify({})
   });
   const data=await res.json();
-  data.forEach(m=>{ machineMap[m.MachineCode]=m.MachineName||m.MachineCode; });
+  data.forEach(m=>{
+    const code = m.MachineCode || m["รหัสเครื่อง"] || m["MachineID"] || m["รหัส"];
+    const name = m.MachineName || m["รายชื่อเครื่องจักร"] || m["MachineNameThai"] || code;
+    if(!code) return;
+    machineMap[code]=name;
+  });
 }
 
 async function fetchRepairTechnicians(){
@@ -152,7 +170,8 @@ function calcDurationMinutes(start,end){
 }
 
 function formatDuration(mins){ 
-  if(!mins||isNaN(mins)) return "-"; 
+  if(!mins&&mins!==0) return "-"; 
+  if(isNaN(mins)) return "-";
   return mins<60?`${mins} นาที`:`${Math.floor(mins/60)} ชม.${mins%60>0?` ${mins%60} นาที`:''}`; 
 }
 
@@ -169,12 +188,12 @@ function groupData(data){
 function renderTechnicianChart(filteredData){
   const counts={};
   filteredData.forEach(r=>{
-    const name=empMap[r.EmpCode]||r.EmpCode;
+    const name=empMap[r.EmpCode]||r.EmpCode||"-";
     counts[name]=(counts[name]||0)+1;
   });
   const labels=Object.keys(counts);
   const data=Object.values(counts);
-  const colors=labels.map((_,i)=>`hsl(${i*360/labels.length},75%,55%)`);
+  const colors=labels.map((_,i)=>`hsl(${i*360/Math.max(1,labels.length)},75%,55%)`);
   const ctx=document.getElementById('technicianChart').getContext('2d');
   if(window.technicianChartInstance) window.technicianChartInstance.destroy();
   window.technicianChartInstance=new Chart(ctx,{
@@ -231,20 +250,21 @@ function renderTable(){
     filteredData.push(...filtered);
     filtered.sort((a,b)=>new Date(a["เวลาเริ่ม"])-new Date(b["เวลาเริ่ม"]));
     const main=filtered[0];
-    const names=filtered.map(f=>empMap[f.EmpCode]||f.EmpCode).join(",");
-    
-    // แก้ตรงนี้ให้ unique และนับจำนวน
-    const machineCounts={};
-    filtered.forEach(f=>{
-      const name=machineMap[f["รหัสเครื่อง"]]||f["รหัสเครื่อง"];
-      machineCounts[name]=(machineCounts[name]||0)+1;
-    });
-    const machineNames=Object.entries(machineCounts).map(([name,count])=> count>1 ? `${name} x${count}` : name).join(", ");
+    const names=[...new Set(filtered.map(f=>empMap[f.EmpCode]||f.EmpCode))].join(",");
+
+    const machineNames=[...new Set(
+      filtered.map(f=>{
+        const code = f["รหัสเครื่อง"] || f["MachineCode"] || f["MachineID"] || f["รหัส"];
+        return machineMap[code] || code || "-";
+      })
+    )].join(", ");
 
     const startDate=formatDateTH(main["เวลาเริ่ม"]);
     const start=new Date(main["เวลาเริ่ม"]);
     const end=new Date(main["เวลาจบ"]);
-    const timeRange=(start && end)?`${start.toLocaleTimeString('th-TH',{hour12:false})} - ${end.toLocaleTimeString('th-TH',{hour12:false})}`:"-";
+    const timeRange=(start && end)
+      ? `${start.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',hour12:false})} - ${end.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit',hour12:false})}`
+      : "-";
     const duration=formatDuration(calcDurationMinutes(main["เวลาเริ่ม"],main["เวลาจบ"]));
     const statusRaw=main["สถานะของงานช่าง"]||"-";
     const statusClass=statusRaw.replace(/\s/g,"");
@@ -270,41 +290,42 @@ function renderTable(){
 
   rows.sort((a,b)=>b.startDate-a.startDate);
 
-  if(rows.length===0){ table.style.display="none"; noData.style.display="block"; }
-  else { table.style.display="table"; noData.style.display="none"; tbody.innerHTML=rows.map(r=>r.rowHtml).join(""); }
-
-  renderTechnicianChart(filteredData);
-  renderStatusChart(filteredData);
+  if(rows.length===0){
+    table.style.display="none"; noData.style.display="block";
+    renderTechnicianChart([]); renderStatusChart([]);
+  } else {
+    table.style.display="table"; noData.style.display="none";
+    document.getElementById("tableBody").innerHTML=rows.map(r=>r.rowHtml).join("");
+    renderTechnicianChart(filteredData);
+    renderStatusChart(filteredData);
+  }
 }
 
 function searchData(){ renderTable(); }
-function resetSearch(){ 
-  document.getElementById("searchStatus").value=""; 
-  document.getElementById("searchDepartment").value=""; 
-  const today=new Date(); 
-  const twoDaysAgo=new Date(today.getTime()-2*24*60*60*1000);
-  document.getElementById("searchDateFrom").value=twoDaysAgo.toISOString().split("T")[0];
-  document.getElementById("searchDateTo").value=today.toISOString().split("T")[0];
-  renderTable(); 
+function resetSearch(){
+  const today = new Date();
+  const oneDayAgo = new Date(today.getTime() - 1*24*60*60*1000); // 1 วันย้อนหลัง
+  document.getElementById("searchDateFrom").value = oneDayAgo.toISOString().split("T")[0];
+  document.getElementById("searchDateTo").value = today.toISOString().split("T")[0];
+  document.getElementById("searchDepartment").value = "";
+  document.getElementById("searchStatus").value = "";
+  renderTable();
 }
 
 function exportCSV(){
-  const tbody=document.querySelector("#tableBody");
-  if(!tbody) return alert("ไม่มีข้อมูลให้ Export");
-  const rows=tbody.querySelectorAll("tr");
-  if(rows.length===0) return alert("ไม่มีข้อมูลให้ Export");
-  let csv="\uFEFF";
-  csv+='"ว/ด/ป","เวลาที่ใช้","ช่างผู้ทำ","ใบแจ้งซ่อม","แผนก","รายชื่อเครื่องจักร","ปัญหาอาการ","การแก้ไข","สถานะ"\n';
-  rows.forEach(row=>{
-    const cols=row.querySelectorAll("td");
-    const rowData=Array.from(cols).map((col,index)=>`"${col.innerText.replace(/"/g,'""')}"`);
-    csv+=rowData.join(",")+"\n";
+  const rows=[["ว/ด/ป","เวลาที่ใช้","ช่างผู้ทำ","ใบแจ้งซ่อม","แผนก","รายชื่อเครื่องจักร","ปัญหาอาการ","การแก้ไข","สถานะ"]];
+  document.querySelectorAll("#tableBody tr").forEach(tr=>{
+    const cols=[...tr.querySelectorAll("td")].map(td=>td.innerText.replace(/\n/g," ").trim());
+    rows.push(cols);
   });
-  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const csvContent = "data:text/csv;charset=utf-8," + rows.map(e=>e.join(",")).join("\n");
+  const encodedUri = encodeURI(csvContent);
   const link=document.createElement("a");
-  link.href=URL.createObjectURL(blob);
-  link.download=`Maintenance_Report_${new Date().toISOString().slice(0,10)}.csv`;
+  link.setAttribute("href", encodedUri);
+  link.setAttribute("download", `Maintenance_Report_${new Date().toISOString().slice(0,10)}.csv`);
+  document.body.appendChild(link);
   link.click();
+  document.body.removeChild(link);
 }
 
 async function init(){
@@ -314,6 +335,7 @@ async function init(){
   await fetchRepairTechnicians();
   resetSearch();
 }
+
 init();
 </script>
 </body>
