@@ -1,140 +1,35 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>เพิ่ม/แก้ไข เครื่องจักร พร้อมรายงาน</title>
   <link href="https://fonts.googleapis.com/css2?family=Kanit&display=swap" rel="stylesheet" />
   <style>
-    body {
-      font-family: 'Kanit', sans-serif;
-      background-color: #f0f4ff;
-      margin: 0; padding: 2rem;
-      color: #222;
-    }
-    h1 { color: #1d4ed8; text-align: center; }
-    form {
-      max-width: 600px; margin: auto;
-      background: white; padding: 2rem;
-      border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      position: relative;
-    }
-    label { display: block; margin: 1rem 0 0.3rem; font-weight: bold; }
-    input, select, button {
-      width: 100%; padding: 0.6rem;
-      border: 1.5px solid #93c5fd;
-      border-radius: 6px; font-size: 1rem;
-      box-sizing: border-box;
-    }
-    button {
-      margin-top: 1.5rem;
-      font-weight: bold;
-      cursor: pointer;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 1rem;
-    }
-    #addBtn {
-      background-color: #2563eb;
-    }
-    #addBtn:hover {
-      background-color: #1e40af;
-    }
-    #editBtn {
-      background-color: #f59e0b;
-      display: none; /* ซ่อนตอนเริ่มต้น */
-    }
-    #editBtn:hover {
-      background-color: #b45309;
-    }
-    .msg { text-align: center; font-weight: bold; margin-top: 1rem; }
-    #suggestions {
-      border: 1px solid #ccc; max-height: 150px;
-      overflow-y: auto; position: absolute;
-      background: white; width: 95%;
-      display: none; z-index: 1000;
-    }
-    #suggestions div {
-      padding: 6px; cursor: pointer;
-    }
-    #suggestions div:hover {
-      background: #f0f0f0;
-    }
-    /* ตารางรายงาน */
-    #machineListContainer {
-      max-width: 800px;
-      margin: 2rem auto;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      padding: 1rem 1rem 2rem 1rem;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 1rem;
-    }
-    thead {
-      background-color: #2563eb;
-      color: white;
-    }
-    th, td {
-      padding: 0.6rem 0.8rem;
-      border: 1px solid #ddd;
-      text-align: left;
-    }
-    tbody tr:hover {
-      background-color: #f0f4ff;
-      cursor: pointer;
-    }
-    #searchListInput {
-      width: 100%;
-      padding: 0.5rem;
-      margin-bottom: 1rem;
-      font-size: 1rem;
-      border: 1.5px solid #93c5fd;
-      border-radius: 6px;
-      box-sizing: border-box;
-    }
+    body { font-family: 'Kanit', sans-serif; background-color: #f0f4ff; margin: 0; padding: 1rem; color: #222; }
+    h1 { color: #1d4ed8; text-align: center; margin-bottom:1rem; }
+    form { max-width: 600px; margin: auto; background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    label { display: block; margin: 0.8rem 0 0.3rem; font-weight: bold; font-size:0.9rem;}
+    input, select, button { width: 100%; padding: 0.5rem; border: 1.5px solid #93c5fd; border-radius: 6px; font-size: 0.9rem; box-sizing: border-box; }
+    button { margin-top: 1rem; font-weight: bold; cursor: pointer; color: white; border: none; border-radius: 6px; }
+    #addBtn { background-color: #2563eb; } #addBtn:hover { background-color: #1e40af; }
+    #editBtn { background-color: #f59e0b; display:none;} #editBtn:hover { background-color: #b45309; }
+    .msg { text-align:center; font-weight:bold; margin-top:0.8rem; font-size:0.9rem; }
 
-    /* Responsive */
-    @media (max-width: 700px) {
-      body {
-        padding: 1rem;
-      }
-      form, #machineListContainer {
-        padding: 1rem;
-        margin: 1rem auto;
-      }
-      table, thead, tbody, th, td, tr {
-        display: block;
-      }
-      thead tr {
-        display: none;
-      }
-      tbody tr {
-        margin-bottom: 1rem;
-        border: 1px solid #ccc;
-        border-radius: 8px;
-        padding: 0.5rem;
-      }
-      tbody td {
-        border: none;
-        padding: 0.4rem 0.5rem;
-        position: relative;
-        padding-left: 50%;
-        text-align: left;
-      }
-      tbody td::before {
-        position: absolute;
-        top: 0.4rem;
-        left: 0.6rem;
-        width: 45%;
-        white-space: nowrap;
-        font-weight: bold;
-        content: attr(data-label);
-      }
+    #machineListContainer { max-width: 900px; margin: 1.5rem auto; background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 1rem; }
+    .search-row { display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.5rem;}
+    .search-row input { flex:1; font-size:0.85rem; padding:0.4rem; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    thead { background-color: #2563eb; color: white; }
+    th, td { padding:0.5rem; border:1px solid #ddd; text-align:left; }
+    tbody tr:hover { background-color:#f0f4ff; cursor:pointer; }
+
+    @media (max-width:700px){
+      table, thead, tbody, th, td, tr { display:block; }
+      thead tr { display:none; }
+      tbody tr { margin-bottom:0.5rem; border:1px solid #ccc; border-radius:6px; padding:0.3rem; }
+      tbody td { border:none; padding:0.3rem 0.5rem; position:relative; padding-left:50%; text-align:left; }
+      tbody td::before { position:absolute; top:0.3rem; left:0.5rem; width:45%; white-space:nowrap; font-weight:bold; content:attr(data-label); font-size:0.8rem;}
     }
   </style>
 </head>
@@ -142,344 +37,249 @@
   <h1>📦 เพิ่ม/แก้ไข เครื่องจักร พร้อมรายงาน</h1>
   <form id="machineForm" onsubmit="return false;">
     <label>รหัสเครื่อง</label>
-    <input type="text" id="machineCode" placeholder="รหัสเครื่อง (Auto หรือจากข้อมูลเดิม)" readonly />
-
-    <label>ค้นหาชื่อเครื่องจักร (ค้นหาหน้าโปรแกรมแจ้งซ่อม)</label>
-    <input type="text" id="machineSearch" placeholder="พิมพ์เพื่อค้นหา..." autocomplete="off" />
-    <div id="suggestions"></div>
-
-    <label>รายชื่อเครื่องจักร(ค้นหาหน้าโปรแกรมแจ้งซ่อม)</label>
+    <input type="text" id="machineCode" placeholder="กรอกรหัสเครื่อง" required />
+    <label>ชื่อเครื่องจักร (NickName)</label>
     <input type="text" id="machineName1" required />
-
-    <label>รายชื่อเครื่องจักร(แบบเต็ม)</label>
+    <label>ชื่อเครื่องจักร</label>
     <input type="text" id="machineName" required />
-
-    <label>แผนก / หน่วยงาน</label>
-    <select id="deptCode" required>
-      <option value="">-- เลือกแผนกหรือหน่วย --</option>
+    <label>กลุ่มเครื่องจักร (PM)</label>
+    <select id="groupCode">
+      <option value="">-- เลือกกลุ่มเครื่องจักร --</option>
     </select>
-
+    <label>แผนก</label>
+    <select id="deptCode" required>
+      <option value="">-- เลือกแผนก --</option>
+    </select>
     <button id="addBtn" type="button">เพิ่ม</button>
     <button id="editBtn" type="button">แก้ไข</button>
     <div class="msg" id="message"></div>
   </form>
 
-  <!-- รายงานแสดงรายการเครื่องจักรทั้งหมด -->
   <div id="machineListContainer">
-    <input type="text" id="searchListInput" placeholder="ค้นหาเครื่องจักรในรายงาน..." />
-    <table id="machineListTable" role="grid" aria-label="รายงานเครื่องจักร">
+    <div class="search-row">
+      <input type="text" id="searchCode" placeholder="ค้นหารหัสเครื่อง">
+      <input type="text" id="searchNick" placeholder="ค้นหา NickName">
+      <input type="text" id="searchName" placeholder="ค้นหาชื่อเครื่องจักร">
+      <input type="text" id="searchDept" placeholder="ค้นหาแผนก">
+    </div>
+    <table id="machineListTable">
       <thead>
         <tr>
           <th>รหัสเครื่อง</th>
-          <th>รายชื่อเครื่องจักร1</th>
-          <th>รายชื่อเครื่องจักร</th>
+          <th>ชื่อเครื่องจักร (NickName)</th>
+          <th>ชื่อเครื่องจักร</th>
           <th>แผนก</th>
+          <th>กลุ่มเครื่องจักร (PM)</th>
         </tr>
       </thead>
-      <tbody>
-        <!-- แถวข้อมูลจะถูกเติมด้วย JS -->
-      </tbody>
+      <tbody></tbody>
     </table>
   </div>
 
 <script>
-  const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
-  const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
-  let machinesData = [];
+const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
+const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
+let machinesData = [], deptsData=[], groupsData=[];
 
-  async function fetchTable(tableName) {
-    const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/${tableName}/Find`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "ApplicationAccessKey": apiKey,
-      },
-      body: JSON.stringify({}),
-    });
-    if (!res.ok) throw new Error(`Failed to fetch table ${tableName}`);
-    return res.json();
-  }
+async function fetchTable(tableName){
+  const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/${tableName}/Find`,{
+    method:"POST",
+    headers:{ "Content-Type":"application/json","ApplicationAccessKey":apiKey },
+    body:JSON.stringify({})
+  });
+  if(!res.ok) throw new Error(`Failed to fetch table ${tableName}`);
+  return res.json();
+}
 
-  async function generateMachineCode() {
-    try {
-      const codes = machinesData.map(d => d["รหัสเครื่อง"]).filter(Boolean);
-      if (codes.length === 0) {
-        document.getElementById("machineCode").value = "MC-1";
-        return;
-      }
-      const maxNum = Math.max(...codes.map(c => {
-        const parts = c.split("-");
-        const numPart = parts.length > 1 ? parts[1] : "0";
-        return parseInt(numPart) || 0;
-      }));
-      document.getElementById("machineCode").value = `MC-${maxNum + 1}`;
-    } catch (error) {
-      document.getElementById("machineCode").value = "⚠️ โหลดรหัสล้มเหลว";
-      console.error(error);
-    }
-  }
+async function loadDropdowns(){
+  deptsData = await fetchTable("Department");
+  groupsData = await fetchTable("MachineGroup");
 
-  async function loadDepartments() {
-    try {
-      const depts = await fetchTable("Department");
-      const deptSelect = document.getElementById("deptCode");
-      deptSelect.innerHTML = `<option value="">-- เลือกแผนกหรือหน่วย --</option>`;
-      depts.forEach(d => {
-        const opt = document.createElement("option");
-        opt.value = d["DeptCode"];
-        opt.textContent = d["DeptNameEng"] || d["DeptName"] || d["DeptCode"];
-        deptSelect.appendChild(opt);
-      });
-    } catch (error) {
-      console.error("โหลดข้อมูลแผนกผิดพลาด", error);
-    }
-  }
-
-  function fillMachineData(found) {
-    document.getElementById("machineCode").value = found["รหัสเครื่อง"];
-    document.getElementById("machineName1").value = found["รายชื่อเครื่องจักร1"] || "";
-    document.getElementById("machineName").value = found["รายชื่อเครื่องจักร"] || "";
-    document.getElementById("deptCode").value = found["DeptCode"] || "";
-    const msg = document.getElementById("message");
-    msg.textContent = "ℹ️ แก้ไขข้อมูลเครื่องจักรนี้ได้";
-    msg.style.color = "green";
-
-    // แสดงปุ่มแก้ไข ซ่อนปุ่มเพิ่ม
-    document.getElementById("editBtn").style.display = "block";
-    document.getElementById("addBtn").style.display = "none";
-
-    // Scroll to top ฟอร์มเวลาเลือกแก้ไข
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  function resetForm() {
-    document.getElementById("machineCode").value = "";
-    document.getElementById("machineSearch").value = "";
-    document.getElementById("machineName1").value = "";
-    document.getElementById("machineName").value = "";
-    document.getElementById("deptCode").value = "";
-    document.getElementById("suggestions").style.display = "none";
-    document.getElementById("message").textContent = "";
-
-    // แสดงปุ่มเพิ่ม ซ่อนปุ่มแก้ไข
-    document.getElementById("addBtn").style.display = "block";
-    document.getElementById("editBtn").style.display = "none";
-  }
-
-  function initAutocomplete() {
-    const searchInput = document.getElementById("machineSearch");
-    const suggestionsBox = document.getElementById("suggestions");
-
-    searchInput.addEventListener("input", () => {
-      const term = searchInput.value.toLowerCase();
-      suggestionsBox.innerHTML = "";
-      if (!term) {
-        suggestionsBox.style.display = "none";
-        return;
-      }
-      const matches = machinesData.filter(m => (m["รายชื่อเครื่องจักร1"] || "").toLowerCase().includes(term));
-      if (matches.length === 0) {
-        suggestionsBox.style.display = "none";
-        return;
-      }
-      matches.forEach(m => {
-        const div = document.createElement("div");
-        div.textContent = m["รายชื่อเครื่องจักร1"];
-        div.addEventListener("click", () => {
-          fillMachineData(m);
-          searchInput.value = m["รายชื่อเครื่องจักร1"];
-          suggestionsBox.style.display = "none";
-        });
-        suggestionsBox.appendChild(div);
-      });
-      suggestionsBox.style.display = "block";
-    });
-  }
-
-  function renderMachineList(filterText = "") {
-    const tbody = document.querySelector("#machineListTable tbody");
-    tbody.innerHTML = "";
-
-    if (!filterText.trim()) {
-      // ถ้าไม่มีข้อความค้นหา ให้ไม่แสดงอะไรเลย
-      const tr = document.createElement("tr");
-      const td = document.createElement("td");
-      td.colSpan = 4;
-      td.style.textAlign = "center";
-      td.textContent = "กรุณาพิมพ์คำค้นหาเพื่อแสดงข้อมูล";
-      tr.appendChild(td);
-      tbody.appendChild(tr);
-      return;
-    }
-
-    const ft = filterText.toLowerCase();
-    const filtered = machinesData.filter(m =>
-      (m["รหัสเครื่อง"] && m["รหัสเครื่อง"].toLowerCase().includes(ft)) ||
-      (m["รายชื่อเครื่องจักร1"] && m["รายชื่อเครื่องจักร1"].toLowerCase().includes(ft)) ||
-      (m["รายชื่อเครื่องจักร"] && m["รายชื่อเครื่องจักร"].toLowerCase().includes(ft)) ||
-      (m["แผนก"] && m["แผนก"].toLowerCase().includes(ft))
-    );
-
-    if(filtered.length === 0) {
-      const tr = document.createElement("tr");
-      const td = document.createElement("td");
-      td.colSpan = 4;
-      td.style.textAlign = "center";
-      td.textContent = "ไม่พบข้อมูลที่ค้นหา";
-      tr.appendChild(td);
-      tbody.appendChild(tr);
-      return;
-    }
-
-    filtered.forEach(m => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td data-label="รหัสเครื่อง">${m["รหัสเครื่อง"] || ""}</td>
-        <td data-label="รายชื่อเครื่องจักร1">${m["รายชื่อเครื่องจักร1"] || ""}</td>
-        <td data-label="รายชื่อเครื่องจักร">${m["รายชื่อเครื่องจักร"] || ""}</td>
-        <td data-label="แผนก">${m["แผนก"] || ""}</td>
-      `;
-      tr.addEventListener("click", () => fillMachineData(m));
-      tbody.appendChild(tr);
-    });
-  }
-
-  async function addMachine() {
-    const code = document.getElementById("machineCode").value;
-    const name1 = document.getElementById("machineName1").value.trim();
-    const name = document.getElementById("machineName").value.trim();
-    const deptCode = document.getElementById("deptCode").value;
-    const deptText = document.getElementById("deptCode").selectedOptions[0].text;
-    const msg = document.getElementById("message");
-
-    if (!code || !name1 || !name || !deptCode) {
-      msg.style.color = "red";
-      msg.textContent = "❌ กรุณากรอกข้อมูลให้ครบถ้วน";
-      return;
-    }
-
-    const exists = machinesData.find(m => m["รหัสเครื่อง"] === code);
-    if (exists) {
-      msg.style.color = "red";
-      msg.textContent = "❌ รหัสเครื่องนี้มีอยู่แล้ว กรุณาเปลี่ยนรหัสใหม่";
-      return;
-    }
-
-    const payload = {
-      Action: "Add",
-      Properties: {},
-      Rows: [{
-        "รหัสเครื่อง": code,
-        "รายชื่อเครื่องจักร1": name1,
-        "รายชื่อเครื่องจักร": name,
-        "DeptCode": deptCode,
-        "แผนก": deptText
-      }]
-    };
-
-    try {
-      const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineMaster/Action`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "ApplicationAccessKey": apiKey,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (res.ok) {
-        msg.style.color = "green";
-        msg.textContent = "✅ เพิ่มข้อมูลเรียบร้อย";
-
-        machinesData = await fetchTable("MachineMaster");
-        resetForm();
-        await generateMachineCode();
-        renderMachineList();
-      } else {
-        msg.style.color = "red";
-        msg.textContent = `❌ บันทึกไม่สำเร็จ: ${await res.text()}`;
-      }
-    } catch (error) {
-      msg.style.color = "red";
-      msg.textContent = `❌ เกิดข้อผิดพลาด: ${error.message}`;
-    }
-  }
-
-  async function editMachine() {
-    const code = document.getElementById("machineCode").value;
-    const name1 = document.getElementById("machineName1").value.trim();
-    const name = document.getElementById("machineName").value.trim();
-    const deptCode = document.getElementById("deptCode").value;
-    const deptText = document.getElementById("deptCode").selectedOptions[0].text;
-    const msg = document.getElementById("message");
-
-    if (!code || !name1 || !name || !deptCode) {
-      msg.style.color = "red";
-      msg.textContent = "❌ กรุณากรอกข้อมูลให้ครบถ้วน";
-      return;
-    }
-
-    const exists = machinesData.find(m => m["รหัสเครื่อง"] === code);
-    if (!exists) {
-      msg.style.color = "red";
-      msg.textContent = "❌ ไม่พบข้อมูลเครื่องจักรนี้ในระบบ";
-      return;
-    }
-
-    const payload = {
-      Action: "Edit",
-      Properties: {},
-      Rows: [{
-        "รหัสเครื่อง": code,
-        "รายชื่อเครื่องจักร1": name1,
-        "รายชื่อเครื่องจักร": name,
-        "DeptCode": deptCode,
-        "แผนก": deptText
-      }]
-    };
-
-    try {
-      const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineMaster/Action`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "ApplicationAccessKey": apiKey,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (res.ok) {
-        msg.style.color = "green";
-        msg.textContent = "✅ แก้ไขข้อมูลเรียบร้อย";
-
-        machinesData = await fetchTable("MachineMaster");
-        resetForm();
-        await generateMachineCode();
-        renderMachineList();
-      } else {
-        msg.style.color = "red";
-        msg.textContent = `❌ แก้ไขไม่สำเร็จ: ${await res.text()}`;
-      }
-    } catch (error) {
-      msg.style.color = "red";
-      msg.textContent = `❌ เกิดข้อผิดพลาด: ${error.message}`;
-    }
-  }
-
-  document.getElementById("addBtn").addEventListener("click", addMachine);
-  document.getElementById("editBtn").addEventListener("click", editMachine);
-
-  document.getElementById("searchListInput").addEventListener("input", e => {
-    renderMachineList(e.target.value);
+  const deptSelect = document.getElementById("deptCode");
+  deptSelect.innerHTML = `<option value="">-- เลือกแผนก --</option>`;
+  deptsData.forEach(d=>{
+    const opt = document.createElement("option");
+    opt.value = d["DeptCode"];
+    opt.textContent = `${d["DeptCode"]} : ${d["DeptNameEng"]}`;
+    deptSelect.appendChild(opt);
   });
 
-  (async function init() {
-    await loadDepartments();
-    machinesData = await fetchTable("MachineMaster");
-    await generateMachineCode();
-    renderMachineList("");  // ไม่แสดงข้อมูลตอนโหลด
-    initAutocomplete();
-  })();
+  const groupSelect = document.getElementById("groupCode");
+  groupSelect.innerHTML = `<option value="">-- เลือกกลุ่มเครื่องจักร --</option>`;
+  groupsData.forEach(g=>{
+    const opt = document.createElement("option");
+    opt.value = g["GroupCode"];
+    opt.textContent = g["GroupName"];
+    groupSelect.appendChild(opt);
+  });
+}
+
+function renderMachineList(){
+  const tbody = document.querySelector("#machineListTable tbody");
+  tbody.innerHTML="";
+
+  const fCode = document.getElementById("searchCode").value.toLowerCase();
+  const fNick = document.getElementById("searchNick").value.toLowerCase();
+  const fName = document.getElementById("searchName").value.toLowerCase();
+  const fDept = document.getElementById("searchDept").value.toLowerCase();
+
+  // ถ้ายังไม่ค้นหา ให้ว่าง
+  if(!fCode && !fNick && !fName && !fDept){
+    const tr = document.createElement("tr");
+    const td = document.createElement("td"); td.colSpan=5; td.style.textAlign="center";
+    td.textContent="กรุณาพิมพ์คำค้นหาเพื่อแสดงข้อมูล";
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+    return;
+  }
+
+  let filtered = machinesData.filter(m=>{
+    const deptText = deptsData.find(d=>d["DeptCode"]===m["DeptCode"]);
+    const deptFull = m["DeptCode"] + " : " + (deptText ? deptText["DeptNameEng"] : "");
+    return (!fCode || (m["รหัสเครื่อง"]||"").toLowerCase().includes(fCode)) &&
+           (!fNick || (m["รายชื่อเครื่องจักร1"]||"").toLowerCase().includes(fNick)) &&
+           (!fName || (m["รายชื่อเครื่องจักร"]||"").toLowerCase().includes(fName)) &&
+           (!fDept || deptFull.toLowerCase().includes(fDept));
+  });
+
+  if(filtered.length===0){
+    const tr = document.createElement("tr");
+    const td = document.createElement("td"); td.colSpan=5; td.style.textAlign="center";
+    td.textContent="ไม่พบข้อมูล";
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+    return;
+  }
+
+  filtered.forEach(m=>{
+    const tr = document.createElement("tr");
+    const deptText = deptsData.find(d=>d["DeptCode"]===m["DeptCode"]);
+    const groupText = groupsData.find(g=>g["GroupCode"]===m["GroupCode"]);
+    tr.innerHTML=`
+      <td data-label="รหัสเครื่อง">${m["รหัสเครื่อง"]||""}</td>
+      <td data-label="ชื่อเครื่องจักร (NickName)">${m["รายชื่อเครื่องจักร1"]||""}</td>
+      <td data-label="ชื่อเครื่องจักร">${m["รายชื่อเครื่องจักร"]||""}</td>
+      <td data-label="แผนก">${m["DeptCode"]} : ${deptText?deptText["DeptNameEng"]:""}</td>
+      <td data-label="กลุ่มเครื่องจักร (PM)">${groupText?groupText["GroupName"]:""}</td>
+    `;
+    tr.addEventListener("click",()=>fillForm(m));
+    tbody.appendChild(tr);
+  });
+}
+
+function fillForm(data){
+  document.getElementById("machineCode").value = data["รหัสเครื่อง"];
+  document.getElementById("machineCode").disabled = true;
+  document.getElementById("machineName1").value = data["รายชื่อเครื่องจักร1"]||"";
+  document.getElementById("machineName").value = data["รายชื่อเครื่องจักร"]||"";
+  document.getElementById("groupCode").value = data["GroupCode"]||"";
+  document.getElementById("deptCode").value = data["DeptCode"]||"";
+
+  document.getElementById("addBtn").style.display="none";
+  document.getElementById("editBtn").style.display="block";
+}
+
+function resetForm(){
+  document.getElementById("machineForm").reset();
+  document.getElementById("machineCode").disabled=false;
+  document.getElementById("addBtn").style.display="block";
+  document.getElementById("editBtn").style.display="none";
+  document.getElementById("message").textContent="";
+}
+
+async function addMachine(){
+  const code = document.getElementById("machineCode").value.trim();
+  const name1 = document.getElementById("machineName1").value.trim();
+  const name = document.getElementById("machineName").value.trim();
+  const group = document.getElementById("groupCode").value;
+  const dept = document.getElementById("deptCode").value;
+  const msg = document.getElementById("message");
+
+  if(!code || !name1 || !name || !dept){
+    msg.style.color="red"; msg.textContent="❌ กรุณากรอกข้อมูลให้ครบถ้วน"; return;
+  }
+
+  const payload={ Action:"Add", Rows:[{
+    "รหัสเครื่อง": code,
+    "รายชื่อเครื่องจักร1": name1,
+    "รายชื่อเครื่องจักร": name,
+    "GroupCode": group,
+    "DeptCode": dept
+  }]};
+
+  try{
+    const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineMaster/Action`,{
+      method:"POST",
+      headers:{ "Content-Type":"application/json","ApplicationAccessKey":apiKey },
+      body:JSON.stringify(payload)
+    });
+    if(res.ok){
+      msg.style.color="green"; msg.textContent="✅ เพิ่มข้อมูลเรียบร้อย";
+      machinesData = await fetchTable("MachineMaster");
+      resetForm(); renderMachineList();
+    }else{
+      const text = await res.text();
+      msg.style.color="red"; msg.textContent="❌ บันทึกไม่สำเร็จ: "+text;
+    }
+  }catch(e){
+    msg.style.color="red"; msg.textContent="❌ เกิดข้อผิดพลาด: "+e.message;
+  }
+}
+
+async function editMachine(){
+  const code = document.getElementById("machineCode").value.trim();
+  const name1 = document.getElementById("machineName1").value.trim();
+  const name = document.getElementById("machineName").value.trim();
+  const group = document.getElementById("groupCode").value;
+  const dept = document.getElementById("deptCode").value;
+  const msg = document.getElementById("message");
+
+  if(!code || !name1 || !name || !dept){
+    msg.style.color="red"; msg.textContent="❌ กรุณากรอกข้อมูลให้ครบถ้วน"; return;
+  }
+
+  const payload={ Action:"Edit", Rows:[{
+    "รหัสเครื่อง": code,
+    "รายชื่อเครื่องจักร1": name1,
+    "รายชื่อเครื่องจักร": name,
+    "GroupCode": group,
+    "DeptCode": dept
+  }]};
+
+  try{
+    const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineMaster/Action`,{
+      method:"POST",
+      headers:{ "Content-Type":"application/json","ApplicationAccessKey":apiKey },
+      body:JSON.stringify(payload)
+    });
+    if(res.ok){
+      msg.style.color="green"; msg.textContent="✅ แก้ไขข้อมูลเรียบร้อย";
+      machinesData = await fetchTable("MachineMaster");
+      resetForm(); renderMachineList();
+    }else{
+      const text = await res.text();
+      msg.style.color="red"; msg.textContent="❌ แก้ไขไม่สำเร็จ: "+text;
+    }
+  }catch(e){
+    msg.style.color="red"; msg.textContent="❌ เกิดข้อผิดพลาด: "+e.message;
+  }
+}
+
+document.getElementById("addBtn").addEventListener("click",addMachine);
+document.getElementById("editBtn").addEventListener("click",editMachine);
+document.getElementById("searchCode").addEventListener("input",renderMachineList);
+document.getElementById("searchNick").addEventListener("input",renderMachineList);
+document.getElementById("searchName").addEventListener("input",renderMachineList);
+document.getElementById("searchDept").addEventListener("input",renderMachineList);
+
+async function init(){
+  await loadDropdowns();
+  machinesData = await fetchTable("MachineMaster");
+  // ไม่แสดงข้อมูลตอนเริ่มต้น
+  renderMachineList();
+}
+
+init();
 </script>
 </body>
 </html>
