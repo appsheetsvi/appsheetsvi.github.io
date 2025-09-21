@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>ฟอร์มแจ้งซ่อมเครื่องจักร</title>
+<title>ระบบแจ้งซ่อมเครื่องจักร + PM</title>
 <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
 <link href="https://fonts.googleapis.com/css2?family=Sarabun&display=swap" rel="stylesheet" />
 <style>
@@ -15,7 +15,8 @@ textarea { min-height:3rem; }
 .parts-row > * { flex:1 1 120px; }
 .btn-remove-part { background:#ef4444;color:white;padding:4px 8px;border-radius:6px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center; }
 .btn-remove-part:hover { background:#b91c1c; }
-.tech-checkboxes > div { background:#f9fafb; border:1px solid #ccc; padding:12px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.05); margin-bottom:6px; }
+.tech-checkboxes { display:flex; flex-wrap:wrap; gap:8px; margin-top:4px; }
+.tech-checkbox { flex:1 1 300px; background:#f9fafb; border:1px solid #ccc; padding:12px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.05); display:flex; flex-direction:column; }
 .machine-container { border:1px solid #ccc; padding:12px; border-radius:10px; margin-bottom:12px; background:#fff; position:relative; }
 .btn-remove-machine { position:absolute; top:8px; right:8px; background:#ef4444; color:white; padding:2px 6px; border-radius:6px; cursor:pointer; }
 .btn-remove-machine:hover { background:#b91c1c; }
@@ -23,15 +24,16 @@ textarea { min-height:3rem; }
 </head>
 <body>
 <nav class="bg-blue-600 text-white p-4 flex justify-between items-center">
-<a href="#" class="font-semibold">🏠 Home</a>
+<a href="https://appsheetsvi.github.io/Menu.html" class="font-semibold">🏠 Home</a>
 <div class="font-semibold text-lg">ระบบแจ้งซ่อมออนไลน์</div>
 <div></div>
 </nav>
 
 <main class="max-w-7xl mx-auto mt-6 p-6 bg-white rounded-xl shadow">
-<h1 class="text-2xl font-bold text-blue-700 text-center mb-6">📋 ฟอร์มแจ้งซ่อมเครื่องจักร</h1>
+<h1 class="text-2xl font-bold text-blue-700 text-center mb-6">📋 ฟอร์มแจ้งซ่อมเครื่องจักร </h1>
 
 <form id="repairForm" class="grid gap-6" autocomplete="off">
+<!-- หน่วยงาน -->
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
   <div>
     <label class="font-semibold">เลขที่ใบแจ้งซ่อม</label>
@@ -47,6 +49,16 @@ textarea { min-height:3rem; }
   </div>
 </div>
 
+<!-- PM Group -->
+<div>
+  <label class="font-semibold">รายชื่อเครื่องจักร (PM)</label>
+  <div class="relative">
+    <input type="text" id="pmGroupSearch" placeholder="🔍 เลือก Group..." class="w-full" disabled/>
+    <ul id="pmGroupList" class="absolute w-full bg-white max-h-40 overflow-y-auto border rounded z-10 hidden"></ul>
+  </div>
+</div>
+
+<!-- เครื่องจักร -->
 <div id="machinesContainer"></div>
 
 <div class="flex gap-4 flex-wrap">
@@ -61,42 +73,41 @@ textarea { min-height:3rem; }
 const appId="ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
 const apiKey="V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
 const apiBase=`https://api.appsheet.com/api/v2/apps/${appId}/tables/`;
-let deptList=[], machineList=[], empList=[];
+let deptList=[], machineList=[], empList=[], groupList=[];
 const $=id=>document.getElementById(id);
 
-// Fetch from table
-async function fetchFromTable(table){ 
+// Fetch Table
+async function fetchFromTable(table){
   try{
-    const res=await fetch(`${apiBase}${table}/Find`,{
+    const res = await fetch(`${apiBase}${table}/Find`, {
       method:"POST",
       headers:{"Content-Type":"application/json","ApplicationAccessKey":apiKey},
-      body:JSON.stringify({})
+      body: JSON.stringify({})
     });
     if(!res.ok) return [];
-    return res.json();
+    const data = await res.json();
+    return data;
   }catch{return [];}
 }
 
 // Generate Request Number
 async function generateNextRequestNumber(){
-  const list=await fetchFromTable("RepairTechnicians");
+  const list = await fetchFromTable("RepairTechnicians");
   const nums=list.map(r=>parseInt(r["เลขที่ใบแจ้งซ่อม"])).filter(n=>!isNaN(n));
   const nextNum=(Math.max(...nums,0)+1).toString();
   $("repairForm").querySelector('input[name="เลขที่ใบแจ้งซ่อม"]').value=nextNum;
 }
 
-// Load Departments, Machines, Technicians
-async function loadDepartments(){ deptList=await fetchFromTable("Department"); }
-async function loadMachinesByDept(code){ 
-  const list=await fetchFromTable("MachineMaster");
-  machineList=list.filter(m=>m.DeptCode===code);
-}
+// Load Departments, Machines, Technicians, Groups
+async function loadDepartments(){ deptList = await fetchFromTable("Department"); }
+async function loadMachines(){ machineList = await fetchFromTable("MachineMaster"); }
 async function loadTechnicians(){ 
-  const all=await fetchFromTable("Emp");
+  const all=await fetchFromTable("Emp"); 
   empList=all.filter(e=>e.EmpStatus==0 && e.DeptCode==="A12"); 
 }
+async function loadGroups(){ groupList = await fetchFromTable("MachineGroup"); }
 
-// Create Part Row
+// Create Parts Row
 function createPartRow(){
   const div=document.createElement("div");
   div.className="parts-row";
@@ -108,9 +119,31 @@ function createPartRow(){
   return div;
 }
 
+// Technician Box
+function createTechBox(emp){
+  const div = document.createElement("div");
+  div.className="tech-checkbox";
+  div.innerHTML=`
+    <label class="inline-flex items-center space-x-2 font-semibold">
+      <input type="checkbox" name="ช่างผู้รับผิดชอบ" value="${emp.EmpCode}"/> ${emp.EmpName}
+    </label>
+    <textarea name="comment_${emp.EmpCode}" placeholder="ความคิดเห็น" class="mt-1"></textarea>
+    <div class="flex gap-2 mt-1">
+      <div class="flex flex-col flex-1"><label class="text-xs">วันที่เริ่ม</label><input type="datetime-local" name="start_${emp.EmpCode}" /></div>
+      <div class="flex flex-col flex-1"><label class="text-xs">วันที่จบ</label><input type="datetime-local" name="end_${emp.EmpCode}" /></div>
+    </div>
+    <div class="flex gap-2 mt-1">
+      <label><input type="checkbox" name="status_${emp.EmpCode}" value="จบงาน"/> จบงาน</label>
+      <label><input type="checkbox" name="status_${emp.EmpCode}" value="ไม่จบงาน"/> ไม่จบงาน</label>
+    </div>
+    <label class="inline-flex items-center mt-1"><input type="checkbox" name="autoCopy_${emp.EmpCode}"/> คัดลอกข้อมูลไปช่างอื่นในเครื่องเดียวกัน</label>
+  `;
+  return div;
+}
+
 // Create Machine Row
 function createMachineRow(){
-  const div=document.createElement("div");
+  const div = document.createElement("div");
   div.className="machine-container";
   div.innerHTML=`<button type="button" class="btn-remove-machine">x</button>
     <label class="font-semibold">รายชื่อเครื่อง</label>
@@ -124,185 +157,164 @@ function createMachineRow(){
     <label class="font-semibold mt-2">วิเคราะห์สาเหตุ</label>
     <textarea name="วิเคราะห์สาเหตุ" class="w-full" rows="2" required></textarea>
     <label class="font-semibold mt-2">เลือกช่างผู้รับผิดชอบ (สูงสุด 3 คน)</label>
-    <div class="techCheckboxes tech-checkboxes mb-2"></div>
+    <div class="tech-checkboxes mb-2"></div>
     <label class="font-semibold mt-2">รายการอะไหล่</label>
     <div class="partsContainer"></div>
-    <button type="button" class="btnAddPart mt-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">+ เพิ่มอะไหล่</button>`;
+    <button type="button" class="btnAddPart mt-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">+ เพิ่มอะไหล่</button>
+  `;
   div.querySelector(".btn-remove-machine").onclick=()=>div.remove();
   div.querySelector(".btnAddPart").onclick=()=>div.querySelector(".partsContainer").appendChild(createPartRow());
-  renderTechCheckboxes(div.querySelector(".techCheckboxes"));
-  return div;
-}
 
-// Render Technicians
-function renderTechCheckboxes(container){
-  container.innerHTML="";
-  empList.forEach(emp=>{
-    const wrapper=document.createElement("div"); wrapper.className="mb-2 p-2 border rounded shadow bg-gray-50";
-    const label=document.createElement("label"); label.className="inline-flex items-center space-x-2 font-semibold";
-    const checkbox=document.createElement("input"); checkbox.type="checkbox"; checkbox.name="ช่างผู้รับผิดชอบ"; checkbox.value=emp.EmpCode;
-    label.appendChild(checkbox); label.appendChild(document.createTextNode(emp.EmpName));
-    wrapper.appendChild(label);
+  const techContainer = div.querySelector(".tech-checkboxes");
+  empList.forEach(emp=>techContainer.appendChild(createTechBox(emp)));
+  techContainer.addEventListener("change", e=>{
+    if(e.target.name==="ช่างผู้รับผิดชอบ"){
+      const selected=techContainer.querySelectorAll('input[name="ช่างผู้รับผิดชอบ"]:checked');
+      if(selected.length>3){ e.target.checked=false; alert("เลือกช่างได้สูงสุด 3 คน"); }
+    }
+  });
 
-    const comment=document.createElement("textarea"); comment.name=`comment_${emp.EmpCode}`; comment.placeholder="ความคิดเห็น"; comment.className="w-full mt-1 text-sm";
-    wrapper.appendChild(comment);
-
-    ["start","end"].forEach(type=>{
-      const box=document.createElement("div"); box.className="flex flex-col flex-1 min-w-[120px] mt-1";
-      box.innerHTML=`<label class="text-xs font-semibold mb-1">วันที่${type==="start"?"เริ่ม":"จบ"}</label>
-        <input type="datetime-local" name="${type}_${emp.EmpCode}" class="text-sm"/>`;
-      wrapper.appendChild(box);
-    });
-
-    // --- Checkbox อิสระ สถานะของงานช่าง
-    const statusWrapper=document.createElement("div"); 
-    statusWrapper.className="flex gap-4 mt-1";
-    ["จบงาน","ไม่จบงาน"].forEach(val=>{
-      const span=document.createElement("label"); 
-      span.className="inline-flex items-center space-x-1 cursor-pointer";
-      span.innerHTML=`<input type="checkbox" name="status_${emp.EmpCode}" value="${val}"> ${val}`;
-      statusWrapper.appendChild(span);
-    });
-    wrapper.appendChild(statusWrapper);
-
-    const copyWrapper=document.createElement("div"); copyWrapper.className="mt-1";
-    copyWrapper.innerHTML=`<label class="inline-flex items-center space-x-2"><input type="checkbox" name="autoCopy_${emp.EmpCode}"/> คัดลอกข้อมูลไปช่างอื่นในเครื่องเดียวกัน</label>`;
-    wrapper.appendChild(copyWrapper);
-
-    container.appendChild(wrapper);
-
-    // Copy logic ข้ามช่าง
-    copyWrapper.querySelector('input').addEventListener("change", ()=>{
-      const checked = copyWrapper.querySelector('input').checked;
-      if(!checked) return;
-      const machineContainer = wrapper.closest(".machine-container");
-      const allTechs = machineContainer.querySelectorAll('input[name="ช่างผู้รับผิดชอบ"]');
-      const sourceCode = emp.EmpCode;
-      const sourceComment = wrapper.querySelector(`textarea[name="comment_${sourceCode}"]`).value;
-      const sourceStart = wrapper.querySelector(`input[name="start_${sourceCode}"]`).value;
-      const sourceEnd = wrapper.querySelector(`input[name="end_${sourceCode}"]`).value;
-      const sourceStatus = [...wrapper.querySelectorAll(`input[name="status_${sourceCode}"]:checked`)].map(c=>c.value).join(",");
-
-      allTechs.forEach(t=>{
-        if(t.value !== sourceCode){
-          const tWrapper = t.closest("div");
-          tWrapper.querySelector(`textarea[name="comment_${t.value}"]`).value = sourceComment;
-          tWrapper.querySelector(`input[name="start_${t.value}"]`).value = sourceStart;
-          tWrapper.querySelector(`input[name="end_${t.value}"]`).value = sourceEnd;
-          // Copy Checkbox status
-          tWrapper.querySelectorAll(`input[name="status_${t.value}"]`).forEach(cb=>{
-            cb.checked = sourceStatus.split(",").includes(cb.value);
-          });
+  // Copy data logic
+  techContainer.querySelectorAll('input[type="checkbox"][name^="autoCopy_"]').forEach(cb=>{
+    cb.addEventListener("change", ()=>{
+      if(!cb.checked) return;
+      const code = cb.name.replace("autoCopy_","");
+      const sourceDiv = techContainer.querySelector(`input[value="${code}"]`).closest(".tech-checkbox");
+      const data = {
+        comment: sourceDiv.querySelector(`textarea[name="comment_${code}"]`).value,
+        start: sourceDiv.querySelector(`input[name="start_${code}"]`).value,
+        end: sourceDiv.querySelector(`input[name="end_${code}"]`).value,
+        status: [...sourceDiv.querySelectorAll(`input[name="status_${code}"]:checked`)].map(c=>c.value)
+      };
+      techContainer.querySelectorAll(".tech-checkbox").forEach(tc=>{
+        const empCode = tc.querySelector('input[name="ช่างผู้รับผิดชอบ"]').value;
+        if(empCode!==code){
+          tc.querySelector(`textarea[name="comment_${empCode}"]`).value = data.comment;
+          tc.querySelector(`input[name="start_${empCode}"]`).value = data.start;
+          tc.querySelector(`input[name="end_${empCode}"]`).value = data.end;
+          tc.querySelectorAll(`input[name="status_${empCode}"]`).forEach(cbx=>{ cbx.checked = data.status.includes(cbx.value); });
         }
       });
     });
   });
 
-  container.addEventListener("change", e=>{
-    if(e.target.name==="ช่างผู้รับผิดชอบ"){
-      const selected=container.querySelectorAll('input[name="ช่างผู้รับผิดชอบ"]:checked');
-      if(selected.length>3){ e.target.checked=false; alert("เลือกช่างได้สูงสุด 3 คนเท่านั้น"); }
-    }
-    if(e.target.name.startsWith("end_")){
-      const code = e.target.name.replace("end_","");
-      const startInput = container.querySelector(`input[name="start_${code}"]`);
-      if(startInput.value && e.target.value && e.target.value < startInput.value){
-        alert("วันที่จบ ต้องไม่ต่ำว่าวันเริ่ม"); e.target.value="";
-      }
-    }
-  });
-}
-
-// --- Add Machine
-$("btnAddMachine").addEventListener("click", async ()=>{
-  const code=$("deptCodeHidden").value; if(!code){ alert("กรุณาเลือกหน่วยงานก่อน"); return; }
-  await loadMachinesByDept(code); await loadTechnicians();
-  const row=createMachineRow();
-  $("machinesContainer").appendChild(row);
-
-  const searchInput=row.querySelector(".machineSearch");
-  const ul=row.querySelector(".machineList");
-  const hiddenInput=row.querySelector(".machineCodeHidden");
-
+  // Machine search autocomplete
+  const searchInput = div.querySelector(".machineSearch");
+  const ul = div.querySelector(".machineList");
+  const hiddenInput = div.querySelector(".machineCodeHidden");
   searchInput.addEventListener("input", ()=>{
     const val=searchInput.value.toLowerCase();
-    const filtered=machineList.filter(m=>(`${m["รายชื่อเครื่องจักร1"]}`).toLowerCase().includes(val));
+    const filtered = machineList.filter(m=>m.DeptCode==$("deptCodeHidden").value && (m["รายชื่อเครื่องจักร1"]||"").toLowerCase().includes(val));
     ul.innerHTML="";
     filtered.forEach(m=>{
       const li=document.createElement("li");
-      li.textContent=`${m["รายชื่อเครื่องจักร1"]}`;
-      li.dataset.code=m["รหัสเครื่อง"];
+      li.textContent = m["รายชื่อเครื่องจักร1"];
+      li.dataset.code = m["รหัสเครื่อง"];
       li.className="px-3 py-1 hover:bg-blue-100 cursor-pointer";
       li.onclick=()=>{ searchInput.value=li.textContent; hiddenInput.value=li.dataset.code; ul.classList.add("hidden"); };
       ul.appendChild(li);
     });
     ul.classList.toggle("hidden", filtered.length===0);
   });
-});
 
-// --- Department Search
+  return div;
+}
+
+// --- Event Listeners ---
 $("deptSearch").addEventListener("input", e=>{
   const val=e.target.value.toLowerCase();
-  const filtered=deptList.filter(d=>`${d.NickName||""} : ${d.DeptName||""}`.toLowerCase().includes(val));
   const ul=$("deptList"); ul.innerHTML="";
-  filtered.forEach(d=>{
+  deptList.filter(d=>`${d.NickName||""} : ${d.DeptName||""}`.toLowerCase().includes(val)).forEach(d=>{
     const li=document.createElement("li");
     li.textContent=`${d.NickName} : ${d.DeptName}`;
     li.dataset.code=d.DeptCode;
     li.className="px-3 py-1 hover:bg-blue-100 cursor-pointer";
-    li.onclick=()=>{ $("deptSearch").value=li.textContent; $("deptCodeHidden").value=li.dataset.code; ul.classList.add("hidden"); };
+    li.onclick=()=>{
+      $("deptSearch").value=li.textContent;
+      $("deptCodeHidden").value=li.dataset.code;
+      ul.classList.add("hidden");
+      $("pmGroupSearch").disabled=false;
+    };
     ul.appendChild(li);
   });
   $("deptList").classList.remove("hidden");
 });
 
-// --- Reset Form
+// PM Group search
+$("pmGroupSearch").addEventListener("input", ()=>{
+  if(!$("deptCodeHidden").value){ alert("กรุณาเลือกหน่วยงานก่อน"); $("pmGroupSearch").value=""; return; }
+  const val=$("pmGroupSearch").value.toLowerCase();
+  const ul=$("pmGroupList"); ul.innerHTML="";
+  groupList.filter(g=>g.DeptCode==$("deptCodeHidden").value && (g.GroupName||"").toLowerCase().includes(val)).forEach(g=>{
+    const li=document.createElement("li");
+    li.textContent=g.GroupName;
+    li.dataset.code=g.GroupCode;
+    li.className="px-3 py-1 hover:bg-blue-100 cursor-pointer";
+    li.onclick=()=>{
+      $("pmGroupSearch").value=li.textContent;
+      ul.classList.add("hidden");
+      // Auto-fill machines for this group
+      const machinesInGroup = machineList.filter(m=>m.GroupCode==li.dataset.code && m.DeptCode==$("deptCodeHidden").value);
+      $("machinesContainer").innerHTML="";
+      machinesInGroup.forEach(m=>{
+        const row=createMachineRow();
+        row.querySelector(".machineSearch").value = m["รายชื่อเครื่องจักร1"];
+        row.querySelector(".machineCodeHidden").value = m["รหัสเครื่อง"];
+        $("machinesContainer").appendChild(row);
+      });
+    };
+    ul.appendChild(li);
+  });
+  $("pmGroupList").classList.remove("hidden");
+});
+
+$("btnAddMachine").addEventListener("click", ()=>{
+  if(!$("deptCodeHidden").value){ alert("กรุณาเลือกหน่วยงานก่อน"); return; }
+  $("machinesContainer").appendChild(createMachineRow());
+});
+
 $("btnResetForm").addEventListener("click", ()=>{
   $("repairForm").reset();
   $("machinesContainer").innerHTML="";
   generateNextRequestNumber();
 });
 
-// --- Submit แบบ batch
-$("repairForm").addEventListener("submit", async e => {
+// Submit
+$("repairForm").addEventListener("submit", async e=>{
   e.preventDefault();
-  const submitBtn = $("submitBtn");
-  submitBtn.disabled = true;
-  submitBtn.textContent = "⏳ กำลังบันทึก...";
-
-  try {
+  const submitBtn=$("submitBtn"); submitBtn.disabled=true; submitBtn.textContent="⏳ กำลังบันทึก...";
+  try{
     const form = $("repairForm");
     const reqNum = form.querySelector('input[name="เลขที่ใบแจ้งซ่อม"]').value;
     const dept = $("deptCodeHidden").value;
     const machines = [...form.querySelectorAll(".machine-container")];
 
-    let techniciansRows = [];
-    let partsRows = [];
+    let techniciansRows=[], partsRows=[];
 
-    for (const machine of machines) {
+    machines.forEach(machine=>{
       const machineCode = machine.querySelector(".machineCodeHidden").value;
       const detail = machine.querySelector('textarea[name="รายละเอียดอาการเสีย"]').value;
       const cause = machine.querySelector('textarea[name="วิเคราะห์สาเหตุ"]').value;
 
-      const techs = [...machine.querySelectorAll('input[name="ช่างผู้รับผิดชอบ"]:checked')].map(checkbox => {
-        const code = checkbox.value;
+      const techs = [...machine.querySelectorAll('input[name="ช่างผู้รับผิดชอบ"]:checked')].map(checkbox=>{
+        const code=checkbox.value;
         return {
           EmpCode: code,
           comment: machine.querySelector(`textarea[name="comment_${code}"]`).value,
           start: machine.querySelector(`input[name="start_${code}"]`).value,
           end: machine.querySelector(`input[name="end_${code}"]`).value,
-          status: [...machine.querySelectorAll(`input[name="status_${code}"]:checked`)].map(c=>c.value).join(",") || ""
+          status: [...machine.querySelectorAll(`input[name="status_${code}"]:checked`)].map(c=>c.value).join(",")
         };
       });
 
-      const parts = [...machine.querySelectorAll(".parts-row")].map((p, idx) => ({
-        Seq: idx + 1,
+      const parts = [...machine.querySelectorAll(".parts-row")].map((p, idx)=>({
+        Seq: idx+1,
         รายการอะไหล่: p.querySelector('input[name="รายการอะไหล่"]').value,
         จำนวน: p.querySelector('input[name="จำนวน"]').value,
         หน่วย: p.querySelector('input[name="หน่วย"]').value
       }));
 
-      techs.forEach(t => {
+      techs.forEach(t=>{
         techniciansRows.push({
           "เลขที่ใบแจ้งซ่อม": reqNum,
           "หน่วยงาน": dept,
@@ -315,53 +327,45 @@ $("repairForm").addEventListener("submit", async e => {
           "เวลาจบ": t.end,
           "สถานะของงานช่าง": t.status
         });
+      });
 
-        parts.forEach(p => {
-          partsRows.push({
-            "เลขที่ใบแจ้งซ่อม": reqNum,
-            "รหัสเครื่อง": machineCode,
-            "EmpCode": t.EmpCode,
-            "Seq": p.Seq,
-            "รายการอะไหล่": p.รายการอะไหล่,
-            "จำนวน": p.จำนวน,
-            "หน่วย": p.หน่วย
-          });
+      parts.forEach(p=>{
+        partsRows.push({
+          "เลขที่ใบแจ้งซ่อม": reqNum,
+          "รหัสเครื่อง": machineCode,
+          "EmpCode": "", // optional
+          "Seq": p.Seq,
+          "รายการอะไหล่": p["รายการอะไหล่"],
+          "จำนวน": p["จำนวน"],
+          "หน่วย": p["หน่วย"]
         });
       });
-    }
+    });
 
-    if (techniciansRows.length > 0) {
-      await fetch(`${apiBase}RepairTechnicians/Rows`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "ApplicationAccessKey": apiKey },
-        body: JSON.stringify({ "Action": "Add", "Properties": {}, "Rows": techniciansRows })
-      });
-    }
+    // Push to AppSheet RepairTechnicians
+    await fetch(`${apiBase}RepairTechnicians/Batch`,{
+      method:"POST",
+      headers:{"Content-Type":"application/json","ApplicationAccessKey":apiKey},
+      body: JSON.stringify({Action:"Add",Rows:techniciansRows})
+    });
 
-    if (partsRows.length > 0) {
-      await fetch(`${apiBase}RepairParts/Rows`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "ApplicationAccessKey": apiKey },
-        body: JSON.stringify({ "Action": "Add", "Properties": {}, "Rows": partsRows })
-      });
-    }
+    // Push to AppSheet RepairParts
+    await fetch(`${apiBase}RepairParts/Batch`,{
+      method:"POST",
+      headers:{"Content-Type":"application/json","ApplicationAccessKey":apiKey},
+      body: JSON.stringify({Action:"Add",Rows:partsRows})
+    });
 
-    alert("✅ บันทึกสำเร็จ");
-    form.reset();
-    $("machinesContainer").innerHTML = "";
-    generateNextRequestNumber();
-  } catch (err) {
-    console.error(err);
-    alert("❌ บันทึกไม่สำเร็จ");
-  }
-
-  submitBtn.disabled = false;
-  submitBtn.textContent = "✅ บันทึกข้อมูล";
+    alert("บันทึกสำเร็จ ✅");
+    $("repairForm").reset(); $("machinesContainer").innerHTML=""; generateNextRequestNumber();
+  }catch(err){
+    console.error(err); alert("เกิดข้อผิดพลาดในการบันทึก ❌"); 
+  } finally{ submitBtn.disabled=false; submitBtn.textContent="✅ บันทึกข้อมูล"; }
 });
 
-// --- Init
-(async()=>{
-  await loadDepartments();
+// --- Init ---
+(async function init(){
+  await Promise.all([loadDepartments(), loadMachines(), loadTechnicians(), loadGroups()]);
   generateNextRequestNumber();
 })();
 </script>
