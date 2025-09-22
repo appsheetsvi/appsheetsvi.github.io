@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MachineMaster + MachineGroup Full</title>
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<style>
+body { font-family:'Kanit', sans-serif; background:#f0f4ff; }
+.tag { background:#3b82f6; color:white; padding:2px 6px; margin:2px; border-radius:5px; display:inline-flex; align-items:center; cursor:move; }
+.tag button { margin-left:4px; font-weight:bold; background:none; border:none; color:white; cursor:pointer; }
+.autocomplete-suggestions { position:absolute; background:#fff; border:1px solid #93c5fd; border-radius:6px; max-height:150px; overflow-y:auto; z-index:10; display:none; width:100%; }
+.autocomplete-suggestion { padding:0.5rem; cursor:pointer; }
+.autocomplete-suggestion:hover { background:#e0f2fe; }
+.table-container { overflow-x:auto; }
+</style>
+</head>
+<body class="p-4">
+
+<h1 class="text-2xl font-bold text-center text-blue-800 mb-6">MachineMaster + MachineGroup</h1>
+
+<div class="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow-lg mb-6">
+  <form id="groupForm" onsubmit="return false;">
+    <div class="mb-4">
+      <label class="font-semibold text-gray-700">GroupCode</label>
+      <input type="text" id="gGroupCode" readonly class="w-full border-2 border-blue-300 rounded px-2 py-1 bg-gray-200 text-blue-700 font-bold">
+    </div>
+    <div class="mb-4 relative">
+      <label class="font-semibold">GroupName</label>
+      <input type="text" id="gGroupName" required placeholder="พิมพ์เพื่อค้นหา..." class="w-full border-2 border-blue-300 rounded px-2 py-1">
+      <div id="groupNameSuggestions" class="autocomplete-suggestions"></div>
+    </div>
+    <div class="mb-4">
+      <label class="font-semibold">DeptCode</label>
+      <select id="gDeptCode" required class="w-full border-2 border-blue-300 rounded px-2 py-1"></select>
+    </div>
+    <div class="mb-4 relative">
+      <label class="font-semibold">เครื่องจักรในกลุ่ม</label>
+      <input type="text" id="machineInput" placeholder="พิมพ์ชื่อเครื่อง..." class="w-full border-2 border-blue-300 rounded px-2 py-1">
+      <div id="machineSuggestions" class="autocomplete-suggestions"></div>
+      <div id="groupMachines" class="mt-2 flex flex-wrap"></div>
+    </div>
+    <div class="flex gap-2 mb-2">
+      <button id="groupAddBtn" type="button" class="bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-800">เพิ่มกลุ่ม</button>
+      <button id="groupEditBtn" type="button" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 hidden">แก้ไขกลุ่ม</button>
+      <button id="groupCancelBtn" type="button" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 hidden">ยกเลิก</button>
+    </div>
+    <div id="groupMsg" class="text-center font-semibold mt-2"></div>
+  </form>
+</div>
+
+<div class="max-w-3xl mx-auto bg-white p-4 rounded-xl shadow-lg table-container">
+  <h2 class="text-xl font-semibold mb-2">MachineGroup ปัจจุบัน</h2>
+  <table id="groupTable" class="min-w-full table-auto border border-gray-300">
+    <thead>
+      <tr class="bg-blue-100">
+        <th class="border px-2 py-1">#</th>
+        <th class="border px-2 py-1">GroupCode</th>
+        <th class="border px-2 py-1">GroupName</th>
+        <th class="border px-2 py-1">DeptCode</th>
+        <th class="border px-2 py-1">Action</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<script>
+const appId="ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
+const apiKey="V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
+const currentEmp = localStorage.getItem("EmpCode") || "EMP001";
+
+let machinesData=[], groupsData=[], deptsData=[], selectedMachines=[], editRow=null;
+
+// Fetch Table
+async function fetchTable(tableName){
+  try{
+    const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/${tableName}/Find`,{
+      method:"POST",
+      headers:{ "Content-Type":"application/json","ApplicationAccessKey":apiKey },
+      body:JSON.stringify({})
+    });
+    const text = await res.text();
+    return text ? JSON.parse(text) : [];
+  } catch(e){ console.error(tableName+" fetch error:", e); return []; }
+}
+
+// Load Dropdowns
+async function loadDropdowns(){
+  deptsData = await fetchTable("Department");
+  const deptSelect = document.getElementById("gDeptCode");
+  deptSelect.innerHTML = '<option value="">-- เลือกแผนก --</option>';
+  deptsData.forEach(d=>{
+    const opt = document.createElement("option");
+    opt.value = d.DeptCode;
+    opt.textContent = `${d.DeptCode} : ${d.DeptName || d.DeptNameEng || d.DeptCode}`;
+    deptSelect.appendChild(opt);
+  });
+}
+
+// Generate GroupCode
+async function generateGroupCode(){
+  groupsData = await fetchTable("MachineGroup");
+  const date = new Date();
+  const yyyy = date.getFullYear();
+  const mm = (date.getMonth()+1).toString().padStart(2,'0');
+  let max=0;
+  groupsData.forEach(g=>{
+    if(g.GroupCode?.startsWith(`${yyyy}${mm}`)){
+      const n=parseInt(g.GroupCode.slice(-3));
+      if(n>max) max=n;
+    }
+  });
+  document.getElementById("gGroupCode").value = `${yyyy}${mm}${(max+1).toString().padStart(3,'0')}`;
+}
+
+// Drag & Drop
+function enableDragDrop(){
+  const container = document.getElementById("groupMachines");
+  let dragged=null;
+  container.addEventListener("dragstart", e=>{ dragged = e.target; e.dataTransfer.effectAllowed="move"; });
+  container.addEventListener("dragover", e=>{ e.preventDefault(); });
+  container.addEventListener("drop", e=>{
+    e.preventDefault();
+    if(e.target.classList.contains("tag") && dragged){
+      container.insertBefore(dragged, e.target.nextSibling);
+      selectedMachines = Array.from(container.children).map(c=>c.querySelector("span").textContent);
+    }
+  });
+}
+
+// Render Selected Machines
+function renderSelectedMachines(){
+  const container = document.getElementById("groupMachines");
+  container.innerHTML="";
+  selectedMachines.forEach(m=>{
+    const div=document.createElement("div");
+    div.className="tag";
+    div.draggable=true;
+    div.innerHTML=`<span>${m}</span><button type="button">&times;</button>`;
+    div.querySelector("button").addEventListener("click",async()=>{
+      selectedMachines = selectedMachines.filter(x=>x!==m);
+      renderSelectedMachines();
+      const machine = machinesData.find(x=>x["รายชื่อเครื่องจักร1"]===m);
+      if(machine){
+        await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineMaster/Action`,{
+          method:"POST",
+          headers:{"Content-Type":"application/json","ApplicationAccessKey":apiKey},
+          body:JSON.stringify({Action:"Edit", Rows:[{"รหัสเครื่อง":machine["รหัสเครื่อง"], "GroupCode":""}]})
+        });
+        machine.GroupCode = "";
+      }
+    });
+    container.appendChild(div);
+  });
+  enableDragDrop();
+}
+
+// Auto-complete Machines
+document.getElementById("machineInput").addEventListener("input",()=>{
+  const val = document.getElementById("machineInput").value.toLowerCase();
+  const dept = document.getElementById("gDeptCode").value;
+  const suggDiv = document.getElementById("machineSuggestions");
+  if(!val || !dept){ suggDiv.style.display="none"; return;}
+  const filtered = machinesData.filter(m=>m.DeptCode===dept && m["รายชื่อเครื่องจักร1"]?.toLowerCase().includes(val));
+  suggDiv.innerHTML="";
+  filtered.forEach(m=>{
+    const div=document.createElement("div");
+    div.className="autocomplete-suggestion";
+    div.textContent = m["รายชื่อเครื่องจักร1"];
+    div.addEventListener("click",()=>{ 
+      if(!selectedMachines.includes(m["รายชื่อเครื่องจักร1"])){
+        selectedMachines.push(m["รายชื่อเครื่องจักร1"]);
+        renderSelectedMachines();
+      }
+      document.getElementById("machineInput").value="";
+      suggDiv.style.display="none";
+    });
+    suggDiv.appendChild(div);
+  });
+  suggDiv.style.display = filtered.length>0?"block":"none";
+});
+
+// Auto-complete GroupName
+document.getElementById("gGroupName").addEventListener("input",()=>{
+  const val = document.getElementById("gGroupName").value.toLowerCase();
+  const suggDiv = document.getElementById("groupNameSuggestions");
+  if(!val){ suggDiv.style.display="none"; return;}
+  const filtered = groupsData.filter(g=>g.GroupName?.toLowerCase().includes(val));
+  suggDiv.innerHTML="";
+  filtered.forEach(g=>{
+    const div=document.createElement("div");
+    div.className="autocomplete-suggestion";
+    div.textContent = g.GroupName;
+    div.addEventListener("click",()=>{
+      document.getElementById("gGroupName").value = g.GroupName;
+      document.getElementById("gDeptCode").value = g.DeptCode;
+      selectedMachines = machinesData.filter(m=>m.GroupCode===g.GroupCode).map(m=>m["รายชื่อเครื่องจักร1"]);
+      renderSelectedMachines();
+      suggDiv.style.display="none";
+      editRow = g;
+      document.getElementById("groupAddBtn").classList.add("hidden");
+      document.getElementById("groupEditBtn").classList.remove("hidden");
+      document.getElementById("groupCancelBtn").classList.remove("hidden");
+    });
+    suggDiv.appendChild(div);
+  });
+  suggDiv.style.display = filtered.length>0?"block":"none";
+});
+
+// Render Group Table
+function renderGroupTable(){
+  const tbody = document.querySelector("#groupTable tbody");
+  tbody.innerHTML="";
+  groupsData.forEach((g,index)=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML = `
+      <td class="border px-2 py-1">${index+1}</td>
+      <td class="border px-2 py-1">${g.GroupCode}</td>
+      <td class="border px-2 py-1">${g.GroupName}</td>
+      <td class="border px-2 py-1">${g.DeptCode}</td>
+      <td class="border px-2 py-1">
+        <button class="bg-green-600 text-white px-2 py-1 rounded editBtn">แก้ไข</button>
+        <button class="bg-red-600 text-white px-2 py-1 rounded delBtn">ลบ</button>
+      </td>`;
+    tr.querySelector(".editBtn").addEventListener("click",()=>{
+      document.getElementById("gGroupCode").value = g.GroupCode;
+      document.getElementById("gGroupName").value = g.GroupName;
+      document.getElementById("gDeptCode").value = g.DeptCode;
+      selectedMachines = machinesData.filter(m=>m.GroupCode===g.GroupCode).map(m=>m["รายชื่อเครื่องจักร1"]);
+      renderSelectedMachines();
+      editRow = g;
+      document.getElementById("groupAddBtn").classList.add("hidden");
+      document.getElementById("groupEditBtn").classList.remove("hidden");
+      document.getElementById("groupCancelBtn").classList.remove("hidden");
+    });
+    tr.querySelector(".delBtn").addEventListener("click", async()=>{
+      if(!confirm("ต้องการลบกลุ่มนี้หรือไม่?")) return;
+      const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineGroup/Action`,{
+        method:"POST",
+        headers:{"Content-Type":"application/json","ApplicationAccessKey":apiKey},
+        body:JSON.stringify({Action:"Delete", Rows:[{GroupCode:g.GroupCode}]})
+      });
+      const oldMachines = machinesData.filter(m=>m.GroupCode===g.GroupCode);
+      for(const m of oldMachines){
+        await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineMaster/Action`,{
+          method:"POST",
+          headers:{"Content-Type":"application/json","ApplicationAccessKey":apiKey},
+          body:JSON.stringify({Action:"Edit", Rows:[{"รหัสเครื่อง":m["รหัสเครื่อง"], "GroupCode":""}]})
+        });
+        m.GroupCode = "";
+      }
+      groupsData = groupsData.filter(x=>x.GroupCode!==g.GroupCode);
+      renderGroupTable();
+    });
+    tbody.appendChild(tr);
+  });
+}
+
+// Save Group
+async function saveGroup(){
+  const gCode = document.getElementById("gGroupCode").value;
+  const gName = document.getElementById("gGroupName").value;
+  const gDept = document.getElementById("gDeptCode").value;
+  if(!gCode || !gName || !gDept){ alert("กรุณากรอกข้อมูลครบทุกช่อง"); return;}
+  const timestamp = new Date().toISOString();
+  const newGroup = {GroupCode:gCode, GroupName:gName, DeptCode:gDept, CreatedBy:currentEmp, CreatedDate:timestamp, ModifiedBy:currentEmp, ModifiedDate:timestamp};
+
+  const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineGroup/Action`,{
+    method:"POST",
+    headers:{"Content-Type":"application/json","ApplicationAccessKey":apiKey},
+    body:JSON.stringify({Action:"Add", Rows:[newGroup]})
+  });
+  const data = await res.json();
+  console.log("Add Group response:", data);
+
+  groupsData.push(newGroup);
+
+  // Update MachineMaster
+  for(const mName of selectedMachines){
+    const machine = machinesData.find(m=>m["รายชื่อเครื่องจักร1"]===mName);
+    if(machine){
+      await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineMaster/Action`,{
+        method:"POST",
+        headers:{"Content-Type":"application/json","ApplicationAccessKey":apiKey},
+        body:JSON.stringify({Action:"Edit", Rows:[{"รหัสเครื่อง":machine["รหัสเครื่อง"], "GroupCode":gCode}]})
+      });
+      machine.GroupCode = gCode;
+    }
+  }
+  renderGroupTable();
+  resetForm();
+}
+
+// Edit Group
+async function editGroup(){
+  if(!editRow) return;
+  const gCode = document.getElementById("gGroupCode").value;
+  const gName = document.getElementById("gGroupName").value;
+  const gDept = document.getElementById("gDeptCode").value;
+  const timestamp = new Date().toISOString();
+  const updatedGroup = {...editRow, GroupName:gName, DeptCode:gDept, ModifiedBy:currentEmp, ModifiedDate:timestamp};
+
+  const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineGroup/Action`,{
+    method:"POST",
+    headers:{"Content-Type":"application/json","ApplicationAccessKey":apiKey},
+    body:JSON.stringify({Action:"Edit", Rows:[updatedGroup]})
+  });
+  const data = await res.json();
+  console.log("Edit Group response:", data);
+
+  // Update MachineMaster
+  const oldMachines = machinesData.filter(m=>m.GroupCode===gCode && !selectedMachines.includes(m["รายชื่อเครื่องจักร1"]));
+  for(const m of oldMachines){
+    await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineMaster/Action`,{
+      method:"POST",
+      headers:{"Content-Type":"application/json","ApplicationAccessKey":apiKey},
+      body:JSON.stringify({Action:"Edit", Rows:[{"รหัสเครื่อง":m["รหัสเครื่อง"], "GroupCode":""}]})
+    });
+    m.GroupCode = "";
+  }
+  for(const mName of selectedMachines){
+    const machine = machinesData.find(m=>m["รายชื่อเครื่องจักร1"]===mName);
+    if(machine) {
+      await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineMaster/Action`,{
+        method:"POST",
+        headers:{"Content-Type":"application/json","ApplicationAccessKey":apiKey},
+        body:JSON.stringify({Action:"Edit", Rows:[{"รหัสเครื่อง":machine["รหัสเครื่อง"], "GroupCode":gCode}]})
+      });
+      machine.GroupCode = gCode;
+    }
+  }
+  groupsData = groupsData.map(g=>g.GroupCode===gCode ? updatedGroup : g);
+  renderGroupTable();
+  resetForm();
+}
+
+// Reset Form
+function resetForm(){
+  document.getElementById("groupForm").reset();
+  selectedMachines=[];
+  renderSelectedMachines();
+  editRow=null;
+  document.getElementById("groupAddBtn").classList.remove("hidden");
+  document.getElementById("groupEditBtn").classList.add("hidden");
+  document.getElementById("groupCancelBtn").classList.add("hidden");
+  generateGroupCode();
+}
+
+// Init
+async function init(){
+  await loadDropdowns();
+  machinesData = await fetchTable("MachineMaster");
+  groupsData = await fetchTable("MachineGroup");
+  renderGroupTable();
+  generateGroupCode();
+}
+
+// Event Listeners
+document.getElementById("groupAddBtn").addEventListener("click", saveGroup);
+document.getElementById("groupEditBtn").addEventListener("click", editGroup);
+document.getElementById("groupCancelBtn").addEventListener("click", resetForm);
+
+init();
+</script>
+</body>
+</html>
