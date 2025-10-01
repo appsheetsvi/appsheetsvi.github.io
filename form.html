@@ -92,11 +92,23 @@ async function fetchFromTable(table){
 }
 
 // Generate Request Number
+// Generate Request Number in format YYMM###
 async function generateNextRequestNumber(){
   const list = await fetchFromTable("RepairTechnicians");
-  const nums=list.map(r=>parseInt(r["เลขที่ใบแจ้งซ่อม"])).filter(n=>!isNaN(n));
-  const nextNum=(Math.max(...nums,0)+1).toString();
-  $("repairForm").querySelector('input[name="เลขที่ใบแจ้งซ่อม"]').value=nextNum;
+  const nums = list.map(r => r["เลขที่ใบแจ้งซ่อม"]).filter(n => !!n);
+
+  const now = new Date();
+  const year = now.getFullYear().toString().slice(-2); // ✅ ปี ค.ศ. 2 หลัก
+  const month = (now.getMonth() + 1).toString().padStart(2, "0"); // ✅ เดือน 2 หลัก
+  const prefix = year + month; // เช่น "2510"
+
+  const filtered = nums.filter(n => n.startsWith(prefix));
+  if(filtered.length === 0){
+    $("repairForm").querySelector('input[name="เลขที่ใบแจ้งซ่อม"]').value = prefix + "001";
+  } else {
+    const max = Math.max(...filtered.map(n => parseInt(n)));
+    $("repairForm").querySelector('input[name="เลขที่ใบแจ้งซ่อม"]').value = (max + 1).toString();
+  }
 }
 
 // Load Departments, Machines, Technicians, Groups
