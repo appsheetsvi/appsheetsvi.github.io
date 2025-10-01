@@ -342,11 +342,16 @@ $("repairForm").addEventListener("submit", async e=>{
         });
       });
 
+
+// หา EmpCode ของช่างคนแรก
+const firstTech = machine.querySelector('input[name="ช่างผู้รับผิดชอบ"]:checked');
+const empCode = firstTech ? firstTech.value : "";
+
       parts.forEach(p=>{
         partsRows.push({
           "เลขที่ใบแจ้งซ่อม": reqNum,
           "รหัสเครื่อง": machineCode,
-          "EmpCode": "", // optional
+          "EmpCode": empCode,  // <-- เพิ่มตรงนี้
           "Seq": p.Seq,
           "รายการอะไหล่": p["รายการอะไหล่"],
           "จำนวน": p["จำนวน"],
