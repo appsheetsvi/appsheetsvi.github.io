@@ -310,6 +310,11 @@ $("pmGroupSearch").addEventListener("input", ()=>{
         const row=createMachineRow();
         row.querySelector(".machineSearch").value = m["รายชื่อเครื่องจักร1"];
         row.querySelector(".machineCodeHidden").value = m["รหัสเครื่อง"];
+        // ✅ เติมข้อมูลอาการเสียและวิเคราะห์สาเหตุจาก Group
+    row.querySelector('textarea[name="รายละเอียดอาการเสีย"]').value = g["รายละเอียดอาการเสีย"] || "";
+    row.querySelector('textarea[name="วิเคราะห์สาเหตุ"]').value = g["วิเคราะห์สาเหตุ"] || ""; 
+
+
         $("machinesContainer").appendChild(row);
       });
     };
