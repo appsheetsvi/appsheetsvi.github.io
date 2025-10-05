@@ -8,7 +8,17 @@
 <link href="https://fonts.googleapis.com/css2?family=Sarabun&display=swap" rel="stylesheet" />
 <style>
 body { font-family:'Sarabun',sans-serif; background:#f0f9ff; min-height:100vh; }
-input, textarea, select { font-size:0.875rem; padding:0.375rem 0.5rem; border-radius:0.375rem; }
+  
+/*input, textarea, select { font-size:0.875rem; padding:0.375rem 0.5rem; border-radius:0.375rem; }*/
+  @media (max-width: 640px) {
+  input, textarea, select {
+    font-size: 1rem;
+    padding: 0.5rem 0.75rem;
+  }
+  label { font-size: 0.95rem; }
+  .tech-checkbox { flex: 1 1 100%; } /* กล่องช่างเรียงแนวตั้ง */
+}
+
 input:focus, textarea:focus, select:focus { outline:none; border-color:#3b82f6; box-shadow:0 0 0 2px rgba(59,130,246,0.4); background:#fff; }
 textarea { min-height:3rem; }
 .parts-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
@@ -44,7 +54,7 @@ textarea { min-height:3rem; }
 <div></div>
 </nav>
 
-<main class="max-w-7xl mx-auto mt-6 p-6 bg-white rounded-xl shadow">
+<main class="w-full max-w-3xl mx-auto mt-4 p-4 bg-white rounded-lg shadow">  
 <h1 class="text-2xl font-bold text-blue-700 text-center mb-6">📋 ฟอร์มแจ้งซ่อมเครื่องจักร </h1>
 
 <form id="repairForm" class="grid gap-6" autocomplete="off">
@@ -404,6 +414,7 @@ const empCode = firstTech ? firstTech.value : "";
 </script>
 </body>
 </html>
+
 
 
 
