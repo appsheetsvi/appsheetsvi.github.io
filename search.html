@@ -293,8 +293,15 @@ function renderTable(){
       const e = empList.find(x => (x.EmpCode||x["รหัส"]) === code.trim());
       return e ? (e.EmpName||e.EmpNameEng||code) : code;
     }).join(", ") || "-";
-    const machineName = machineList.find(m=> (m.MachineCode||m["รหัส"]) === r["รหัสเครื่อง"])?.MachineName
-                        || r["รหัสเครื่อง"] || "-";
+// แปลงรหัสเครื่องเป็น "รหัส - ชื่อเครื่องจักร"
+const mObj = machineList.find(m => 
+    (m.MachineCode || m["รหัส"] || m["รหัสเครื่อง"]) === r["รหัสเครื่อง"]
+);
+const machineName = mObj 
+    ? `${mObj.MachineCode || mObj["รหัส"] || ""} - ${mObj.MachineName || mObj["รายชื่อเครื่องจักร"] || ""}` 
+    : r["รหัสเครื่อง"] || "-";
+
+
     const date = fmtDateThai(r["เวลาเริ่ม"]);
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -432,8 +439,19 @@ document.getElementById("btnSave").addEventListener("click", ()=>saveRecord());
 /* ============ BOOT ============ */
 (async function init(){
   try{
+   // ตั้งค่า default วันที่ 3 วันล่าสุด
+    const today = new Date();
+    const threeDaysAgo = new Date();
+    threeDaysAgo.setDate(today.getDate() - 2); // รวมวันนี้เป็น 3 วันล่าสุด
+
+    // ฟอร์แมตเป็น yyyy-mm-dd สำหรับ input type="date"
+    const pad = n => String(n).padStart(2,"0");
+    document.getElementById("filterFrom").value = `${threeDaysAgo.getFullYear()}-${pad(threeDaysAgo.getMonth()+1)}-${pad(threeDaysAgo.getDate())}`;
+    document.getElementById("filterTo").value = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
+
+
     await loadLookups();
-    await loadRepairData();
+    await loadRepairData(); // จะใช้วันที่ที่ตั้งค่าแล้วในการกรอง
   }catch(err){
     console.error("init",err);
   }
