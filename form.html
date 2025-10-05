@@ -171,10 +171,17 @@ function createTechBox(emp){
       <input type="checkbox" name="ช่างผู้รับผิดชอบ" value="${emp.EmpCode}"/> ${emp.EmpName}
     </label>
     <textarea name="comment_${emp.EmpCode}" placeholder="ความคิดเห็น" class="mt-1"></textarea>
-    <div class="flex gap-2 mt-1">
-      <div class="flex flex-col flex-1"><label class="text-xs">วันที่เริ่ม</label><input type="datetime-local" name="start_${emp.EmpCode}" /></div>
-      <div class="flex flex-col flex-1"><label class="text-xs">วันที่จบ</label><input type="datetime-local" name="end_${emp.EmpCode}" /></div>
-    </div>
+    <div class="flex flex-col flex-1">
+  <label class="text-xs">วันที่เริ่ม</label>
+  <input type="datetime-local" name="start_${emp.EmpCode}" 
+         class="w-full max-w-[140px] sm:max-w-full text-sm px-1" />
+</div>
+<div class="flex flex-col flex-1">
+  <label class="text-xs">วันที่จบ</label>
+  <input type="datetime-local" name="end_${emp.EmpCode}" 
+         class="w-full max-w-[140px] sm:max-w-full text-sm px-1" />
+</div>
+
     <div class="flex gap-2 mt-1">
       <label><input type="checkbox" name="status_${emp.EmpCode}" value="จบงาน"/> จบงาน</label>
       <label><input type="checkbox" name="status_${emp.EmpCode}" value="ไม่จบงาน"/> ไม่จบงาน</label>
@@ -419,6 +426,7 @@ const empCode = firstTech ? firstTech.value : "";
 </script>
 </body>
 </html>
+
 
 
 
