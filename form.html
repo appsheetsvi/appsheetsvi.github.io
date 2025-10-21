@@ -337,6 +337,12 @@ $("btnResetForm").addEventListener("click", ()=>{
 // Submit
 $("repairForm").addEventListener("submit", async e=>{
   e.preventDefault();
+  
+// ✅ เช็คว่ามีเครื่องจักรถูกเพิ่มหรือยัง
+  if (document.querySelectorAll(".machine-container").length === 0) {
+    alert("กรุณาเพิ่มรายชื่อเครื่องจักรก่อนบันทึกข้อมูล");
+    return; // ❌ หยุดการบันทึก
+  }
   const submitBtn=$("submitBtn"); submitBtn.disabled=true; submitBtn.textContent="⏳ กำลังบันทึก...";
   try{
     const form = $("repairForm");
@@ -431,6 +437,7 @@ const empCode = firstTech ? firstTech.value : "";
 </script>
 </body>
 </html>
+
 
 
 
