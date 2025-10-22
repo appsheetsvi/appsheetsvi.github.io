@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title> MachineGroup Full</title>
+<title>MachineGroup Full</title>
 <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 <style>
 body { font-family:'Kanit', sans-serif; background:#f0f4ff; }
@@ -19,15 +19,14 @@ body { font-family:'Kanit', sans-serif; background:#f0f4ff; }
 </style>
 </head>
 <body class="p-4">
- <div> 
 <nav class="bg-blue-600 text-white p-4 flex justify-between items-center">
 <a href="https://appsheetsvi.github.io/Menu.html" class="font-semibold">🏠 Home</a>
 <div class="font-semibold text-lg">ระบบแจ้งซ่อมออนไลน์</div>
-</div>
 </nav>
+
 <h1 class="text-2xl font-bold text-center text-blue-800 mb-6">MachineGroup</h1>
 
-<!-- ช่องค้นหา GroupName PM สำหรับแก้ไขเครื่องจักร -->
+<!-- ช่องค้นหา GroupName PM -->
 <div class="max-w-3xl mx-auto bg-white p-4 rounded-xl shadow-lg mb-6 relative">
   <label class="font-semibold">ค้นหา ชื่อกลุ่มเครื่อง(PM)</label>
   <input type="text" id="searchGroupPM" placeholder="🔍พิมพ์ชื่อกลุ่ม..." class="w-full border-2 border-blue-300 rounded px-2 py-1">
@@ -50,12 +49,24 @@ body { font-family:'Kanit', sans-serif; background:#f0f4ff; }
       <label class="font-semibold">DeptCode</label>
       <select id="gDeptCode" required class="w-full border-2 border-blue-300 rounded px-2 py-1"></select>
     </div>
+
+    <!-- ช่องใหม่ -->
+    <div class="mb-4">
+      <label class="font-semibold">รายละเอียดอาการเสีย</label>
+      <textarea id="gProblemDetail" placeholder="กรอกอาการเสีย..." class="w-full border-2 border-blue-300 rounded px-2 py-1"></textarea>
+    </div>
+    <div class="mb-4">
+      <label class="font-semibold">วิเคราะห์สาเหตุ</label>
+      <textarea id="gCauseAnalysis" placeholder="วิเคราะห์สาเหตุ..." class="w-full border-2 border-blue-300 rounded px-2 py-1"></textarea>
+    </div>
+
     <div class="mb-4 relative">
       <label class="font-semibold">เครื่องจักรในกลุ่ม</label>
       <input type="text" id="machineInput" placeholder="🔍พิมพ์ชื่อเครื่องจักร..." class="w-full border-2 border-blue-300 rounded px-2 py-1">
       <div id="machineSuggestions" class="autocomplete-suggestions"></div>
       <div id="groupMachines" class="mt-2 flex flex-wrap"></div>
     </div>
+
     <div class="flex gap-2 mb-2">
       <button id="groupAddBtn" type="button" class="bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-800">เพิ่มกลุ่ม</button>
       <button id="groupEditBtn" type="button" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 hidden">แก้ไขกลุ่ม</button>
@@ -178,34 +189,6 @@ document.getElementById("machineInput").addEventListener("input",()=>{
   suggDiv.style.display = filtered.length>0?"block":"none";
 });
 
-// Search GroupName PM (แก้ไขเครื่องจักร)
-document.getElementById("searchGroupPM").addEventListener("input",()=>{
-  const val = document.getElementById("searchGroupPM").value.toLowerCase();
-  const suggDiv = document.getElementById("searchGroupPMSuggestions");
-  if(!val){ suggDiv.style.display="none"; return;}
-  const filtered = groupsData.filter(g=>g.GroupName?.toLowerCase().includes(val));
-  suggDiv.innerHTML="";
-  filtered.forEach(g=>{
-    const div=document.createElement("div");
-    div.className="autocomplete-suggestion";
-    div.textContent = g.GroupName;
-    div.addEventListener("click",()=>{
-      document.getElementById("gGroupCode").textContent = g.GroupCode;
-      document.getElementById("gGroupName").value = g.GroupName;
-      document.getElementById("gDeptCode").value = g.DeptCode;
-      selectedMachines = machinesData.filter(m=>m.GroupCode===g.GroupCode).map(m=>m["รายชื่อเครื่องจักร1"]);
-      renderSelectedMachines();
-      editRow = g;
-      document.getElementById("groupAddBtn").classList.add("hidden");
-      document.getElementById("groupEditBtn").classList.remove("hidden");
-      document.getElementById("groupCancelBtn").classList.remove("hidden");
-      suggDiv.style.display="none";
-    });
-    suggDiv.appendChild(div);
-  });
-  suggDiv.style.display = filtered.length>0?"block":"none";
-});
-
 // Render Group Table
 function renderGroupTable(){
   const tbody = document.querySelector("#groupTable tbody");
@@ -226,6 +209,8 @@ function renderGroupTable(){
       document.getElementById("gGroupCode").textContent = g.GroupCode;
       document.getElementById("gGroupName").value = g.GroupName;
       document.getElementById("gDeptCode").value = g.DeptCode;
+      document.getElementById("gProblemDetail").value = g["รายละเอียดอาการเสีย"] || "";
+      document.getElementById("gCauseAnalysis").value = g["วิเคราะห์สาเหตุ"] || "";
       selectedMachines = machinesData.filter(m=>m.GroupCode===g.GroupCode).map(m=>m["รายชื่อเครื่องจักร1"]);
       renderSelectedMachines();
       editRow = g;
@@ -237,85 +222,11 @@ function renderGroupTable(){
   });
 }
 
-// Save Group
-async function saveGroup(){
-  const gCode = document.getElementById("gGroupCode").textContent;
-  const gName = document.getElementById("gGroupName").value;
-  const gDept = document.getElementById("gDeptCode").value;
-  if(!gCode || !gName || !gDept){ alert("กรุณากรอกข้อมูลครบทุกช่อง"); return;}
-
-  const timestamp = new Date().toLocaleString("th-TH",{hour12:false});
-  const newGroup = {GroupCode:gCode, GroupName:gName, DeptCode:gDept, CreatedBy:currentEmp, CreatedDate:timestamp, ModifiedBy:currentEmp, ModifiedDate:timestamp};
-
-  await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineGroup/Action`,{
-    method:"POST",
-    headers:{"Content-Type":"application/json","ApplicationAccessKey":apiKey},
-    body:JSON.stringify({Action:"Add", Rows:[newGroup]})
-  });
-
-  groupsData.push(newGroup);
-
-  for(const mName of selectedMachines){
-    const machine = machinesData.find(m=>m["รายชื่อเครื่องจักร1"]===mName);
-    if(machine){
-      await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineMaster/Action`,{
-        method:"POST",
-        headers:{"Content-Type":"application/json","ApplicationAccessKey":apiKey},
-        body:JSON.stringify({Action:"Edit", Rows:[{"รหัสเครื่อง":machine["รหัสเครื่อง"], "GroupCode":gCode}]})
-      });
-      machine.GroupCode = gCode;
-    }
-  }
-
-  renderGroupTable();
-  resetForm();
-  showSuccess();
-}
-
-// Edit Group
-async function editGroup(){
-  if(!editRow) return;
-  const gCode = document.getElementById("gGroupCode").textContent;
-  const gName = document.getElementById("gGroupName").value;
-  const gDept = document.getElementById("gDeptCode").value;
-  const timestamp = new Date().toLocaleString("th-TH",{hour12:false});
-  const updatedGroup = {...editRow, GroupName:gName, DeptCode:gDept, ModifiedBy:currentEmp, ModifiedDate:timestamp};
-
-  await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineGroup/Action`,{
-    method:"POST",
-    headers:{"Content-Type":"application/json","ApplicationAccessKey":apiKey},
-    body:JSON.stringify({Action:"Edit", Rows:[updatedGroup]})
-  });
-
-  const oldMachines = machinesData.filter(m=>m.GroupCode===gCode && !selectedMachines.includes(m["รายชื่อเครื่องจักร1"]));
-  for(const m of oldMachines){
-    await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineMaster/Action`,{
-      method:"POST",
-      headers:{"Content-Type":"application/json","ApplicationAccessKey":apiKey},
-      body:JSON.stringify({Action:"Edit", Rows:[{"รหัสเครื่อง":m["รหัสเครื่อง"], "GroupCode":""}]})
-    });
-    m.GroupCode = "";
-  }
-  for(const mName of selectedMachines){
-    const machine = machinesData.find(m=>m["รายชื่อเครื่องจักร1"]===mName);
-    if(machine){
-      await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineMaster/Action`,{
-        method:"POST",
-        headers:{"Content-Type":"application/json","ApplicationAccessKey":apiKey},
-        body:JSON.stringify({Action:"Edit", Rows:[{"รหัสเครื่อง":machine["รหัสเครื่อง"], "GroupCode":gCode}]})
-      });
-      machine.GroupCode = gCode;
-    }
-  }
-  groupsData = groupsData.map(g=>g.GroupCode===gCode ? updatedGroup : g);
-  renderGroupTable();
-  resetForm();
-  showSuccess();
-}
-
 // Reset Form
 function resetForm(){
   document.getElementById("groupForm").reset();
+  document.getElementById("gProblemDetail").value="";
+  document.getElementById("gCauseAnalysis").value="";
   selectedMachines=[];
   renderSelectedMachines();
   editRow=null;
@@ -343,24 +254,99 @@ async function init(){
 }
 
 // Event Listeners
-document.getElementById("groupAddBtn").addEventListener("click", saveGroup);
-document.getElementById("groupEditBtn").addEventListener("click", editGroup);
+document.getElementById("groupAddBtn").addEventListener("click", async ()=>{
+  const gCode = document.getElementById("gGroupCode").textContent;
+  const gName = document.getElementById("gGroupName").value;
+  const gDept = document.getElementById("gDeptCode").value;
+  const problem = document.getElementById("gProblemDetail").value;
+  const cause = document.getElementById("gCauseAnalysis").value;
+
+  if(!gCode || !gName || !gDept){ alert("กรุณากรอกข้อมูลครบทุกช่อง"); return;}
+  const timestamp = new Date().toLocaleString("th-TH",{hour12:false});
+  const newGroup = {GroupCode:gCode, GroupName:gName, DeptCode:gDept, "รายละเอียดอาการเสีย":problem, "วิเคราะห์สาเหตุ":cause, CreatedBy:currentEmp, CreatedDate:timestamp, ModifiedBy:currentEmp, ModifiedDate:timestamp};
+
+  await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineGroup/Action`,{
+    method:"POST",
+    headers:{"Content-Type":"application/json","ApplicationAccessKey":apiKey},
+    body:JSON.stringify({Action:"Add", Rows:[newGroup]})
+  });
+
+  groupsData.push(newGroup);
+
+  // บันทึก GroupCode ใน MachineMaster
+  for(const mName of selectedMachines){
+    const machine = machinesData.find(m=>m["รายชื่อเครื่องจักร1"]===mName);
+    if(machine){
+      await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineMaster/Action`,{
+        method:"POST",
+        headers:{"Content-Type":"application/json","ApplicationAccessKey":apiKey},
+        body:JSON.stringify({Action:"Edit", Rows:[{"รหัสเครื่อง":machine["รหัสเครื่อง"], "GroupCode":gCode}]})
+      });
+      machine.GroupCode = gCode;
+    }
+  }
+
+  renderGroupTable();
+  resetForm();
+  showSuccess();
+});
+
+document.getElementById("groupEditBtn").addEventListener("click", async ()=>{
+  if(!editRow) return;
+  const gCode = document.getElementById("gGroupCode").textContent;
+  const gName = document.getElementById("gGroupName").value;
+  const gDept = document.getElementById("gDeptCode").value;
+  const problem = document.getElementById("gProblemDetail").value;
+  const cause = document.getElementById("gCauseAnalysis").value;
+  const timestamp = new Date().toLocaleString("th-TH",{hour12:false});
+  const updatedGroup = {...editRow, GroupName:gName, DeptCode:gDept, "รายละเอียดอาการเสีย":problem, "วิเคราะห์สาเหตุ":cause, ModifiedBy:currentEmp, ModifiedDate:timestamp};
+
+  await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineGroup/Action`,{
+    method:"POST",
+    headers:{"Content-Type":"application/json","ApplicationAccessKey":apiKey},
+    body:JSON.stringify({Action:"Edit", Rows:[updatedGroup]})
+  });
+
+  // Update machines
+  const oldMachines = machinesData.filter(m=>m.GroupCode===gCode && !selectedMachines.includes(m["รายชื่อเครื่องจักร1"]));
+  for(const m of oldMachines){
+    await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineMaster/Action`,{
+      method:"POST",
+      headers:{"Content-Type":"application/json","ApplicationAccessKey":apiKey},
+      body:JSON.stringify({Action:"Edit", Rows:[{"รหัสเครื่อง":m["รหัสเครื่อง"], "GroupCode":""}]})
+    });
+    m.GroupCode = "";
+  }
+  for(const mName of selectedMachines){
+    const machine = machinesData.find(m=>m["รายชื่อเครื่องจักร1"]===mName);
+    if(machine){
+      await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineMaster/Action`,{
+        method:"POST",
+        headers:{"Content-Type":"application/json","ApplicationAccessKey":apiKey},
+        body:JSON.stringify({Action:"Edit", Rows:[{"รหัสเครื่อง":machine["รหัสเครื่อง"], "GroupCode":gCode}]})
+      });
+      machine.GroupCode = gCode;
+    }
+  }
+  groupsData = groupsData.map(g=>g.GroupCode===gCode ? updatedGroup : g);
+  renderGroupTable();
+  resetForm();
+  showSuccess();
+});
+
 document.getElementById("groupCancelBtn").addEventListener("click", resetForm);
 
-// ช่องค้นหาทุกคอลัมน์
-document.getElementById("searchAll").addEventListener("input",()=>{
+// Search All Columns
+document.getElementById("searchAll").addEventListener("input", ()=>{
   const val = document.getElementById("searchAll").value.toLowerCase();
-  document.querySelectorAll("#groupTable tbody tr").forEach(tr=>{
-    const text = Array.from(tr.children).slice(0,4).map(td=>td.textContent.toLowerCase()).join(" ");
+  const tbody = document.querySelector("#groupTable tbody");
+  tbody.querySelectorAll("tr").forEach(tr=>{
+    const text = tr.textContent.toLowerCase();
     tr.style.display = text.includes(val) ? "" : "none";
   });
 });
 
 init();
 </script>
-
 </body>
 </html>
-
-
-
