@@ -30,7 +30,7 @@ body { font-family:'Kanit', sans-serif; background:#f0f4ff; }
 <div class="max-w-3xl mx-auto bg-white p-4 rounded-xl shadow-lg mb-6 relative">
   <label class="font-semibold">ค้นหา ชื่อกลุ่มเครื่อง(PM)</label>
   <input type="text" id="searchGroupPM" placeholder="🔍พิมพ์ชื่อกลุ่ม..." class="w-full border-2 border-blue-300 rounded px-2 py-1">
-  <span class="search-icon">🔍</span>
+  <span class="search-icon"></span>
   <div id="searchGroupPMSuggestions" class="autocomplete-suggestions"></div>
 </div>
 
@@ -182,6 +182,34 @@ document.getElementById("machineInput").addEventListener("input",()=>{
         renderSelectedMachines();
       }
       document.getElementById("machineInput").value="";
+      suggDiv.style.display="none";
+    });
+    suggDiv.appendChild(div);
+  });
+  suggDiv.style.display = filtered.length>0?"block":"none";
+});
+
+// Search GroupName PM (แก้ไขเครื่องจักร)
+document.getElementById("searchGroupPM").addEventListener("input",()=>{
+  const val = document.getElementById("searchGroupPM").value.toLowerCase();
+  const suggDiv = document.getElementById("searchGroupPMSuggestions");
+  if(!val){ suggDiv.style.display="none"; return;}
+  const filtered = groupsData.filter(g=>g.GroupName?.toLowerCase().includes(val));
+  suggDiv.innerHTML="";
+  filtered.forEach(g=>{
+    const div=document.createElement("div");
+    div.className="autocomplete-suggestion";
+    div.textContent = g.GroupName;
+    div.addEventListener("click",()=>{
+      document.getElementById("gGroupCode").textContent = g.GroupCode;
+      document.getElementById("gGroupName").value = g.GroupName;
+      document.getElementById("gDeptCode").value = g.DeptCode;
+      selectedMachines = machinesData.filter(m=>m.GroupCode===g.GroupCode).map(m=>m["รายชื่อเครื่องจักร1"]);
+      renderSelectedMachines();
+      editRow = g;
+      document.getElementById("groupAddBtn").classList.add("hidden");
+      document.getElementById("groupEditBtn").classList.remove("hidden");
+      document.getElementById("groupCancelBtn").classList.remove("hidden");
       suggDiv.style.display="none";
     });
     suggDiv.appendChild(div);
