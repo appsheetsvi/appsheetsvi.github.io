@@ -26,17 +26,15 @@ body { font-family:'Kanit', sans-serif; background:#f0f4ff; }
 
 <h1 class="text-2xl font-bold text-center text-blue-800 mb-6">MachineGroup</h1>
 
-<!-- ช่องค้นหา GroupName PM -->
-<div class="max-w-3xl mx-auto bg-white p-4 rounded-xl shadow-lg mb-6 relative">
-  <label class="font-semibold">ค้นหา ชื่อกลุ่มเครื่อง(PM)</label>
-  <input type="text" id="searchGroupPM" placeholder="🔍พิมพ์ชื่อกลุ่ม..." class="w-full border-2 border-blue-300 rounded px-2 py-1">
-  <span class="search-icon"></span>
-  <div id="searchGroupPMSuggestions" class="autocomplete-suggestions"></div>
-</div>
-
 <!-- ฟอร์มเพิ่ม/แก้ไขกลุ่ม -->
 <div class="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow-lg mb-6">
   <form id="groupForm" onsubmit="return false;">
+    <div class="mb-4">
+      <label class="font-semibold text-gray-700">ค้นหา MachineGroup</label>
+      <input type="text" id="searchGroupPM" placeholder="🔍 พิมพ์ชื่อกลุ่ม..." class="w-full border-2 border-blue-300 rounded px-2 py-1">
+      <div id="searchGroupPMSuggestions" class="autocomplete-suggestions"></div>
+    </div>
+
     <div class="mb-4">
       <label class="font-semibold text-gray-700">GroupCode</label>
       <div id="gGroupCode" class="groupcode-label">---</div>
@@ -49,8 +47,6 @@ body { font-family:'Kanit', sans-serif; background:#f0f4ff; }
       <label class="font-semibold">DeptCode</label>
       <select id="gDeptCode" required class="w-full border-2 border-blue-300 rounded px-2 py-1"></select>
     </div>
-
-    <!-- ช่องใหม่ -->
     <div class="mb-4">
       <label class="font-semibold">รายละเอียดอาการเสีย</label>
       <textarea id="gProblemDetail" placeholder="กรอกอาการเสีย..." class="w-full border-2 border-blue-300 rounded px-2 py-1"></textarea>
@@ -59,10 +55,18 @@ body { font-family:'Kanit', sans-serif; background:#f0f4ff; }
       <label class="font-semibold">วิเคราะห์สาเหตุ</label>
       <textarea id="gCauseAnalysis" placeholder="วิเคราะห์สาเหตุ..." class="w-full border-2 border-blue-300 rounded px-2 py-1"></textarea>
     </div>
+    <div class="mb-4">
+      <label class="font-semibold">การแก้ไขความคิดเห็น</label>
+      <textarea id="gComment" placeholder="กรอกความคิดเห็น..." class="w-full border-2 border-blue-300 rounded px-2 py-1"></textarea>
+    </div>
+    <div class="mb-4">
+      <label class="font-semibold">PmTime (นาที)</label>
+      <input type="number" id="gPmTime" min="0" placeholder="0" class="w-full border-2 border-blue-300 rounded px-2 py-1">
+    </div>
 
     <div class="mb-4 relative">
       <label class="font-semibold">เครื่องจักรในกลุ่ม</label>
-      <input type="text" id="machineInput" placeholder="🔍พิมพ์ชื่อเครื่องจักร..." class="w-full border-2 border-blue-300 rounded px-2 py-1">
+      <input type="text" id="machineInput" placeholder="🔍 พิมพ์ชื่อเครื่องจักร..." class="w-full border-2 border-blue-300 rounded px-2 py-1">
       <div id="machineSuggestions" class="autocomplete-suggestions"></div>
       <div id="groupMachines" class="mt-2 flex flex-wrap"></div>
     </div>
@@ -76,14 +80,10 @@ body { font-family:'Kanit', sans-serif; background:#f0f4ff; }
   </form>
 </div>
 
-<!-- ช่องค้นหารวมทุกคอลัมน์ -->
-<div class="max-w-5xl mx-auto mb-2">
-  <input type="text" id="searchAll" placeholder="🔍ค้นหาทุกคอลัมน์..." class="w-full border-2 border-blue-300 rounded px-2 py-1">
-</div>
-
 <!-- ตารางรายงาน -->
 <div class="max-w-5xl mx-auto bg-white p-4 rounded-xl shadow-lg table-container">
   <h2 class="text-xl font-semibold mb-2">MachineGroup(PM)</h2>
+  <input type="text" id="searchAll" placeholder="🔍 ค้นหาทุกคอลัมน์..." class="w-full border-2 border-blue-300 rounded px-2 py-1 mb-2">
   <table id="groupTable" class="min-w-full table-auto border border-gray-300">
     <thead>
       <tr class="bg-blue-100">
@@ -91,6 +91,10 @@ body { font-family:'Kanit', sans-serif; background:#f0f4ff; }
         <th class="border px-2 py-1">GroupCode</th>
         <th class="border px-2 py-1">GroupName(PM)</th>
         <th class="border px-2 py-1">DeptNameEng</th>
+        <th class="border px-2 py-1">รายละเอียดอาการเสีย</th>
+        <th class="border px-2 py-1">วิเคราะห์สาเหตุ</th>
+        <th class="border px-2 py-1">การแก้ไขความคิดเห็น</th>
+        <th class="border px-2 py-1">PmTime</th>
         <th class="border px-2 py-1">Action</th>
       </tr>
     </thead>
@@ -111,7 +115,7 @@ async function fetchTable(tableName){
     const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/${tableName}/Find`,{
       method:"POST",
       headers:{ "Content-Type":"application/json","ApplicationAccessKey":apiKey },
-      body:JSON.stringify({})
+      body: JSON.stringify({})
     });
     const text = await res.text();
     return text ? JSON.parse(text) : [];
@@ -189,7 +193,7 @@ document.getElementById("machineInput").addEventListener("input",()=>{
   suggDiv.style.display = filtered.length>0?"block":"none";
 });
 
-// Search GroupName PM (แก้ไขเครื่องจักร)
+// Search GroupName PM
 document.getElementById("searchGroupPM").addEventListener("input",()=>{
   const val = document.getElementById("searchGroupPM").value.toLowerCase();
   const suggDiv = document.getElementById("searchGroupPMSuggestions");
@@ -204,6 +208,10 @@ document.getElementById("searchGroupPM").addEventListener("input",()=>{
       document.getElementById("gGroupCode").textContent = g.GroupCode;
       document.getElementById("gGroupName").value = g.GroupName;
       document.getElementById("gDeptCode").value = g.DeptCode;
+      document.getElementById("gProblemDetail").value = g["รายละเอียดอาการเสีย"] || "";
+      document.getElementById("gCauseAnalysis").value = g["วิเคราะห์สาเหตุ"] || "";
+      document.getElementById("gComment").value = g["การแก้ไขความคิดเห็น"] || "";
+      document.getElementById("gPmTime").value = g["PmTime"] || 0;
       selectedMachines = machinesData.filter(m=>m.GroupCode===g.GroupCode).map(m=>m["รายชื่อเครื่องจักร1"]);
       renderSelectedMachines();
       editRow = g;
@@ -230,6 +238,10 @@ function renderGroupTable(){
       <td class="border px-2 py-1">${g.GroupCode}</td>
       <td class="border px-2 py-1">${g.GroupName}</td>
       <td class="border px-2 py-1">${deptNameEng}</td>
+      <td class="border px-2 py-1">${g["รายละเอียดอาการเสีย"] || ""}</td>
+      <td class="border px-2 py-1">${g["วิเคราะห์สาเหตุ"] || ""}</td>
+      <td class="border px-2 py-1">${g["การแก้ไขความคิดเห็น"] || ""}</td>
+      <td class="border px-2 py-1">${g["PmTime"] || 0}</td>
       <td class="border px-2 py-1">
         <button class="bg-green-600 text-white px-2 py-1 rounded editBtn">แก้ไข</button>
       </td>`;
@@ -239,6 +251,8 @@ function renderGroupTable(){
       document.getElementById("gDeptCode").value = g.DeptCode;
       document.getElementById("gProblemDetail").value = g["รายละเอียดอาการเสีย"] || "";
       document.getElementById("gCauseAnalysis").value = g["วิเคราะห์สาเหตุ"] || "";
+      document.getElementById("gComment").value = g["การแก้ไขความคิดเห็น"] || "";
+      document.getElementById("gPmTime").value = g["PmTime"] || 0;
       selectedMachines = machinesData.filter(m=>m.GroupCode===g.GroupCode).map(m=>m["รายชื่อเครื่องจักร1"]);
       renderSelectedMachines();
       editRow = g;
@@ -255,6 +269,8 @@ function resetForm(){
   document.getElementById("groupForm").reset();
   document.getElementById("gProblemDetail").value="";
   document.getElementById("gCauseAnalysis").value="";
+  document.getElementById("gComment").value="";
+  document.getElementById("gPmTime").value="";
   selectedMachines=[];
   renderSelectedMachines();
   editRow=null;
@@ -272,109 +288,96 @@ function showSuccess(){
   setTimeout(()=>msg.classList.add("hidden"),3000);
 }
 
-// Init
-async function init(){
-  await loadDropdowns();
-  machinesData = await fetchTable("MachineMaster");
-  groupsData = await fetchTable("MachineGroup");
-  renderGroupTable();
-  generateGroupCode();
+// Add / Edit
+async function addOrEditMachineGroup(isEdit=false){
+  const gCode = document.getElementById("gGroupCode").textContent.trim();
+  const gName = document.getElementById("gGroupName").value.trim();
+  const gDept = document.getElementById("gDeptCode").value.trim();
+  const problem = document.getElementById("gProblemDetail").value.trim();
+  const cause = document.getElementById("gCauseAnalysis").value.trim();
+  const comment = document.getElementById("gComment").value.trim();
+  const pmTime = parseInt(document.getElementById("gPmTime").value)||0;
+
+  if(!gCode || !gName || !gDept){ alert("กรุณากรอกข้อมูลครบทุกช่อง"); return; }
+
+  const timestamp = new Date().toISOString();
+  const groupObj = {
+    GroupCode: gCode,
+    GroupName: gName,
+    DeptCode: gDept,
+    "รายละเอียดอาการเสีย": problem,
+    "วิเคราะห์สาเหตุ": cause,
+    "การแก้ไขความคิดเห็น": comment,
+    "PmTime": pmTime,
+    ModifiedBy: currentEmp,
+    ModifiedDate: timestamp
+  };
+
+  const action = isEdit?"Edit":"Add";
+  if(!isEdit){
+    groupObj.CreatedBy = currentEmp;
+    groupObj.CreatedDate = timestamp;
+  }
+
+  try{
+    const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineGroup/Action`,{
+      method:"POST",
+      headers:{ "Content-Type":"application/json","ApplicationAccessKey": apiKey },
+      body: JSON.stringify({Action:action, Rows:[groupObj]})
+    });
+    const result = await res.json();
+    console.log(action+" result:", result);
+    if(result?.Rows && result.Rows.length>0){
+      if(isEdit){
+        const idx = groupsData.findIndex(g=>g.GroupCode===gCode);
+        if(idx>=0) groupsData[idx] = {...groupsData[idx], ...groupObj};
+      } else {
+        groupsData.push(groupObj);
+      }
+
+      // Update machines
+      for(const mName of selectedMachines){
+        const machine = machinesData.find(m=>m["รายชื่อเครื่องจักร1"]===mName);
+        if(machine){
+          await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineMaster/Action`,{
+            method:"POST",
+            headers:{ "Content-Type":"application/json","ApplicationAccessKey": apiKey },
+            body:JSON.stringify({ Action:"Edit", Rows:[{"รหัสเครื่อง":machine["รหัสเครื่อง"], "GroupCode":gCode}] })
+          });
+          machine.GroupCode=gCode;
+        }
+      }
+      renderGroupTable();
+      resetForm();
+      showSuccess();
+    } else {
+      alert("ไม่สามารถบันทึก MachineGroup ได้ ตรวจสอบฟิลด์ required หรือชื่อฟิลด์");
+    }
+  } catch(err){ console.error(action+" MachineGroup error:", err); alert("เกิดข้อผิดพลาด"); }
 }
 
 // Event Listeners
-document.getElementById("groupAddBtn").addEventListener("click", async ()=>{
-  const gCode = document.getElementById("gGroupCode").textContent;
-  const gName = document.getElementById("gGroupName").value;
-  const gDept = document.getElementById("gDeptCode").value;
-  const problem = document.getElementById("gProblemDetail").value;
-  const cause = document.getElementById("gCauseAnalysis").value;
-
-  if(!gCode || !gName || !gDept){ alert("กรุณากรอกข้อมูลครบทุกช่อง"); return;}
-  const timestamp = new Date().toLocaleString("th-TH",{hour12:false});
-  const newGroup = {GroupCode:gCode, GroupName:gName, DeptCode:gDept, "รายละเอียดอาการเสีย":problem, "วิเคราะห์สาเหตุ":cause, CreatedBy:currentEmp, CreatedDate:timestamp, ModifiedBy:currentEmp, ModifiedDate:timestamp};
-
-  await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineGroup/Action`,{
-    method:"POST",
-    headers:{"Content-Type":"application/json","ApplicationAccessKey":apiKey},
-    body:JSON.stringify({Action:"Add", Rows:[newGroup]})
-  });
-
-  groupsData.push(newGroup);
-
-  // บันทึก GroupCode ใน MachineMaster
-  for(const mName of selectedMachines){
-    const machine = machinesData.find(m=>m["รายชื่อเครื่องจักร1"]===mName);
-    if(machine){
-      await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineMaster/Action`,{
-        method:"POST",
-        headers:{"Content-Type":"application/json","ApplicationAccessKey":apiKey},
-        body:JSON.stringify({Action:"Edit", Rows:[{"รหัสเครื่อง":machine["รหัสเครื่อง"], "GroupCode":gCode}]})
-      });
-      machine.GroupCode = gCode;
-    }
-  }
-
-  renderGroupTable();
-  resetForm();
-  showSuccess();
-});
-
-document.getElementById("groupEditBtn").addEventListener("click", async ()=>{
-  if(!editRow) return;
-  const gCode = document.getElementById("gGroupCode").textContent;
-  const gName = document.getElementById("gGroupName").value;
-  const gDept = document.getElementById("gDeptCode").value;
-  const problem = document.getElementById("gProblemDetail").value;
-  const cause = document.getElementById("gCauseAnalysis").value;
-  const timestamp = new Date().toLocaleString("th-TH",{hour12:false});
-  const updatedGroup = {...editRow, GroupName:gName, DeptCode:gDept, "รายละเอียดอาการเสีย":problem, "วิเคราะห์สาเหตุ":cause, ModifiedBy:currentEmp, ModifiedDate:timestamp};
-
-  await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineGroup/Action`,{
-    method:"POST",
-    headers:{"Content-Type":"application/json","ApplicationAccessKey":apiKey},
-    body:JSON.stringify({Action:"Edit", Rows:[updatedGroup]})
-  });
-
-  // Update machines
-  const oldMachines = machinesData.filter(m=>m.GroupCode===gCode && !selectedMachines.includes(m["รายชื่อเครื่องจักร1"]));
-  for(const m of oldMachines){
-    await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineMaster/Action`,{
-      method:"POST",
-      headers:{"Content-Type":"application/json","ApplicationAccessKey":apiKey},
-      body:JSON.stringify({Action:"Edit", Rows:[{"รหัสเครื่อง":m["รหัสเครื่อง"], "GroupCode":""}]})
-    });
-    m.GroupCode = "";
-  }
-  for(const mName of selectedMachines){
-    const machine = machinesData.find(m=>m["รายชื่อเครื่องจักร1"]===mName);
-    if(machine){
-      await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineMaster/Action`,{
-        method:"POST",
-        headers:{"Content-Type":"application/json","ApplicationAccessKey":apiKey},
-        body:JSON.stringify({Action:"Edit", Rows:[{"รหัสเครื่อง":machine["รหัสเครื่อง"], "GroupCode":gCode}]})
-      });
-      machine.GroupCode = gCode;
-    }
-  }
-  groupsData = groupsData.map(g=>g.GroupCode===gCode ? updatedGroup : g);
-  renderGroupTable();
-  resetForm();
-  showSuccess();
-});
-
+document.getElementById("groupAddBtn").addEventListener("click", ()=>addOrEditMachineGroup(false));
+document.getElementById("groupEditBtn").addEventListener("click", ()=>addOrEditMachineGroup(true));
 document.getElementById("groupCancelBtn").addEventListener("click", resetForm);
 
-// Search All Columns
-document.getElementById("searchAll").addEventListener("input", ()=>{
+// Search Table All Columns
+document.getElementById("searchAll").addEventListener("input",()=>{
   const val = document.getElementById("searchAll").value.toLowerCase();
   const tbody = document.querySelector("#groupTable tbody");
-  tbody.querySelectorAll("tr").forEach(tr=>{
-    const text = tr.textContent.toLowerCase();
-    tr.style.display = text.includes(val) ? "" : "none";
+  Array.from(tbody.rows).forEach(r=>{
+    r.style.display = Array.from(r.cells).some(td=>td.textContent.toLowerCase().includes(val))?"":"none";
   });
 });
 
-init();
+// Initial Load
+(async()=>{
+  machinesData = await fetchTable("MachineMaster");
+  await loadDropdowns();
+  await generateGroupCode();
+  groupsData = await fetchTable("MachineGroup");
+  renderGroupTable();
+})();
 </script>
 </body>
 </html>
