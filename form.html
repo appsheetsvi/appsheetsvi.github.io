@@ -303,26 +303,53 @@ $("pmGroupSearch").addEventListener("input", ()=>{
     li.onclick=()=>{
       $("pmGroupSearch").value=li.textContent;
       ul.classList.add("hidden");
-      // Auto-fill machines for this group
+
       const machinesInGroup = machineList.filter(m=>m.GroupCode==li.dataset.code && m.DeptCode==$("deptCodeHidden").value);
-      $("machinesContainer").innerHTML="";
-      machinesInGroup.forEach(m=>{
-        const row=createMachineRow();
-        row.querySelector(".machineSearch").value = m["รายชื่อเครื่องจักร1"];
-        row.querySelector(".machineCodeHidden").value = m["รหัสเครื่อง"];
-        // ✅ เติมข้อมูลอาการเสียและวิเคราะห์สาเหตุจาก Group
-    row.querySelector('textarea[name="รายละเอียดอาการเสีย"]').value = g["รายละเอียดอาการเสีย"] || "";
-    row.querySelector('textarea[name="วิเคราะห์สาเหตุ"]').value = g["วิเคราะห์สาเหตุ"] || ""; 
+$("machinesContainer").innerHTML="";
 
+// 🕑 ฟังก์ชันเวลาไทย (GMT+7)
+function formatDateLocal(date) {
+  const tzOffset = 7 * 60; // +7 ชั่วโมง
+  const local = new Date(date.getTime() + tzOffset * 60000);
+  return local.toISOString().slice(0, 16);
+}
 
-        $("machinesContainer").appendChild(row);
+let prevEndTime = new Date();
+machinesInGroup.forEach(m=>{
+    const row = createMachineRow();
+
+    // ใช้ PmTime ของเครื่องเป็นนาที (default 10 นาที)
+    const pmMinutes = parseInt(m.PmTime) || 10;
+    const startStr = formatDateLocal(prevEndTime);
+    const endTime = new Date(prevEndTime.getTime() + pmMinutes * 60000);
+    const endStr = formatDateLocal(endTime);
+    prevEndTime = endTime;
+
+    // เติมค่าในฟอร์ม
+    row.querySelector(".machineSearch").value = m["รายชื่อเครื่องจักร1"];
+    row.querySelector(".machineCodeHidden").value = m["รหัสเครื่อง"];
+    
+    row.querySelector('textarea[name="รายละเอียดอาการเสีย"]').value = m["รายละเอียดอาการเสีย"] || "PM ทำความสะอาด";
+    row.querySelector('textarea[name="วิเคราะห์สาเหตุ"]').value = m["วิเคราะห์สาเหตุ"] || "ตามกำหนด PM";
+
+    row.querySelectorAll(".tech-checkbox").forEach(tc=>{
+      const empCode = tc.querySelector('input[name="ช่างผู้รับผิดชอบ"]').value;
+      tc.querySelector(`input[name="start_${empCode}"]`).value = startStr;
+      tc.querySelector(`input[name="end_${empCode}"]`).value = endStr;
+      tc.querySelectorAll(`input[name="status_${empCode}"]`).forEach(cbx=>{
+        cbx.checked = (cbx.value==="จบงาน");
       });
+      tc.querySelector(`textarea[name="comment_${empCode}"]`).value = g["การแก้ไขความคิดเห็น"] || "";
+    });
+
+    $("machinesContainer").appendChild(row);
+});
+
     };
     ul.appendChild(li);
   });
   $("pmGroupList").classList.remove("hidden");
 });
-
 $("btnAddMachine").addEventListener("click", ()=>{
   if(!$("deptCodeHidden").value){ alert("กรุณาเลือกหน่วยงานก่อน"); return; }
   $("machinesContainer").appendChild(createMachineRow());
