@@ -334,8 +334,8 @@ machinesInGroup.forEach(m=>{
 
     row.querySelectorAll(".tech-checkbox").forEach(tc=>{
       const empCode = tc.querySelector('input[name="ช่างผู้รับผิดชอบ"]').value;
-      tc.querySelector(`input[name="start_${empCode}"]`).value = startStr;
-      tc.querySelector(`input[name="end_${empCode}"]`).value = endStr;
+     // tc.querySelector(`input[name="start_${empCode}"]`).value = startStr;
+     // tc.querySelector(`input[name="end_${empCode}"]`).value = endStr;
       tc.querySelectorAll(`input[name="status_${empCode}"]`).forEach(cbx=>{
         cbx.checked = (cbx.value==="จบงาน");
       });
