@@ -301,7 +301,7 @@ async function addMachine(){
   const codeExists = machinesData.some(m => m["รหัสเครื่อง"] === code);
   const nickExists = machinesData.some(m => m["รายชื่อเครื่องจักร1"] === nick);
   if(codeExists){ msg.style.color="red"; msg.textContent="รหัสเครื่องนี้มีอยู่แล้ว"; return; }
-  if(nickExists){ msg.style.color="red"; msg.textContent="ชื่อเครื่องจักร (NickName)"; return; }
+  if(nickExists){ msg.style.color="red"; msg.textContent="ชื่อเครื่องจักร(NickName)ซ้ำกันมีอยู๋แล้ว! ให้ท่านแก้ไขหรือเปลี่ยนใหม่ และบันทึกใหม่"; return; }
 
   const payload={ Action:"Add", Rows:[{
     "รหัสเครื่อง": code,
@@ -380,6 +380,7 @@ document.getElementById("searchAll").addEventListener("input", renderMachineList
 </script>
 </body>
 </html>
+
 
 
 
