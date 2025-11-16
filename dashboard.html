@@ -106,6 +106,15 @@ td.request-number:hover { color:#2563eb; }
   word-wrap: break-word;    /* ตัดคำถ้ายาวเกิน */
   overflow: hidden; 
 }
+.chart-box {
+  width: 180px;       /* ลดขนาดกราฟลง */
+  max-width: 45vw;    /* ให้ responsive บนมือถือ */
+  height: 180px;      /* ความสูงเล็กลง */
+  padding:0.5rem;
+  background:transparent; /* ไม่มีพื้นหลัง */
+  border-radius:8px;
+  box-shadow:none;        /* ลบเงา */
+}
 
 </style>
 </head>
@@ -572,9 +581,7 @@ function updateCharts(){
   cacheData.forEach(r=>{
     const empCodes = (r.EmpCode || "").split(",").map(x=>x.trim()).filter(x=>x);
     const empNames = empCodes.map(c=>empMap[c] || c);
-    empNames.forEach(n=>{
-      techCounts[n] = (techCounts[n] || 0) + 1;
-    });
+    empNames.forEach(n=>{ techCounts[n] = (techCounts[n] || 0) + 1; });
     const status = r["สถานะของงานช่าง"] || r.status || "-";
     statusCounts[status] = (statusCounts[status] || 0) + 1;
   });
@@ -584,7 +591,16 @@ function updateCharts(){
   if(techChart) techChart.destroy();
   if(statusChart) statusChart.destroy();
 
-  // ทั้งคู่ใช้ doughnut เหมือนกัน
+  // ตั้งค่ากราฟแบบโดนัท สำหรับมือถือ
+  const commonOptions = {
+    responsive: true,
+    maintainAspectRatio: false, // ให้ปรับตาม container
+    plugins:{
+      legend:{ display:false },  // ปิด legend
+      tooltip:{ enabled:true }   // tooltip แสดงชื่อและจำนวน
+    }
+  };
+
   techChart = new Chart(techCtx,{
     type:'doughnut',
     data:{
@@ -595,15 +611,11 @@ function updateCharts(){
         backgroundColor:[
           '#2563eb','#34d399','#f97316','#facc15','#a855f7',
           '#f472b6','#22c55e','#0ea5e9','#fb7185','#64748b'
-        ]
+        ],
+        borderWidth:0 // ลบเส้นรอบกราฟ
       }]
     },
-    options:{
-      responsive:true,
-      plugins:{
-        legend:{ position:'bottom' }
-      }
-    }
+    options: commonOptions
   });
 
   statusChart = new Chart(statusCtx,{
@@ -613,15 +625,11 @@ function updateCharts(){
       datasets:[{
         label:'จำนวนงาน',
         data:Object.values(statusCounts),
-        backgroundColor:['#34d399','#fbbf24','#fde68a','#fecaca','#bfdbfe']
+        backgroundColor:['#34d399','#fbbf24','#fde68a','#fecaca','#bfdbfe'],
+        borderWidth:0
       }]
     },
-    options:{
-      responsive:true,
-      plugins:{
-        legend:{ position:'bottom' }
-      }
-    }
+    options: commonOptions
   });
 }
 
