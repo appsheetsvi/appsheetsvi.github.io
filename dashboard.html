@@ -69,13 +69,50 @@ td.request-number:hover { color:#2563eb; }
 #historyModal thead { background:#2563eb; color:white; position:sticky; top:0; z-index:5; }
 
 /* Responsive: แสดงตารางแบบ card บนมือถือ */
+/* Modal responsive */
 @media (max-width:768px){
-  table, thead, tbody, th, td, tr { display:block; }
-  thead { display:none; }
-  tbody tr { margin-bottom:1rem; background:white; border-radius:12px; box-shadow:0 2px 6px rgba(0,0,0,0.1); padding:0.8rem 1rem; }
-  tbody td { border:none; padding:0.4rem 0; font-size:0.9rem; display:flex; justify-content:space-between; }
-  tbody td::before { content: attr(data-label); font-weight:600; color:#2563eb; margin-right:0.5rem; }
+  #historyModal .modal-content table, 
+  #historyModal .modal-content thead, 
+  #historyModal .modal-content tbody, 
+  #historyModal .modal-content th, 
+  #historyModal .modal-content td, 
+  #historyModal .modal-content tr {
+    display:block;
+    width:100%;
+  }
+  #historyModal .modal-content thead { display:none; }
+
+  #historyModal .modal-content tbody tr {
+    background:#f9fafb;
+    margin-bottom:1rem;
+    border-radius:10px;
+    padding:0.8rem 1rem;
+    box-shadow:0 2px 6px rgba(0,0,0,0.1);
+  }
+
+  #historyModal .modal-content td {
+    border:none;
+    display:flex;
+    justify-content:space-between;
+    padding:0.3rem 0;
+    flex-wrap:wrap;
+    font-size:0.85rem;
+  }
+
+  #historyModal .modal-content td::before {
+    content: attr(data-label);
+    font-weight:600;
+    color:#2563eb;
+    width:40%;
+    flex-shrink:0;
+  }
+
+  #historyModal h2 {
+    font-size:1rem;
+    margin-bottom:0.5rem;
+  }
 }
+
 
 /* ใบแจ้งซ่อม */
 #dataTable th[data-label="ใบแจ้งซ่อม"],
@@ -557,18 +594,19 @@ function showHistory(requestNumber){
     const machineName = machineMap[machineCode] || machineCode || "-";
 
     tbody.innerHTML += `
-      <tr>
-        <td>${formatDateTH(start)}</td>
-        <td>${timeText}<br> ${firstRow["TimeBeforeSave"] ? `(เวลาบันทึก : ${firstRow["TimeBeforeSave"]})` : ""}</td>
-        <td>${techNames}</td>
-        <td>${firstRow["เลขที่ใบแจ้งซ่อม"] || "-"}</td>
-        <td>${deptNameEng}</td>
-        <td>${machineName}</td>
-        <td>${firstRow["รายละเอียดอาการเสีย"] || "-"}</td>
-        <td>${firstRow["การแก้ไขความคิดเห็น"] || "-"}</td>
-        <td><span class="status ${statusClass}">${statusRaw}</span></td>
-      </tr>
-    `;
+  <tr>
+    <td data-label="ว/ด/ป">${formatDateTH(start)}</td>
+    <td data-label="เวลาที่ใช้">${timeText}<br> ${firstRow["TimeBeforeSave"] ? `(เวลาบันทึก : ${firstRow["TimeBeforeSave"]})` : ""}</td>
+    <td data-label="ช่างผู้ทำ">${techNames}</td>
+    <td data-label="ใบแจ้งซ่อม">${firstRow["เลขที่ใบแจ้งซ่อม"] || "-"}</td>
+    <td data-label="แผนก">${deptNameEng}</td>
+    <td data-label="รายชื่อเครื่องจักร">${machineName}</td>
+    <td data-label="ปัญหาอาการ">${firstRow["รายละเอียดอาการเสีย"] || "-"}</td>
+    <td data-label="การแก้ไข">${firstRow["การแก้ไขความคิดเห็น"] || "-"}</td>
+    <td data-label="สถานะ"><span class="status ${statusClass}">${statusRaw}</span></td>
+  </tr>
+`;
+
   });
 
   // แก้หัว Modal แสดงชื่อเครื่อง + จำนวน PM/Breakdown
