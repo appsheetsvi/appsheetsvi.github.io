@@ -69,8 +69,9 @@ td.request-number:hover { color:#2563eb; }
 #historyModal thead { background:#2563eb; color:white; position:sticky; top:0; z-index:5; }
 
 /* Responsive: แสดงตารางแบบ card บนมือถือ */
-/* ตารางหลัก responsive สำหรับมือถือ */
+/* สำหรับหน้าจอเล็ก (มือถือ) เท่านั้น */
 @media (max-width:768px){
+  /* ตารางหลักเปลี่ยนเป็น Card */
   #dataTable, #dataTable thead, #dataTable tbody, #dataTable th, #dataTable td, #dataTable tr {
     display:block;
     width:100%;
@@ -80,9 +81,10 @@ td.request-number:hover { color:#2563eb; }
   #dataTable tbody tr {
     background:#ffffff;
     margin-bottom:1rem;
-    border-radius:10px;
+    border-radius:12px;
     padding:0.8rem 1rem;
     box-shadow:0 2px 6px rgba(0,0,0,0.1);
+    word-wrap:break-word;
   }
 
   #dataTable tbody td {
@@ -92,6 +94,7 @@ td.request-number:hover { color:#2563eb; }
     padding:0.3rem 0;
     flex-wrap:wrap;
     font-size:0.85rem;
+    word-break: break-word;
   }
 
   #dataTable tbody td::before {
@@ -100,6 +103,32 @@ td.request-number:hover { color:#2563eb; }
     color:#2563eb;
     width:40%;
     flex-shrink:0;
+  }
+}
+
+/* Card สำหรับ History Modal บนมือถือ */
+@media (max-width:768px){
+  #historyCards .history-card {
+    display:flex;
+    flex-direction:column;
+    gap:0.5rem;
+    background:#fff;
+    padding:1rem;
+    border-radius:12px;
+    box-shadow:0 2px 6px rgba(0,0,0,0.1);
+    margin-bottom:0.5rem;
+    font-size:0.9rem;
+  }
+}
+
+/* บนคอม ใช้ display table ปกติ */
+@media (min-width:769px){
+  #historyCards .history-card {
+    display:table-row;
+    box-shadow:none;
+    border-radius:0;
+    padding:0;
+    margin:0;
   }
 }
 
