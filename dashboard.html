@@ -57,7 +57,7 @@ tbody tr:hover { background:#f0f9ff; }
 .status.ยกเลิกซ่อม { background:#fecaca; color:#991b1b; }
 .status.ไม่จบงาน { background:#fbbf24; color:#92400e; }
 
-td.request-number { font-size:0.75rem; color:#1e40af; font-weight:600; cursor:pointer; text-decoration:underline; }
+td.request-number { font-size:0.75rem; color:#1e40af; font-weight:600; cursor:pointer; text-decoration:none; }
 td.request-number:hover { color:#2563eb; }
 #noData { text-align:center; margin-top:1rem; color:#64748b; font-style:italic; }
 
@@ -144,11 +144,12 @@ td.request-number:hover { color:#2563eb; }
   <div>
     <div class="chart-box"><canvas id="technicianChart"></canvas></div>
     <div id="technicianLegend" class="chart-legend-custom"></div>
-    <div class="chart-label">กราฟจำนวนงานตามช่างผู้ทำ</div>
+    <div class="chart-label">ช่างผู้ทำ</div>
   </div>
   <div>
     <div class="chart-box"><canvas id="statusChart"></canvas></div>
-    <div class="chart-label">กราฟสถานะงาน (จบงาน / ไม่จบงาน)</div>
+    <div class="chart-label">(จบงาน / ไม่จบงาน)</div>
+    <div class="chart-label">สถานนะงาน</div>
   </div>
 </div>
 
@@ -184,7 +185,6 @@ td.request-number:hover { color:#2563eb; }
       <option value="จบงาน">จบงาน</option>
       <option value="ไม่จบงาน">ไม่จบงาน</option>
     </select>
-    <p>PM เท่านั้น</p>
     <label class="inline-flex items-center space-x-1">
       <input type="checkbox" id="searchPMOnly" />
       <span>แสดงเฉพาะ PM</span>
@@ -461,24 +461,26 @@ function renderTable(){
     const deptNameEng = departmentsMap[deptCode] || deptCode || "-";
 
     rows.push({
-      startDate: new Date(start),
-      rowHtml: `
-        <tr>
-          <td data-label="ว/ด/ป">${formatDateTH(start)}</td>
-          <td data-label="เวลาที่ใช้" class="time-used">${timeText}</td>
-          <td data-label="ช่างผู้ทำ">${techNames}</td>
-          <td data-label="ใบแจ้งซ่อม" class="request-number"
-              onclick="showHistory('${main["เลขที่ใบแจ้งซ่อม"]}')">
-              ${main["เลขที่ใบแจ้งซ่อม"] || "-"}
-          </td>
-          <td data-label="แผนก">${deptNameEng}</td>
-          <td data-label="รายชื่อเครื่องจักร">${machineNames}</td>
-          <td data-label="ปัญหาอาการ">${main["รายละเอียดอาการเสีย"] || "-"}</td>
-          <td data-label="การแก้ไข">${main["การแก้ไขความคิดเห็น"] || "-"}</td>
-          <td data-label="สถานะ"><span class="status ${statusClass}">${statusRaw}</span></td>
-        </tr>
-      `
-    });
+  startDate: new Date(start),
+  rowHtml: `
+    <tr style="cursor:pointer;" onclick="showHistory('${main["เลขที่ใบแจ้งซ่อม"]}')">
+      <td data-label="ว/ด/ป">${formatDateTH(start)}</td>
+      <td data-label="เวลาที่ใช้" class="time-used">
+        ${timeText}<br> ${main["TimeBeforeSave"] ? `(เวลาบันทึก : ${main["TimeBeforeSave"]})` : ""}
+      </td>
+      <td data-label="ช่างผู้ทำ">${techNames}</td>
+      <td data-label="ใบแจ้งซ่อม" class="request-number" style="text-decoration:none;">
+        ${main["เลขที่ใบแจ้งซ่อม"] || "-"}
+      </td>
+      <td data-label="แผนก">${deptNameEng}</td>
+      <td data-label="รายชื่อเครื่องจักร">${machineNames}</td>
+      <td data-label="ปัญหาอาการ">${main["รายละเอียดอาการเสีย"] || "-"}</td>
+      <td data-label="การแก้ไข">${main["การแก้ไขความคิดเห็น"] || "-"}</td>
+      <td data-label="สถานะ"><span class="status ${statusClass}">${statusRaw}</span></td>
+    </tr>
+  `
+});
+
   });
 
   rows.sort((a,b)=>b.startDate-a.startDate);
@@ -501,17 +503,20 @@ function showHistory(requestNumber){
   const tbody = document.getElementById("historyContent");
   tbody.innerHTML = "";
 
+  // หาข้อมูลหลัก
   const mainRow = cacheData.find(r => r["เลขที่ใบแจ้งซ่อม"] === requestNumber);
   if(!mainRow){
     modal.style.display = "block";
     return;
   }
 
+  // หาประวัติทั้งหมดของเครื่องนี้
   const machineCode = mainRow["รหัสเครื่อง"];
   const history = cacheData
     .filter(r => r["รหัสเครื่อง"] === machineCode)
     .sort((a,b) => new Date(a["เวลาเริ่ม"]) - new Date(b["เวลาเริ่ม"]));
 
+  // แสดงจำนวน PM / Breakdown
   let totalPM = 0;
   let totalBreakdown = 0;
   history.forEach(r => {
@@ -520,6 +525,7 @@ function showHistory(requestNumber){
     else totalBreakdown++;
   });
 
+  // รวมข้อมูลแถวซ้ำ (รายละเอียดเหมือนกัน)
   const grouped = {};
   history.forEach(r => {
     const key = [
@@ -536,6 +542,7 @@ function showHistory(requestNumber){
     }
   });
 
+  // สร้าง HTML แสดงใน Modal
   Object.values(grouped).forEach(group => {
     const uniqueEmpCodes = [...new Set(group.empCodes)];
     const techNames = getTechNamesFromEmpCode(uniqueEmpCodes.join(","));
@@ -552,7 +559,7 @@ function showHistory(requestNumber){
     tbody.innerHTML += `
       <tr>
         <td>${formatDateTH(start)}</td>
-        <td>${timeText}</td>
+        <td>${timeText}<br> ${firstRow["TimeBeforeSave"] ? `(เวลาบันทึก : ${firstRow["TimeBeforeSave"]})` : ""}</td>
         <td>${techNames}</td>
         <td>${firstRow["เลขที่ใบแจ้งซ่อม"] || "-"}</td>
         <td>${deptNameEng}</td>
@@ -564,15 +571,17 @@ function showHistory(requestNumber){
     `;
   });
 
+  // แก้หัว Modal แสดงชื่อเครื่อง + จำนวน PM/Breakdown
   const machineNameDisplay = machineMap[machineCode] || machineCode || "-";
   modal.querySelector("h2").innerHTML = 
-    `ประวัติซ่อมเครื่อง: ${machineNameDisplay}) — 
+    `ประวัติซ่อมเครื่อง: ${machineNameDisplay} — 
      ซ่อมทั้งหมด <span style="color:#1d4ed8;">${history.length}</span> รายการ 
      (PM: <span style="color:#059669;">${totalPM}</span>, 
       Breakdown: <span style="color:#dc2626;">${totalBreakdown}</span>)`;
 
   modal.style.display = "block";
 }
+
 
 function resetSearch(){
   const today=new Date();
