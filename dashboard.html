@@ -69,28 +69,23 @@ td.request-number:hover { color:#2563eb; }
 #historyModal thead { background:#2563eb; color:white; position:sticky; top:0; z-index:5; }
 
 /* Responsive: แสดงตารางแบบ card บนมือถือ */
-/* Modal responsive */
+/* ตารางหลัก responsive สำหรับมือถือ */
 @media (max-width:768px){
-  #historyModal .modal-content table, 
-  #historyModal .modal-content thead, 
-  #historyModal .modal-content tbody, 
-  #historyModal .modal-content th, 
-  #historyModal .modal-content td, 
-  #historyModal .modal-content tr {
+  #dataTable, #dataTable thead, #dataTable tbody, #dataTable th, #dataTable td, #dataTable tr {
     display:block;
     width:100%;
   }
-  #historyModal .modal-content thead { display:none; }
+  #dataTable thead { display:none; }
 
-  #historyModal .modal-content tbody tr {
-    background:#f9fafb;
+  #dataTable tbody tr {
+    background:#ffffff;
     margin-bottom:1rem;
     border-radius:10px;
     padding:0.8rem 1rem;
     box-shadow:0 2px 6px rgba(0,0,0,0.1);
   }
 
-  #historyModal .modal-content td {
+  #dataTable tbody td {
     border:none;
     display:flex;
     justify-content:space-between;
@@ -99,17 +94,12 @@ td.request-number:hover { color:#2563eb; }
     font-size:0.85rem;
   }
 
-  #historyModal .modal-content td::before {
+  #dataTable tbody td::before {
     content: attr(data-label);
     font-weight:600;
     color:#2563eb;
     width:40%;
     flex-shrink:0;
-  }
-
-  #historyModal h2 {
-    font-size:1rem;
-    margin-bottom:0.5rem;
   }
 }
 
