@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="th">
 <head>
 <meta charset="UTF-8" />
@@ -10,25 +10,53 @@
 <style>
 body { font-family: 'Sarabun', sans-serif; background:#f0f4f8; margin:0; padding:1rem; color:#1e293b; font-size:0.9rem; }
 h1 { color:#1d4ed8; margin:0 0 0.5rem 0; font-size:1.5rem; }
+
+/* แถบค้นหา */
 .search-bar { display:flex; flex-wrap:wrap; gap:0.5rem; justify-content:space-between; margin-bottom:1rem; }
 .search-bar > div { display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center; }
-.search-bar select, .search-bar input[type="date"] { padding:0.35rem 0.5rem; border-radius:6px; border:1px solid #cbd5e1; font-size:0.9rem; min-width:140px; }
+.search-bar select, .search-bar input[type="date"] { padding:0.35rem 0.5rem; border-radius:6px; border:1px solid #cbd5e1; font-size:0.9rem; min-width:120px; }
 .search-bar button { background:#1d4ed8; color:white; border:none; padding:0.35rem 0.8rem; border-radius:6px; font-weight:600; cursor:pointer; font-size:0.9rem; }
 .search-bar button:hover { background:#1e40af; }
-.chart-wrapper { display:flex; justify-content:center; flex-wrap:wrap; gap:1.5rem; margin-bottom:1rem; }
-.chart-box { width:240px; max-width:100%; padding:0.75rem; background:white; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.1); }
+
+/* กราฟ */
+.chart-wrapper { display:flex; justify-content:center; flex-wrap:wrap; gap:1rem; margin-bottom:0.5rem; }
+.chart-box {
+  width: 180px;
+  max-width: 45vw;
+  height: 180px;
+  padding:0.5rem;
+  background:transparent;
+  border-radius:8px;
+  box-shadow:none;
+}
+.chart-label {
+  text-align:center;
+  font-size:0.78rem;
+  margin-top:0.25rem;
+  color:#0f172a;
+}
+.chart-legend-custom {
+  font-size:0.78rem;
+  text-align:center;
+  margin-top:0.25rem;
+}
+
+/* ตาราง */
 .table-container { width:100%; overflow-x:auto; }
 table { width:100%; border-collapse:collapse; background:white; border-radius:10px; overflow:hidden; box-shadow:0 2px 8px rgb(100 116 139 / 0.1); font-size:0.9rem; }
 thead { background:#2563eb; color:white; position:sticky; top:0; z-index:10; }
 th, td { padding:0.5rem 0.75rem; border:1px solid #e2e8f0; text-align:left; vertical-align:middle; }
 td.time-used { min-width:140px; white-space:nowrap; }
 tbody tr:hover { background:#f0f9ff; }
+
+/* status pill */
 .status { display:inline-block; padding:0.25rem 0.75rem; border-radius:9999px; font-weight:600; font-size:0.75rem; line-height:1.25rem; text-align:center; white-space:nowrap; }
 .status.ซ่อมเสร็จ, .status.จบงาน { background:#34d399; color:#065f46; }
 .status.รออะไหล่ { background:#fde68a; color:#92400e; }
 .status.อยู่ระหว่างดำเนินการ { background:#bfdbfe; color:#1e40af; }
 .status.ยกเลิกซ่อม { background:#fecaca; color:#991b1b; }
 .status.ไม่จบงาน { background:#fbbf24; color:#92400e; }
+
 td.request-number { font-size:0.75rem; color:#1e40af; font-weight:600; cursor:pointer; text-decoration:underline; }
 td.request-number:hover { color:#2563eb; }
 #noData { text-align:center; margin-top:1rem; color:#64748b; font-style:italic; }
@@ -40,82 +68,69 @@ td.request-number:hover { color:#2563eb; }
 #historyModal th, #historyModal td { border:1px solid #e2e8f0; padding:0.4rem 0.6rem; }
 #historyModal thead { background:#2563eb; color:white; position:sticky; top:0; z-index:5; }
 
-/* Responsive */
+/* Responsive: แสดงตารางแบบ card บนมือถือ */
 @media (max-width:768px){
   table, thead, tbody, th, td, tr { display:block; }
   thead { display:none; }
   tbody tr { margin-bottom:1rem; background:white; border-radius:12px; box-shadow:0 2px 6px rgba(0,0,0,0.1); padding:0.8rem 1rem; }
   tbody td { border:none; padding:0.4rem 0; font-size:0.9rem; display:flex; justify-content:space-between; }
   tbody td::before { content: attr(data-label); font-weight:600; color:#2563eb; margin-right:0.5rem; }
-
 }
+
 /* ใบแจ้งซ่อม */
 #dataTable th[data-label="ใบแจ้งซ่อม"],
 #dataTable td.request-number {
   font-size: 0.65rem;
-  width: 60px;          /* ปรับความกว้างตามต้องการ */
-  white-space: normal;  /* อนุญาตให้ตัดบรรทัด */
-  word-wrap: break-word; /* ตัดคำหากยาวเกิน */
-  overflow: hidden;
-}
-
-/* แผนก */
-#dataTable th[data-label="แผนก"],
-#dataTable td[data-label="แผนก"] {
-  font-size: 0.75rem;
-  width: 45px;          /* ปรับความกว้างตามต้องการ */
+  width: 60px;
   white-space: normal;
   word-wrap: break-word;
   overflow: hidden;
 }
-
+/* แผนก */
+#dataTable th[data-label="แผนก"],
+#dataTable td[data-label="แผนก"] {
+  font-size: 0.75rem;
+  width: 45px;
+  white-space: normal;
+  word-wrap: break-word;
+  overflow: hidden;
+}
 /* เวลาที่ใช้ */
 #dataTable th[data-label="เวลาที่ใช้"],
 #dataTable td.time-used {
-  font-size: 0.75rem;      /* ลดขนาดฟอนต์ */
-  width: 172px;             /* ปรับความกว้างตามต้องการ */
-  white-space: normal;      /* อนุญาตให้ตัดบรรทัด */
-  word-wrap: break-word;    /* ตัดคำถ้ายาวเกิน */
+  font-size: 0.75rem;
+  width: 172px;
+  white-space: normal;
+  word-wrap: break-word;
   overflow: hidden;
 }
-
-/* คอลัมน์ วัน/เดือน/ปี */
+/* ว/ด/ป */
 #dataTable th[data-label="ว/ด/ป"],
 #dataTable td[data-label="ว/ด/ป"] {
-  font-size: 0.72rem;       /* ลดขนาดฟอนต์ */
-  width: 80px;              /* ปรับความกว้างตามต้องการ */
-  white-space: nowrap;      /* ไม่ตัดบรรทัด */
-  overflow: hidden;         /* ซ่อนข้อความเกิน */
-  text-overflow: ellipsis;  /* แสดง ... ถ้ายาวเกิน */
+  font-size: 0.72rem;
+  width: 80px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-/* คอลัมน์ รายชื่อเครื่องจักร */
+/* รายชื่อเครื่องจักร */
 #dataTable th[data-label="รายชื่อเครื่องจักร"],
 #dataTable td[data-label="รายชื่อเครื่องจักร"] {
-  font-size: 0.85rem;       /* ลดขนาดฟอนต์ */
-  max-width: 200px;          /* ปรับความกว้างตามต้องการ */
-  white-space: normal;      /* อนุญาตให้ตัดบรรทัด */
-  word-wrap: break-word;    /* ตัดคำถ้ายาวเกิน */
+  font-size: 0.85rem;
+  max-width: 200px;
+  white-space: normal;
+  word-wrap: break-word;
   overflow: hidden;
 }
-/* คอลัมน์ ปัญหาอาการ */
+/* ปัญหาอาการ */
 #dataTable th[data-label="ปัญหาอาการ"],
 #dataTable td[data-label="ปัญหาอาการ"] {
-  font-size: 0.85rem;       /* ลดขนาดฟอนต์ */
-  max-width: 1200px;          /* ปรับความกว้างตามต้องการ */
-  white-space: normal;      /* อนุญาตให้ตัดบรรทัด */
-  word-wrap: break-word;    /* ตัดคำถ้ายาวเกิน */
+  font-size: 0.85rem;
+  max-width: 1200px;
+  white-space: normal;
+  word-wrap: break-word;
   overflow: hidden; 
 }
-.chart-box {
-  width: 180px;       /* ลดขนาดกราฟลง */
-  max-width: 45vw;    /* ให้ responsive บนมือถือ */
-  height: 180px;      /* ความสูงเล็กลง */
-  padding:0.5rem;
-  background:transparent; /* ไม่มีพื้นหลัง */
-  border-radius:8px;
-  box-shadow:none;        /* ลบเงา */
-}
-
 </style>
 </head>
 <body>
@@ -124,9 +139,17 @@ td.request-number:hover { color:#2563eb; }
   <div class="font-semibold text-lg">ระบบแจ้งซ่อมออนไลน์</div>
 </nav>
 
+<!-- กราฟ -->
 <div class="chart-wrapper">
-  <div class="chart-box" style="height:220px;"><canvas id="technicianChart"></canvas></div>
-  <div class="chart-box" style="height:220px;"><canvas id="statusChart"></canvas></div>
+  <div>
+    <div class="chart-box"><canvas id="technicianChart"></canvas></div>
+    <div id="technicianLegend" class="chart-legend-custom"></div>
+    <div class="chart-label">กราฟจำนวนงานตามช่างผู้ทำ</div>
+  </div>
+  <div>
+    <div class="chart-box"><canvas id="statusChart"></canvas></div>
+    <div class="chart-label">กราฟสถานะงาน (จบงาน / ไม่จบงาน)</div>
+  </div>
 </div>
 
 <h1>Maintenance Report</h1>
@@ -143,14 +166,22 @@ td.request-number:hover { color:#2563eb; }
     </select>
     <p>หน่วยงาน</p>
     <select id="searchDepartment">
-      <option value="">-- ทังหมด--</option>
+      <option value="">-- ทั้งหมด --</option>
     </select>
+    <p>PM เท่านั้น</p>
+    <label class="inline-flex items-center space-x-1">
+      <input type="checkbox" id="searchPMOnly" />
+      <span>แสดงเฉพาะ PM</span>
+    </label>
+    <!-- ถ้าจะใช้ PM/Breakdown แบบเดิม เก็บไว้ก็ได้ แต่จะไม่บังคับถ้ามี checkbox -->
+    <!--
     <p>PM/Breakdown</p>
     <select id="searchType">
       <option value="all">-- ทั้งหมด --</option>
       <option value="pm">PM</option>
       <option value="breakdown">Breakdown</option>
     </select>
+    -->
     <p>สถานะ</p>
     <select id="searchStatus">
       <option value="">-- ทั้งหมด --</option>
@@ -215,7 +246,6 @@ let repairTableName="RepairTechnicians";
 
 const departmentsMap = {}; // DeptCode -> DeptNameEng
 const empMap = {};         // EmpCode -> EmpName
-let empNameToCodeMap = {}; // EmpName -> EmpCode (ช่วยเรื่อง filter ตามชื่อ)
 const machineMap = {};     // MachineCode -> MachineName
 let cacheData = [];
 let techChart = null;
@@ -266,6 +296,7 @@ async function safeFetch(url,bodyObj,label){
     return null;
   }
 }
+
 // Fetch Emp (for dropdown + map)
 async function fetchEmp(){
   const url=`https://api.appsheet.com/api/v2/apps/${appId}/tables/Emp/Find`;
@@ -275,7 +306,6 @@ async function fetchEmp(){
     techSelect.innerHTML = '<option value="">-- ทั้งหมด --</option>';
 
     data
-      // เงื่อนไข: DeptCode = A12 และ EmpStatus = 0 หรือ "0"
       .filter(e => 
         e.DeptCode === "A12" && 
         (e.EmpStatus === 0 || e.EmpStatus === "0")
@@ -283,12 +313,10 @@ async function fetchEmp(){
       .sort((a,b)=>(a.EmpName||"").localeCompare(b.EmpName||""))
       .forEach(e=>{
         if(e.EmpCode && e.EmpName){
-          // map โค้ด -> ชื่อ เอาไปใช้แปลงชื่อในตารางและกราฟ
           empMap[e.EmpCode] = e.EmpName;
-
           const opt=document.createElement("option");
-          opt.value = e.EmpCode;       // ใช้ EmpCode เป็นค่า (สำหรับ filter)
-          opt.textContent = e.EmpName; // แสดงชื่อช่าง
+          opt.value = e.EmpCode;
+          opt.textContent = e.EmpName;
           techSelect.appendChild(opt);
         }
       });
@@ -297,8 +325,7 @@ async function fetchEmp(){
   }
 }
 
-
-// Fetch Departments (แสดง Eng)
+// Fetch Departments
 async function fetchDepartments(){
   const url=`https://api.appsheet.com/api/v2/apps/${appId}/tables/Department/Find`;
   const data=await safeFetch(url,{},"Department");
@@ -316,26 +343,20 @@ async function fetchDepartments(){
   }
 }
 
-/// Fetch Machine
+// Fetch Machine
 async function fetchMachines(){
   const url=`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineMaster/Find`;
   const data=await safeFetch(url,{},"MachineMaster");
   if(Array.isArray(data)){
     data.forEach(m=>{
-      // ใช้คอลัมน์จริงในตาราง MachineMaster:
-      // รหัสเครื่อง  = code
-      // รายชื่อเครื่องจักร = name (ชื่อเต็ม)
       const code = m["รหัสเครื่อง"];
       const name = m["รายชื่อเครื่องจักร"];
-
       if(code){
-        // map รหัสเครื่อง -> ชื่อเต็ม
         machineMap[code] = name || code;
       }
     });
   }
 }
-
 
 // Fetch RepairTechnicians
 async function fetchRepairTechnicians(){
@@ -353,15 +374,16 @@ function renderTable(){
   if(cacheData.length===0){
     table.style.display="none";
     noData.style.display="block";
+    updateCharts([]);  // เคลียร์กราฟ
     return;
   }
 
   const statusFilter=document.getElementById("searchStatus").value;
   const deptFilter=document.getElementById("searchDepartment").value;
   const techFilter=document.getElementById("searchTechnician").value; // EmpCode
-  const typeFilter=document.getElementById("searchType").value;
   const from=document.getElementById("searchDateFrom").value;
   const to=document.getElementById("searchDateTo").value;
+  const pmOnly = document.getElementById("searchPMOnly").checked;
 
   // group by ใบแจ้งซ่อม + แผนก + เครื่อง + ปัญหา + การแก้ไข
   const grouped={};
@@ -378,54 +400,48 @@ function renderTable(){
   });
 
   const rows=[];
+  let filteredForChart = []; // ใช้สร้างกราฟให้ตรงกับ filter
+
   Object.values(grouped).forEach(group=>{
     if(group.length===0) return;
     const main=group[0];
 
-    // ตรวจ PM
+    // ตรวจ PM จากรายละเอียด
     const desc = (main["รายละเอียดอาการเสีย"] || "").toLowerCase();
     const descRaw = main["รายละเอียดอาการเสีย"] || "";
     const isPM = desc.includes("pm") || descRaw.includes("พีเอ็ม");
 
-    if(typeFilter==="pm" && !isPM) return;
-    if(typeFilter==="breakdown" && isPM) return;
+    // ถ้าเลือก PM เท่านั้น แต่รายการนี้ไม่ใช่ PM -> ข้ามทั้ง group
+    if(pmOnly && !isPM) return;
 
+    const filtered = group.filter(r => {
+      const d = new Date(r["เวลาเริ่ม"] || r.start);
+      if (isNaN(d)) return false;
+      
+      const statusVal = r["สถานะของงานช่าง"] || r.status || "";
+      if (statusFilter && statusVal !== statusFilter) return false;
 
-const filtered = group.filter(r => {
-  const d = new Date(r["เวลาเริ่ม"] || r.start);
-  if (isNaN(d)) return false;
-  
-  const statusVal = r["สถานะของงานช่าง"] || r.status || "";
-  if (statusFilter && statusVal !== statusFilter) return false;
+      const deptVal = r["หน่วยงาน"] || r.dept || "";
+      if (deptFilter && deptVal !== deptFilter) return false;
 
-  const deptVal = r["หน่วยงาน"] || r.dept || "";
-  if (deptFilter && deptVal !== deptFilter) return false;
+      // กรองช่าง
+      if (techFilter) {
+        const allEmpCodes = group.map(f => f.EmpCode || "").join(",");
+        const allTechNames = getTechNamesFromEmpCode(allEmpCodes);
+        const selectedTechName = empMap[techFilter] || techFilter;
+        if (!allTechNames.split(", ").includes(selectedTechName)) return false;
+      }
 
-  // ---------- กรองช่าง (แก้ไข) ----------
-  if (techFilter) {
-    // รวมรหัสช่างทั้งหมดในกลุ่ม
-    const allEmpCodes = group.map(f => f.EmpCode || "").join(",");
-    
-    // แปลงเป็นชื่อจริงทั้งหมด
-    const allTechNames = getTechNamesFromEmpCode(allEmpCodes); // เช่น "เอกพันธ์, เกษม, สมเจตน์"
-    
-    // techFilter เป็น EmpCode ที่เลือก -> แปลงเป็นชื่อจริง
-    const selectedTechName = empMap[techFilter] || techFilter;
-    
-    // ถ้าในกลุ่มไม่มีชื่อช่างที่เลือก -> ตัดทิ้ง
-    if (!allTechNames.split(", ").includes(selectedTechName)) return false;
-  }
+      if (from && d < new Date(from + "T00:00:00")) return false;
+      if (to && d > new Date(to + "T23:59:59")) return false;
 
-  if (from && d < new Date(from + "T00:00:00")) return false;
-  if (to && d > new Date(to + "T23:59:59")) return false;
-
-  return true;
-});
-
-
-
+      return true;
+    });
 
     if(filtered.length===0) return;
+
+    // เก็บหน่วยข้อมูลจริงสำหรับกราฟ
+    filteredForChart.push(...filtered);
 
     const allEmpCodes = filtered.map(f=>f.EmpCode||"").join(",");
     const techNames = getTechNamesFromEmpCode(allEmpCodes);
@@ -475,7 +491,8 @@ const filtered = group.filter(r => {
     noData.style.display="block";
   }
 
-  updateCharts();
+  // อัปเดตกกราฟด้วยข้อมูลที่กรองแล้ว
+  updateCharts(filteredForChart);
 }
 
 function showHistory(requestNumber){
@@ -494,7 +511,6 @@ function showHistory(requestNumber){
     .filter(r => r["รหัสเครื่อง"] === machineCode)
     .sort((a,b) => new Date(a["เวลาเริ่ม"]) - new Date(b["เวลาเริ่ม"]));
 
-  // แยกจำนวนรายการจริง
   let totalPM = 0;
   let totalBreakdown = 0;
   history.forEach(r => {
@@ -503,7 +519,6 @@ function showHistory(requestNumber){
     else totalBreakdown++;
   });
 
-  // Group ข้อมูลโดย: รายละเอียดอาการ + การแก้ไข
   const grouped = {};
   history.forEach(r => {
     const key = [
@@ -520,7 +535,6 @@ function showHistory(requestNumber){
     }
   });
 
-  // สร้างแถว modal (รวมช่างแต่ไม่กระทบจำนวนรายการจริง)
   Object.values(grouped).forEach(group => {
     const uniqueEmpCodes = [...new Set(group.empCodes)];
     const techNames = getTechNamesFromEmpCode(uniqueEmpCodes.join(","));
@@ -559,8 +573,6 @@ function showHistory(requestNumber){
   modal.style.display = "block";
 }
 
-
-function searchData(){ renderTable(); }
 function resetSearch(){
   const today=new Date();
   const oneDayAgo=new Date(today.getTime()-1*24*60*60*1000);
@@ -568,20 +580,23 @@ function resetSearch(){
   document.getElementById("searchDateTo").value=today.toISOString().split("T")[0];
   document.getElementById("searchDepartment").value="";
   document.getElementById("searchStatus").value="";
+  document.getElementById("searchTechnician").value="";
+  document.getElementById("searchPMOnly").checked=false;
   renderTable();
 }
 
-
-
 // Chart
-function updateCharts(){
+function updateCharts(dataArr){
   const techCounts = {};
   const statusCounts = {};
 
-  cacheData.forEach(r=>{
+  (dataArr || []).forEach(r=>{
     const empCodes = (r.EmpCode || "").split(",").map(x=>x.trim()).filter(x=>x);
     const empNames = empCodes.map(c=>empMap[c] || c);
-    empNames.forEach(n=>{ techCounts[n] = (techCounts[n] || 0) + 1; });
+    empNames.forEach(n=>{
+      techCounts[n] = (techCounts[n] || 0) + 1;
+    });
+
     const status = r["สถานะของงานช่าง"] || r.status || "-";
     statusCounts[status] = (statusCounts[status] || 0) + 1;
   });
@@ -591,16 +606,16 @@ function updateCharts(){
   if(techChart) techChart.destroy();
   if(statusChart) statusChart.destroy();
 
-  // ตั้งค่ากราฟแบบโดนัท สำหรับมือถือ
   const commonOptions = {
     responsive: true,
-    maintainAspectRatio: false, // ให้ปรับตาม container
+    maintainAspectRatio: false,
     plugins:{
-      legend:{ display:false },  // ปิด legend
-      tooltip:{ enabled:true }   // tooltip แสดงชื่อและจำนวน
+      legend:{ display:false },
+      tooltip:{ enabled:true }
     }
   };
 
+  // กราฟช่าง
   techChart = new Chart(techCtx,{
     type:'doughnut',
     data:{
@@ -612,20 +627,36 @@ function updateCharts(){
           '#2563eb','#34d399','#f97316','#facc15','#a855f7',
           '#f472b6','#22c55e','#0ea5e9','#fb7185','#64748b'
         ],
-        borderWidth:0 // ลบเส้นรอบกราฟ
+        borderWidth:0
       }]
     },
     options: commonOptions
   });
 
+  // แสดง legend แบบ custom ใต้กราฟช่าง
+  const techLegendDiv = document.getElementById("technicianLegend");
+  if(Object.keys(techCounts).length === 0){
+    techLegendDiv.innerHTML = '<span class="text-gray-400 text-xs">ไม่มีข้อมูล</span>';
+  }else{
+    const parts = Object.entries(techCounts).map(([name,count])=>`${name} : ${count}`);
+    techLegendDiv.innerHTML = parts.join(" | ");
+  }
+
+  // กราฟสถานะ (เน้น จบงาน / ไม่จบงาน)
+  const statusLabels = ["จบงาน","ไม่จบงาน"];
+  const statusData = [
+    statusCounts["จบงาน"] || 0,
+    statusCounts["ไม่จบงาน"] || 0
+  ];
+
   statusChart = new Chart(statusCtx,{
     type:'doughnut',
     data:{
-      labels:Object.keys(statusCounts),
+      labels:statusLabels,
       datasets:[{
         label:'จำนวนงาน',
-        data:Object.values(statusCounts),
-        backgroundColor:['#34d399','#fbbf24','#fde68a','#fecaca','#bfdbfe'],
+        data:statusData,
+        backgroundColor:['#34d399','#fbbf24'],
         borderWidth:0
       }]
     },
@@ -642,14 +673,13 @@ async function initApp(){
   renderTable();
 }
 initApp();
+
 window.addEventListener("DOMContentLoaded", () => {
   const today = new Date();
   const oneDayAgo = new Date(today.getTime() - 1*24*60*60*1000);
   document.getElementById("searchDateFrom").value = oneDayAgo.toISOString().split("T")[0];
   document.getElementById("searchDateTo").value = today.toISOString().split("T")[0];
 });
-
 </script>
 </body>
 </html>
-
