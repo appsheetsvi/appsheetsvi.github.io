@@ -168,11 +168,7 @@ td.request-number:hover { color:#2563eb; }
     <select id="searchDepartment">
       <option value="">-- ทั้งหมด --</option>
     </select>
-    <p>PM เท่านั้น</p>
-    <label class="inline-flex items-center space-x-1">
-      <input type="checkbox" id="searchPMOnly" />
-      <span>แสดงเฉพาะ PM</span>
-    </label>
+    
     <!-- ถ้าจะใช้ PM/Breakdown แบบเดิม เก็บไว้ก็ได้ แต่จะไม่บังคับถ้ามี checkbox -->
     <!--
     <p>PM/Breakdown</p>
@@ -188,6 +184,11 @@ td.request-number:hover { color:#2563eb; }
       <option value="จบงาน">จบงาน</option>
       <option value="ไม่จบงาน">ไม่จบงาน</option>
     </select>
+    <p>PM เท่านั้น</p>
+    <label class="inline-flex items-center space-x-1">
+      <input type="checkbox" id="searchPMOnly" />
+      <span>แสดงเฉพาะ PM</span>
+    </label>
   </div>
   <div>
     <button onclick="renderTable()">ค้นหา</button>
@@ -683,3 +684,4 @@ window.addEventListener("DOMContentLoaded", () => {
 </script>
 </body>
 </html>
+
