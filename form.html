@@ -8,9 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Sarabun&display=swap" rel="stylesheet" />
 <style>
 body { font-family:'Sarabun',sans-serif; background:#f0f9ff; min-height:100vh; }
-  
-/*input, textarea, select { font-size:0.875rem; padding:0.375rem 0.5rem; border-radius:0.375rem; }*/
-  @media (max-width: 640px) {
+@media (max-width: 640px) {
   input, textarea, select {
     font-size: 1rem;
     padding: 0.5rem 0.75rem;
@@ -18,85 +16,97 @@ body { font-family:'Sarabun',sans-serif; background:#f0f9ff; min-height:100vh; }
   label { font-size: 0.95rem; }
   .tech-checkbox { flex: 1 1 250%; } /* กล่องช่างเรียงแนวตั้ง */
 }
-
-input:focus, textarea:focus, select:focus { outline:none; border-color:#3b82f6; box-shadow:0 0 0 2px rgba(59,130,246,0.4); background:#fff; }
+input:focus, textarea:focus, select:focus {
+  outline:none; border-color:#3b82f6;
+  box-shadow:0 0 0 2px rgba(59,130,246,0.4); background:#fff;
+}
 textarea { min-height:3rem; }
 .parts-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
 .parts-row > * { flex:1 1 120px; }
-.btn-remove-part { background:#ef4444;color:white;padding:4px 8px;border-radius:6px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center; }
+.btn-remove-part {
+  background:#ef4444;color:white;padding:4px 8px;border-radius:6px;
+  cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;
+}
 .btn-remove-part:hover { background:#b91c1c; }
 .tech-checkboxes { display:flex; flex-wrap:wrap; gap:8px; margin-top:4px; }
-.tech-checkbox { flex:1 1 250px; background:#f9fafb; border:1px solid #ccc; padding:12px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.05); display:flex; flex-direction:column; }
-.machine-container { border:1px solid #ccc; padding:12px; border-radius:10px; margin-bottom:12px; background:#fff; position:relative; }
-.btn-remove-machine { position:absolute; top:8px; right:8px; background:#ef4444; color:white; padding:2px 6px; border-radius:6px; cursor:pointer; }
+.tech-checkbox {
+  flex:1 1 250px; background:#f9fafb; border:1px solid #ccc; padding:12px;
+  border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,0.05); display:flex; flex-direction:column;
+}
+.machine-container {
+  border:1px solid #ccc; padding:12px; border-radius:10px;
+  margin-bottom:12px; background:#fff; position:relative;
+}
+.btn-remove-machine {
+  position:absolute; top:8px; right:8px;
+  background:#ef4444; color:white; padding:2px 6px; border-radius:6px; cursor:pointer;
+}
 .btn-remove-machine:hover { background:#b91c1c; }
 /* ซ่อน scroll bar และเลื่อนด้วย touch */
 #deptList, #pmGroupList, .machineList {
-  max-height: 200px;               /* ความสูงพอให้เลื่อน */
-  overflow-y: auto;                /* สามารถ scroll ได้ */
-  -webkit-overflow-scrolling: touch; /* เลื่อนด้วยนิ้ว smooth */
-  scrollbar-width: none;           /* Firefox: ซ่อน scroll bar */
+  max-height: 200px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
-
 #deptList::-webkit-scrollbar,
 #pmGroupList::-webkit-scrollbar,
 .machineList::-webkit-scrollbar {
-  display: none;                   /* Chrome/Safari: ซ่อน scroll bar */
+  display: none;
 }
 @media (max-width: 640px) {
   .tech-checkbox {
     flex: 1 1 100%;   /* บังคับเต็มจอในมือถือ */
   }
 }
-
-  
 </style>
 </head>
 <body>
 <div>  
 <nav class="bg-blue-600 text-white p-4 flex justify-between items-center">
-<a href="https://appsheetsvi.github.io/Menu.html" class="font-semibold">🏠 Home</a>
-<div class="font-semibold text-lg">ระบบแจ้งซ่อมออนไลน์</div>
-</div>
+  <a href="https://appsheetsvi.github.io/Menu.html" class="font-semibold">🏠 Home</a>
+  <div class="font-semibold text-lg">ระบบแจ้งซ่อมออนไลน์</div>
 </nav>
+</div>
+
 <main class="w-full max-w-3xl mx-auto mt-4 p-4 bg-white rounded-lg shadow">  
 <h1 class="text-2xl font-bold text-blue-700 text-center mb-6">📋 ฟอร์มแจ้งซ่อมเครื่องจักร </h1>
 
 <form id="repairForm" class="grid gap-6" autocomplete="off">
-<!-- หน่วยงาน -->
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-  <div>
-    <label class="font-semibold">เลขที่ใบแจ้งซ่อม</label>
-    <input name="เลขที่ใบแจ้งซ่อม" readonly class="w-full bg-gray-100"/>
-  </div>
-  <div>
-    <label class="font-semibold">หน่วยงาน</label>
-    <div class="relative">
-      <input type="text" id="deptSearch" placeholder="🔍 พิมพ์ค้นหาแผนก..." class="w-full" required/>
-      <ul id="deptList" class="absolute w-full bg-white max-h-40 overflow-y-auto border rounded z-10 hidden"></ul>
+  <!-- หน่วยงาน -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div>
+      <label class="font-semibold">เลขที่ใบแจ้งซ่อม</label>
+      <input name="เลขที่ใบแจ้งซ่อม" readonly class="w-full bg-gray-100"/>
     </div>
-    <input type="hidden" id="deptCodeHidden" name="หน่วยงาน"/>
+    <div>
+      <label class="font-semibold">หน่วยงาน</label>
+      <div class="relative">
+        <input type="text" id="deptSearch" placeholder="🔍 พิมพ์ค้นหาแผนก..." class="w-full" required/>
+        <ul id="deptList" class="absolute w-full bg-white max-h-40 overflow-y-auto border rounded z-10 hidden"></ul>
+      </div>
+      <input type="hidden" id="deptCodeHidden" name="หน่วยงาน"/>
+    </div>
   </div>
-</div>
 
-<!-- PM Group -->
-<div>
-  <label class="font-semibold">รายชื่อเครื่องจักร (PM)</label>
-  <a href="MachineGroup.html" target="MachineGroup" class="ml-2 text-blue-600 hover:text-blue-800 font-bold">🗂️ เพิ่มกลุ่ม</a>                                                 
-  <div class="relative">
-    <input type="text" id="pmGroupSearch" placeholder="🔍 เลือก Group..." class="w-full" disabled/>
-    <ul id="pmGroupList" class="absolute w-full bg-white max-h-40 overflow-y-auto border rounded z-10 hidden"></ul>
+  <!-- PM Group -->
+  <div>
+    <label class="font-semibold">รายชื่อเครื่องจักร (PM)</label>
+    <a href="MachineGroup.html" target="MachineGroup" class="ml-2 text-blue-600 hover:text-blue-800 font-bold">🗂️ เพิ่มกลุ่ม</a>                                                 
+    <div class="relative">
+      <input type="text" id="pmGroupSearch" placeholder="🔍 เลือก Group..." class="w-full" disabled/>
+      <ul id="pmGroupList" class="absolute w-full bg-white max-h-40 overflow-y-auto border rounded z-10 hidden"></ul>
+    </div>
   </div>
-</div>
 
-<!-- เครื่องจักร -->
-<div id="machinesContainer"></div>
+  <!-- เครื่องจักร -->
+  <div id="machinesContainer"></div>
 
-<div class="flex gap-4 flex-wrap">
-  <button type="button" id="btnAddMachine" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">+ เพิ่มเครื่องจักร</button>
-  <button type="button" id="btnResetForm" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">♻️ Reset Form</button>
-  <button type="submit" id="submitBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">✅ บันทึกข้อมูล</button>
-</div>
+  <div class="flex gap-4 flex-wrap">
+    <button type="button" id="btnAddMachine" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">+ เพิ่มเครื่องจักร</button>
+    <button type="button" id="btnResetForm" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded">♻️ Reset Form</button>
+    <button type="submit" id="submitBtn" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">✅ บันทึกข้อมูล</button>
+  </div>
 </form>
 </main>
 
@@ -107,7 +117,9 @@ const apiBase=`https://api.appsheet.com/api/v2/apps/${appId}/tables/`;
 let deptList=[], machineList=[], empList=[], groupList=[];
 const $=id=>document.getElementById(id);
 
-// Fetch Table
+let deptSelectStartTime = null;   // เวลาเริ่มหลังจากเลือกหน่วยงาน
+
+// ------- Fetch Table -------
 async function fetchFromTable(table){
   try{
     const res = await fetch(`${apiBase}${table}/Find`, {
@@ -118,19 +130,21 @@ async function fetchFromTable(table){
     if(!res.ok) return [];
     const data = await res.json();
     return data;
-  }catch{return [];}
+  }catch(err){
+    console.error("Fetch error:", table, err);
+    return [];
+  }
 }
 
-// Generate Request Number
-// Generate Request Number in format YYMM###
+// ------- Generate Request Number (YYMM###) -------
 async function generateNextRequestNumber(){
   const list = await fetchFromTable("RepairTechnicians");
   const nums = list.map(r => r["เลขที่ใบแจ้งซ่อม"]).filter(n => !!n);
 
   const now = new Date();
-  const year = now.getFullYear().toString().slice(-2); // ✅ ปี ค.ศ. 2 หลัก
-  const month = (now.getMonth() + 1).toString().padStart(2, "0"); // ✅ เดือน 2 หลัก
-  const prefix = year + month; // เช่น "2510"
+  const year = now.getFullYear().toString().slice(-2); // ปี ค.ศ. 2 หลัก
+  const month = (now.getMonth() + 1).toString().padStart(2, "0"); // เดือน 2 หลัก
+  const prefix = year + month; // เช่น "2511"
 
   const filtered = nums.filter(n => n.startsWith(prefix));
   if(filtered.length === 0){
@@ -141,7 +155,7 @@ async function generateNextRequestNumber(){
   }
 }
 
-// Load Departments, Machines, Technicians, Groups
+// ------- Load master data -------
 async function loadDepartments(){ deptList = await fetchFromTable("Department"); }
 async function loadMachines(){ machineList = await fetchFromTable("MachineMaster"); }
 async function loadTechnicians(){ 
@@ -150,11 +164,12 @@ async function loadTechnicians(){
 }
 async function loadGroups(){ groupList = await fetchFromTable("MachineGroup"); }
 
-// Create Parts Row
+// ------- Parts Row -------
 function createPartRow(){
   const div=document.createElement("div");
   div.className="parts-row";
-  div.innerHTML=`<input type="text" name="รายการอะไหล่" placeholder="รายการอะไหล่"/>
+  div.innerHTML=`
+    <input type="text" name="รายการอะไหล่" placeholder="รายการอะไหล่"/>
     <input type="number" name="จำนวน" min="1" value="1"/>
     <input type="text" name="หน่วย" placeholder="หน่วย"/>
     <button type="button" class="btn-remove-part">x</button>`;
@@ -162,7 +177,7 @@ function createPartRow(){
   return div;
 }
 
-// Technician Box
+// ------- Technician Box -------
 function createTechBox(emp){
   const div = document.createElement("div");
   div.className="tech-checkbox";
@@ -172,30 +187,33 @@ function createTechBox(emp){
     </label>
     <textarea name="comment_${emp.EmpCode}" placeholder="ความคิดเห็น" class="mt-1"></textarea>
     <div class="flex flex-col flex-1">
-  <label class="text-xs">วันที่เริ่ม</label>
-  <input type="datetime-local" name="start_${emp.EmpCode}" 
-         class="w-full max-w-[140px] sm:max-w-full text-sm px-1" />
-</div>
-<div class="flex flex-col flex-1">
-  <label class="text-xs">วันที่จบ</label>
-  <input type="datetime-local" name="end_${emp.EmpCode}" 
-         class="w-full max-w-[140px] sm:max-w-full text-sm px-1" />
-</div>
-
+      <label class="text-xs">วันที่เริ่ม</label>
+      <input type="datetime-local" name="start_${emp.EmpCode}" 
+             class="w-full max-w-[140px] sm:max-w-full text-sm px-1" />
+    </div>
+    <div class="flex flex-col flex-1">
+      <label class="text-xs">วันที่จบ</label>
+      <input type="datetime-local" name="end_${emp.EmpCode}" 
+             class="w-full max-w-[140px] sm:max-w-full text-sm px-1" />
+    </div>
     <div class="flex gap-2 mt-1">
       <label><input type="checkbox" name="status_${emp.EmpCode}" value="จบงาน"/> จบงาน</label>
       <label><input type="checkbox" name="status_${emp.EmpCode}" value="ไม่จบงาน"/> ไม่จบงาน</label>
     </div>
-    <label class="inline-flex items-center mt-1"><input type="checkbox" name="autoCopy_${emp.EmpCode}"/> คัดลอกข้อมูลไปช่างอื่นในเครื่องเดียวกัน</label>
+    <label class="inline-flex items-center mt-1">
+      <input type="checkbox" name="autoCopy_${emp.EmpCode}"/>
+      คัดลอกข้อมูลไปช่างอื่นในเครื่องเดียวกัน
+    </label>
   `;
   return div;
 }
 
-// Create Machine Row
+// ------- Machine Row -------
 function createMachineRow(){
   const div = document.createElement("div");
   div.className="machine-container";
-  div.innerHTML=`<button type="button" class="btn-remove-machine">x</button>
+  div.innerHTML=`
+    <button type="button" class="btn-remove-machine">x</button>
     <label class="font-semibold">รายชื่อเครื่อง</label>
     <div class="relative">
       <input type="text" class="machineSearch w-full" placeholder="🔍 พิมพ์ชื่อย่อเครื่อง..." required/>
@@ -217,14 +235,19 @@ function createMachineRow(){
 
   const techContainer = div.querySelector(".tech-checkboxes");
   empList.forEach(emp=>techContainer.appendChild(createTechBox(emp)));
+
+  // จำกัดเลือกช่างไม่เกิน 3
   techContainer.addEventListener("change", e=>{
     if(e.target.name==="ช่างผู้รับผิดชอบ"){
       const selected=techContainer.querySelectorAll('input[name="ช่างผู้รับผิดชอบ"]:checked');
-      if(selected.length>3){ e.target.checked=false; alert("เลือกช่างได้สูงสุด 3 คน"); }
+      if(selected.length>3){
+        e.target.checked=false;
+        alert("เลือกช่างได้สูงสุด 3 คน");
+      }
     }
   });
 
-  // Copy data logic
+  // Logic คัดลอกข้อมูลระหว่างช่าง
   techContainer.querySelectorAll('input[type="checkbox"][name^="autoCopy_"]').forEach(cb=>{
     cb.addEventListener("change", ()=>{
       if(!cb.checked) return;
@@ -242,26 +265,35 @@ function createMachineRow(){
           tc.querySelector(`textarea[name="comment_${empCode}"]`).value = data.comment;
           tc.querySelector(`input[name="start_${empCode}"]`).value = data.start;
           tc.querySelector(`input[name="end_${empCode}"]`).value = data.end;
-          tc.querySelectorAll(`input[name="status_${empCode}"]`).forEach(cbx=>{ cbx.checked = data.status.includes(cbx.value); });
+          tc.querySelectorAll(`input[name="status_${empCode}"]`).forEach(cbx=>{
+            cbx.checked = data.status.includes(cbx.value);
+          });
         }
       });
     });
   });
 
-  // Machine search autocomplete
+  // Autocomplete รายชื่อเครื่อง
   const searchInput = div.querySelector(".machineSearch");
   const ul = div.querySelector(".machineList");
   const hiddenInput = div.querySelector(".machineCodeHidden");
   searchInput.addEventListener("input", ()=>{
     const val=searchInput.value.toLowerCase();
-    const filtered = machineList.filter(m=>m.DeptCode==$("deptCodeHidden").value && (m["รายชื่อเครื่องจักร1"]||"").toLowerCase().includes(val));
+    const filtered = machineList.filter(m=>
+      m.DeptCode===$("deptCodeHidden").value &&
+      (m["รายชื่อเครื่องจักร1"]||"").toLowerCase().includes(val)
+    );
     ul.innerHTML="";
     filtered.forEach(m=>{
       const li=document.createElement("li");
       li.textContent = m["รายชื่อเครื่องจักร1"];
       li.dataset.code = m["รหัสเครื่อง"];
       li.className="px-3 py-1 hover:bg-blue-100 cursor-pointer";
-      li.onclick=()=>{ searchInput.value=li.textContent; hiddenInput.value=li.dataset.code; ul.classList.add("hidden"); };
+      li.onclick=()=>{
+        searchInput.value=li.textContent;
+        hiddenInput.value=li.dataset.code;
+        ul.classList.add("hidden");
+      };
       ul.appendChild(li);
     });
     ul.classList.toggle("hidden", filtered.length===0);
@@ -270,107 +302,152 @@ function createMachineRow(){
   return div;
 }
 
-// --- Event Listeners ---
+// ------- Department search -------
 $("deptSearch").addEventListener("input", e=>{
   const val=e.target.value.toLowerCase();
-  const ul=$("deptList"); ul.innerHTML="";
-  deptList.filter(d=>`${d.NickName||""} : ${d.DeptName||""}`.toLowerCase().includes(val)).forEach(d=>{
-    const li=document.createElement("li");
-    li.textContent=`${d.NickName} : ${d.DeptName}`;
-    li.dataset.code=d.DeptCode;
-    li.className="px-3 py-1 hover:bg-blue-100 cursor-pointer";
-    li.onclick=()=>{
-      $("deptSearch").value=li.textContent;
-      $("deptCodeHidden").value=li.dataset.code;
-      ul.classList.add("hidden");
-      $("pmGroupSearch").disabled=false;
-    };
-    ul.appendChild(li);
-  });
+  const ul=$("deptList");
+  ul.innerHTML="";
+  deptList
+    .filter(d=>`${d.NickName||""} : ${d.DeptName||""}`.toLowerCase().includes(val))
+    .forEach(d=>{
+      const li=document.createElement("li");
+      li.textContent=`${d.NickName} : ${d.DeptName}`;
+      li.dataset.code=d.DeptCode;
+      li.className="px-3 py-1 hover:bg-blue-100 cursor-pointer";
+      li.onclick=()=>{
+        $("deptSearch").value=li.textContent;
+        $("deptCodeHidden").value=li.dataset.code;
+        ul.classList.add("hidden");
+        $("pmGroupSearch").disabled=false;
+
+        // 🕒 บันทึกเวลาเริ่มหลังจากเลือกหน่วยงาน
+        deptSelectStartTime = new Date();
+      };
+      ul.appendChild(li);
+    });
   $("deptList").classList.remove("hidden");
 });
 
-// PM Group search
+// ------- PM Group search -------
 $("pmGroupSearch").addEventListener("input", ()=>{
-  if(!$("deptCodeHidden").value){ alert("กรุณาเลือกหน่วยงานก่อน"); $("pmGroupSearch").value=""; return; }
+  if(!$("deptCodeHidden").value){
+    alert("กรุณาเลือกหน่วยงานก่อน");
+    $("pmGroupSearch").value="";
+    return;
+  }
   const val=$("pmGroupSearch").value.toLowerCase();
-  const ul=$("pmGroupList"); ul.innerHTML="";
-  groupList.filter(g=>g.DeptCode==$("deptCodeHidden").value && (g.GroupName||"").toLowerCase().includes(val)).forEach(g=>{
-    const li=document.createElement("li");
-    li.textContent=g.GroupName;
-    li.dataset.code=g.GroupCode;
-    li.className="px-3 py-1 hover:bg-blue-100 cursor-pointer";
-    li.onclick=()=>{
-      $("pmGroupSearch").value=li.textContent;
-      ul.classList.add("hidden");
+  const ul=$("pmGroupList");
+  ul.innerHTML="";
+  groupList
+    .filter(g=>g.DeptCode===$("deptCodeHidden").value && (g.GroupName||"").toLowerCase().includes(val))
+    .forEach(g=>{
+      const li=document.createElement("li");
+      li.textContent=g.GroupName;
+      li.dataset.code=g.GroupCode;
+      li.className="px-3 py-1 hover:bg-blue-100 cursor-pointer";
+      li.onclick=()=>{
+        $("pmGroupSearch").value=li.textContent;
+        ul.classList.add("hidden");
 
-      const machinesInGroup = machineList.filter(m=>m.GroupCode==li.dataset.code && m.DeptCode==$("deptCodeHidden").value);
-$("machinesContainer").innerHTML="";
+        const machinesInGroup = machineList.filter(m=>
+          m.GroupCode==li.dataset.code && m.DeptCode===$("deptCodeHidden").value
+        );
+        $("machinesContainer").innerHTML="";
 
-// 🕑 ฟังก์ชันเวลาไทย (GMT+7)
-function formatDateLocal(date) {
-  const tzOffset = 7 * 60; // +7 ชั่วโมง
-  const local = new Date(date.getTime() + tzOffset * 60000);
-  return local.toISOString().slice(0, 16);
-}
+        // 🕒 ฟังก์ชันเวลาไทย (GMT+7)
+        function formatDateLocal(date) {
+          const tzOffset = 7 * 60; // +7 ชั่วโมง
+          const local = new Date(date.getTime() + tzOffset * 60000);
+          return local.toISOString().slice(0, 16);
+        }
 
-let prevEndTime = new Date();
-machinesInGroup.forEach(m=>{
-    const row = createMachineRow();
+        let prevEndTime = new Date();
+        machinesInGroup.forEach(m=>{
+          const row = createMachineRow();
 
-    // ใช้ PmTime ของเครื่องเป็นนาที (default 10 นาที)
-    const pmMinutes = parseInt(m.PmTime) || 10;
-    const startStr = formatDateLocal(prevEndTime);
-    const endTime = new Date(prevEndTime.getTime() + pmMinutes * 60000);
-    const endStr = formatDateLocal(endTime);
-    prevEndTime = endTime;
+          const pmMinutes = parseInt(m.PmTime) || 10;
+          const startStr = formatDateLocal(prevEndTime);
+          const endTime = new Date(prevEndTime.getTime() + pmMinutes * 60000);
+          const endStr = formatDateLocal(endTime);
+          prevEndTime = endTime;
 
-    // เติมค่าในฟอร์ม
-    row.querySelector(".machineSearch").value = m["รายชื่อเครื่องจักร1"];
-    row.querySelector(".machineCodeHidden").value = m["รหัสเครื่อง"];
-    
-    row.querySelector('textarea[name="รายละเอียดอาการเสีย"]').value = m["รายละเอียดอาการเสีย"] || "PM ทำความสะอาด";
-    row.querySelector('textarea[name="วิเคราะห์สาเหตุ"]').value = m["วิเคราะห์สาเหตุ"] || "ตามกำหนด PM";
+          row.querySelector(".machineSearch").value = m["รายชื่อเครื่องจักร1"];
+          row.querySelector(".machineCodeHidden").value = m["รหัสเครื่อง"];
+          row.querySelector('textarea[name="รายละเอียดอาการเสีย"]').value =
+            m["รายละเอียดอาการเสีย"] || "PM ทำความสะอาด";
+          row.querySelector('textarea[name="วิเคราะห์สาเหตุ"]').value =
+            m["วิเคราะห์สาเหตุ"] || "ตามกำหนด PM";
 
-    row.querySelectorAll(".tech-checkbox").forEach(tc=>{
-      const empCode = tc.querySelector('input[name="ช่างผู้รับผิดชอบ"]').value;
-     // tc.querySelector(`input[name="start_${empCode}"]`).value = startStr;
-     // tc.querySelector(`input[name="end_${empCode}"]`).value = endStr;
-      tc.querySelectorAll(`input[name="status_${empCode}"]`).forEach(cbx=>{
-        cbx.checked = (cbx.value==="จบงาน");
-      });
-      tc.querySelector(`textarea[name="comment_${empCode}"]`).value = g["การแก้ไขความคิดเห็น"] || "";
+          row.querySelectorAll(".tech-checkbox").forEach(tc=>{
+            const empCode = tc.querySelector('input[name="ช่างผู้รับผิดชอบ"]').value;
+            // ถ้าอยากเติม start/end อัตโนมัติเปิดสองบรรทัดนี้
+            // tc.querySelector(`input[name="start_${empCode}"]`).value = startStr;
+            // tc.querySelector(`input[name="end_${empCode}"]`).value = endStr;
+            tc.querySelectorAll(`input[name="status_${empCode}"]`).forEach(cbx=>{
+              cbx.checked = (cbx.value==="จบงาน");
+            });
+            tc.querySelector(`textarea[name="comment_${empCode}"]`).value =
+              g["การแก้ไขความคิดเห็น"] || "";
+          });
+
+          $("machinesContainer").appendChild(row);
+        });
+      };
+      ul.appendChild(li);
     });
-
-    $("machinesContainer").appendChild(row);
-});
-
-    };
-    ul.appendChild(li);
-  });
   $("pmGroupList").classList.remove("hidden");
 });
+
+// ------- Add machine manually -------
 $("btnAddMachine").addEventListener("click", ()=>{
-  if(!$("deptCodeHidden").value){ alert("กรุณาเลือกหน่วยงานก่อน"); return; }
+  if(!$("deptCodeHidden").value){
+    alert("กรุณาเลือกหน่วยงานก่อน");
+    return;
+  }
   $("machinesContainer").appendChild(createMachineRow());
 });
 
+// ------- Reset form -------
 $("btnResetForm").addEventListener("click", ()=>{
   $("repairForm").reset();
   $("machinesContainer").innerHTML="";
   generateNextRequestNumber();
 });
 
-// Submit
+// ------- แปลง "วินาที" เป็น HH:MM:SS สำหรับ Time -------
+function secondsToTimeStr(seconds) {
+  if (seconds == null) return null;
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  const hh = h.toString().padStart(2, '0');
+  const mm = m.toString().padStart(2, '0');
+  const ss = s.toString().padStart(2, '0');
+  return `${hh}:${mm}:${ss}`;
+}
+
+// ------- Submit -------
 $("repairForm").addEventListener("submit", async e=>{
   e.preventDefault();
-  
-// ✅ เช็คว่ามีเครื่องจักรถูกเพิ่มหรือยัง
+
+  // เช็คว่ามีเครื่องจักรถูกเพิ่มหรือยัง
   if (document.querySelectorAll(".machine-container").length === 0) {
     alert("กรุณาเพิ่มรายชื่อเครื่องจักรก่อนบันทึกข้อมูล");
-    return; // ❌ หยุดการบันทึก
+    return;
   }
-  const submitBtn=$("submitBtn"); submitBtn.disabled=true; submitBtn.textContent="⏳ กำลังบันทึก...";
+
+  // 🕒 คำนวณเวลาตั้งแต่เลือกหน่วยงานจนกดบันทึก (วินาที)
+  let useSeconds = null;
+  if (deptSelectStartTime) {
+    const now = new Date();
+    const diffMs = now - deptSelectStartTime;   // ms
+    useSeconds = Math.round(diffMs / 1000);     // วินาที
+  }
+
+  const submitBtn=$("submitBtn");
+  submitBtn.disabled=true;
+  submitBtn.textContent="⏳ กำลังบันทึก...";
+
   try{
     const form = $("repairForm");
     const reqNum = form.querySelector('input[name="เลขที่ใบแจ้งซ่อม"]').value;
@@ -391,7 +468,8 @@ $("repairForm").addEventListener("submit", async e=>{
           comment: machine.querySelector(`textarea[name="comment_${code}"]`).value,
           start: machine.querySelector(`input[name="start_${code}"]`).value,
           end: machine.querySelector(`input[name="end_${code}"]`).value,
-          status: [...machine.querySelectorAll(`input[name="status_${code}"]:checked`)].map(c=>c.value).join(",")
+          status: [...machine.querySelectorAll(`input[name="status_${code}"]:checked`)]
+                    .map(c=>c.value).join(",")
         };
       });
 
@@ -402,6 +480,7 @@ $("repairForm").addEventListener("submit", async e=>{
         หน่วย: p.querySelector('input[name="หน่วย"]').value
       }));
 
+      // rows สำหรับ RepairTechnicians
       techs.forEach(t=>{
         techniciansRows.push({
           "เลขที่ใบแจ้งซ่อม": reqNum,
@@ -413,20 +492,21 @@ $("repairForm").addEventListener("submit", async e=>{
           "การแก้ไขความคิดเห็น": t.comment,
           "เวลาเริ่ม": t.start,
           "เวลาจบ": t.end,
-          "สถานะของงานช่าง": t.status
+          "สถานะของงานช่าง": t.status,
+          "TimeBeforeSave": useSeconds != null ? secondsToTimeStr(useSeconds) : null
         });
       });
 
+      // หา EmpCode ของช่างคนแรก (เอาไปผูกกับอะไหล่)
+      const firstTech = machine.querySelector('input[name="ช่างผู้รับผิดชอบ"]:checked');
+      const empCode = firstTech ? firstTech.value : "";
 
-// หา EmpCode ของช่างคนแรก
-const firstTech = machine.querySelector('input[name="ช่างผู้รับผิดชอบ"]:checked');
-const empCode = firstTech ? firstTech.value : "";
-
+      // rows สำหรับ RepairParts
       parts.forEach(p=>{
         partsRows.push({
           "เลขที่ใบแจ้งซ่อม": reqNum,
           "รหัสเครื่อง": machineCode,
-          "EmpCode": empCode,  // <-- เพิ่มตรงนี้
+          "EmpCode": empCode,
           "Seq": p.Seq,
           "รายการอะไหล่": p["รายการอะไหล่"],
           "จำนวน": p["จำนวน"],
@@ -450,25 +530,24 @@ const empCode = firstTech ? firstTech.value : "";
     });
 
     alert("บันทึกสำเร็จ ✅");
-    $("repairForm").reset(); $("machinesContainer").innerHTML=""; generateNextRequestNumber();
+    $("repairForm").reset();
+    $("machinesContainer").innerHTML="";
+    generateNextRequestNumber();
+    deptSelectStartTime = null; // เคลียร์เวลา
   }catch(err){
-    console.error(err); alert("เกิดข้อผิดพลาดในการบันทึก ❌"); 
-  } finally{ submitBtn.disabled=false; submitBtn.textContent="✅ บันทึกข้อมูล"; }
+    console.error(err);
+    alert("เกิดข้อผิดพลาดในการบันทึก ❌\nดูใน Console เพิ่มเติมได้");
+  } finally{
+    submitBtn.disabled=false;
+    submitBtn.textContent="✅ บันทึกข้อมูล";
+  }
 });
 
-// --- Init ---
+// ------- Init -------
 (async function init(){
   await Promise.all([loadDepartments(), loadMachines(), loadTechnicians(), loadGroups()]);
-  generateNextRequestNumber();
+  await generateNextRequestNumber();
 })();
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
