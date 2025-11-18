@@ -172,11 +172,11 @@ td.request-number:hover { color:#2563eb; }
 /* รายชื่อเครื่องจักร */
 #dataTable th[data-label="รายชื่อเครื่องจักร"],
 #dataTable td[data-label="รายชื่อเครื่องจักร"] {
-  font-size: 0.85rem;
-  max-width: 200px;
-  white-space: normal;
-  word-wrap: break-word;
-  overflow: hidden;
+  font-size: 0.70rem;
+  max-width: 950px;
+  white-space: normal;   /* ให้ขึ้นบรรทัดปกติ เวลายาวเกินความกว้าง */
+  word-wrap: normal;     /* ไม่บังคับตัดคำ */
+  overflow: visible;     /* แสดงข้อความครบ */
 }
 /* ปัญหาอาการ */
 #dataTable th[data-label="ปัญหาอาการ"],
@@ -187,6 +187,7 @@ td.request-number:hover { color:#2563eb; }
   word-wrap: break-word;
   overflow: hidden; 
 }
+
 </style>
 </head>
 <body>
@@ -522,7 +523,7 @@ function renderTable(){
     <tr style="cursor:pointer;" onclick="showHistory('${main["เลขที่ใบแจ้งซ่อม"]}')">
       <td data-label="ว/ด/ป">${formatDateTH(start)}</td>
       <td data-label="เวลาที่ใช้" class="time-used">
-        ${timeText}<br> ${main["TimeBeforeSave"] ? `(เวลาบันทึก : ${main["TimeBeforeSave"]})` : ""}
+        ${timeText}<br> ${main["TimeBeforeSave"] ? `{${main["TimeBeforeSave"]}}` : ""}
       </td>
       <td data-label="ช่างผู้ทำ">${techNames}</td>
       <td data-label="ใบแจ้งซ่อม" class="request-number" style="text-decoration:none;">
@@ -615,7 +616,7 @@ function showHistory(requestNumber){
     tbody.innerHTML += `
   <tr>
     <td data-label="ว/ด/ป">${formatDateTH(start)}</td>
-    <td data-label="เวลาที่ใช้">${timeText}<br> ${firstRow["TimeBeforeSave"] ? `(เวลาบันทึก : ${firstRow["TimeBeforeSave"]})` : ""}</td>
+    <td data-label="เวลาที่ใช้">${timeText}<br> ${firstRow["TimeBeforeSave"] ? `{${firstRow["TimeBeforeSave"]}}` : ""}</td>
     <td data-label="ช่างผู้ทำ">${techNames}</td>
     <td data-label="ใบแจ้งซ่อม">${firstRow["เลขที่ใบแจ้งซ่อม"] || "-"}</td>
     <td data-label="แผนก">${deptNameEng}</td>
