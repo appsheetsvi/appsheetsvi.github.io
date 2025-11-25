@@ -426,6 +426,30 @@ function secondsToTimeStr(seconds) {
   return `${hh}:${mm}:${ss}`;
 }
 
+// แปลง Date → HH:MM:SS
+function toTimeStr(date){
+  if(!date) return null;
+  const h = String(date.getHours()).padStart(2,'0');
+  const m = String(date.getMinutes()).padStart(2,'0');
+  const s = String(date.getSeconds()).padStart(2,'0');
+  return `${h}:${m}:${s}`;
+}
+
+
+// แปลง Date → เวลาไทยสำหรับ datetime-local ของ AppSheet
+function toThaiDateTimeLocalStr(date){
+  if(!date) return null;
+  // เพิ่ม GMT+7
+  const localDate = new Date(date.getTime() + 7*60*60*1000);
+  const yyyy = localDate.getFullYear();
+  const mm = String(localDate.getMonth()+1).padStart(2,'0');
+  const dd = String(localDate.getDate()).padStart(2,'0');
+  const hh = String(localDate.getHours()).padStart(2,'0');
+  const min = String(localDate.getMinutes()).padStart(2,'0');
+  return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+}
+
+
 // ------- Submit -------
 $("repairForm").addEventListener("submit", async e=>{
   e.preventDefault();
@@ -493,7 +517,9 @@ $("repairForm").addEventListener("submit", async e=>{
           "เวลาเริ่ม": t.start,
           "เวลาจบ": t.end,
           "สถานะของงานช่าง": t.status,
-          "TimeBeforeSave": useSeconds != null ? secondsToTimeStr(useSeconds) : null
+    "StartBeforeSave": toTimeStr(deptSelectStartTime),
+    "EndBeforeSave": toTimeStr(new Date()),
+    "TimeBeforeSave": useSeconds != null ? secondsToTimeStr(useSeconds) : null
         });
       });
 
