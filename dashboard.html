@@ -327,6 +327,52 @@ function formatTimeRangeAndDuration(startTime,endTime){
   let dur=""; if(hours>0) dur+=hours+" ชม."; if(mins>0) dur+=(dur?" ":"")+mins+" นาที"; if(!dur) dur="0 นาที";
   return `${timeRange} (${dur})`;
 }
+
+// แปลง duration เช่น "0:03:51" หรือ "00:03:51" -> "03:51"
+function formatDurationMMSS(durationStr){
+  if(!durationStr) return "-";
+  const parts = ("" + durationStr).split(":").map(p => p.trim());
+  // กรณี 3 ส่วน H:MM:SS
+  if(parts.length === 3){
+    const mm = parts[1].padStart(2,"0");
+    const ss = parts[2].padStart(2,"0");
+    return `${mm}:${ss}`;
+  }
+  // กรณี 2 ส่วน MM:SS
+  if(parts.length === 2){
+    const mm = parts[0].padStart(2,"0");
+    const ss = parts[1].padStart(2,"0");
+    return `${mm}:${ss}`;
+  }
+  // fallback
+  return durationStr;
+}
+
+// แปลง timestamp -> "HH:MM:SS"
+function formatTimeHHMMSS(dateStr){
+  if(!dateStr) return "-";
+  // ถ้าเป็นเวลาแบบ "14:57:56" หรือ "14:57" ให้รองรับด้วย
+  if(typeof dateStr === "string" && dateStr.match(/^\d{1,2}:\d{2}(:\d{2})?$/)){
+    const parts = dateStr.split(":");
+    const hh = parts[0].padStart(2,"0");
+    const mm = (parts[1]||"00").padStart(2,"0");
+    const ss = (parts[2]||"00").padStart(2,"0");
+    return `${hh}:${mm}:${ss}`;
+  }
+  const d = new Date(dateStr);
+  if(!isNaN(d)){
+    const h = d.getHours().toString().padStart(2,"0");
+    const m = d.getMinutes().toString().padStart(2,"0");
+    const s = d.getSeconds().toString().padStart(2,"0");
+    return `${h}:${m}:${s}`;
+  }
+  // fallback
+  return dateStr;
+}
+
+
+
+
 function getTechNamesFromEmpCode(empCodeStr){
   if(!empCodeStr) return "-";
   return empCodeStr
@@ -523,8 +569,20 @@ function renderTable(){
     <tr style="cursor:pointer;" onclick="showHistory('${main["เลขที่ใบแจ้งซ่อม"]}')">
       <td data-label="ว/ด/ป">${formatDateTH(start)}</td>
       <td data-label="เวลาที่ใช้" class="time-used">
-        ${timeText}<br> ${main["TimeBeforeSave"] ? `{${main["TimeBeforeSave"]}}` : ""}
-      </td>
+  ${timeText}
+  <br>
+  ${
+    main["TimeBeforeSave"]
+      ? `${formatDurationMMSS(main["TimeBeforeSave"])}${
+          (main["StartBeforeSave"] && main["EndBeforeSave"])
+            ? ` / ${formatTimeHHMMSS(main["StartBeforeSave"])} - ${formatTimeHHMMSS(main["EndBeforeSave"])}`
+            : ""
+        }`
+      : ""
+  }
+</td>
+
+
       <td data-label="ช่างผู้ทำ">${techNames}</td>
       <td data-label="ใบแจ้งซ่อม" class="request-number" style="text-decoration:none;">
         ${main["เลขที่ใบแจ้งซ่อม"] || "-"}
@@ -616,8 +674,21 @@ function showHistory(requestNumber){
     tbody.innerHTML += `
   <tr>
     <td data-label="ว/ด/ป">${formatDateTH(start)}</td>
-    <td data-label="เวลาที่ใช้">${timeText}<br> ${firstRow["TimeBeforeSave"] ? `{${firstRow["TimeBeforeSave"]}}` : ""}</td>
-    <td data-label="ช่างผู้ทำ">${techNames}</td>
+    <td data-label="เวลาที่ใช้" class="time-used">
+  ${timeText}
+  <br>
+  ${
+    firstRow["TimeBeforeSave"]
+      ? `${formatDurationMMSS(firstRow["TimeBeforeSave"])}${
+          (firstRow["StartBeforeSave"] && firstRow["EndBeforeSave"])
+            ? ` / ${formatTimeHHMMSS(firstRow["StartBeforeSave"])} - ${formatTimeHHMMSS(firstRow["EndBeforeSave"])}`
+            : ""
+        }`
+      : ""
+  }
+</td>
+
+   <td data-label="ช่างผู้ทำ">${techNames}</td>
     <td data-label="ใบแจ้งซ่อม">${firstRow["เลขที่ใบแจ้งซ่อม"] || "-"}</td>
     <td data-label="แผนก">${deptNameEng}</td>
     <td data-label="รายชื่อเครื่องจักร">${machineName}</td>
