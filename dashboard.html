@@ -328,6 +328,25 @@ function formatTimeRangeAndDuration(startTime,endTime){
   return `${timeRange} (${dur})`;
 }
 
+// แปลง StartBeforeSave -> "HH:MM" (ไม่เอาวินาที)
+function formatStartHHMM(timeStr){
+  if(!timeStr) return "-";
+  // ถ้าเป็น "14:57:56" หรือ "14:57" ให้รองรับ
+  if (typeof timeStr === "string" && timeStr.match(/^\d{1,2}:\d{2}(:\d{2})?$/)) {
+    const parts = timeStr.split(":");
+    const hh = parts[0].padStart(2, "0");
+    const mm = (parts[1] || "00").padStart(2, "0");
+    return `${hh}:${mm}`;
+  }
+  const d = new Date(timeStr);
+  if(!isNaN(d)){
+    const h = d.getHours().toString().padStart(2,"0");
+    const m = d.getMinutes().toString().padStart(2,"0");
+    return `${h}:${m}`;
+  }
+  return timeStr;
+}
+
 // แปลง duration เช่น "0:03:51" หรือ "00:03:51" -> "03:51"
 function formatDurationMMSS(durationStr){
   if(!durationStr) return "-";
@@ -568,19 +587,16 @@ function renderTable(){
   rowHtml: `
     <tr style="cursor:pointer;" onclick="showHistory('${main["เลขที่ใบแจ้งซ่อม"]}')">
       <td data-label="ว/ด/ป">${formatDateTH(start)}</td>
-      <td data-label="เวลาที่ใช้" class="time-used">
+<td data-label="เวลาที่ใช้" class="time-used">
   ${timeText}
   <br>
   ${
-    main["TimeBeforeSave"]
-      ? `${formatDurationMMSS(main["TimeBeforeSave"])}${
-          (main["StartBeforeSave"] && main["EndBeforeSave"])
-            ? ` / ${formatTimeHHMMSS(main["StartBeforeSave"])} - ${formatTimeHHMMSS(main["EndBeforeSave"])}`
-            : ""
-        }`
+    main["TimeBeforeSave"] && main["StartBeforeSave"]
+      ? `${formatStartHHMM(main["StartBeforeSave"])} (${formatDurationMMSS(main["TimeBeforeSave"])} นาที)`
       : ""
   }
 </td>
+
 
 
       <td data-label="ช่างผู้ทำ">${techNames}</td>
@@ -678,15 +694,12 @@ function showHistory(requestNumber){
   ${timeText}
   <br>
   ${
-    firstRow["TimeBeforeSave"]
-      ? `${formatDurationMMSS(firstRow["TimeBeforeSave"])}${
-          (firstRow["StartBeforeSave"] && firstRow["EndBeforeSave"])
-            ? ` / ${formatTimeHHMMSS(firstRow["StartBeforeSave"])} - ${formatTimeHHMMSS(firstRow["EndBeforeSave"])}`
-            : ""
-        }`
+    firstRow["TimeBeforeSave"] && firstRow["StartBeforeSave"]
+      ? `${formatStartHHMM(firstRow["StartBeforeSave"])} (${formatDurationMMSS(firstRow["TimeBeforeSave"])} นาที)`
       : ""
   }
 </td>
+
 
    <td data-label="ช่างผู้ทำ">${techNames}</td>
     <td data-label="ใบแจ้งซ่อม">${firstRow["เลขที่ใบแจ้งซ่อม"] || "-"}</td>
