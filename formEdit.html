@@ -14,11 +14,12 @@
 </head>
 <body class="bg-gray-100 font-sarabun p-4">
 <div>
-<nav class="bg-blue-600 text-white p-4 flex justify-between items-center">
-<a href="https://appsheetsvi.github.io/Menu.html" class="font-semibold">🏠 Home</a>
-<div class="font-semibold text-lg">ระบบแจ้งซ่อมออนไลน์</div>
+  <nav class="bg-blue-600 text-white p-4 flex justify-between items-center">
+    <a href="https://appsheetsvi.github.io/Menu.html" class="font-semibold">🏠 Home</a>
+    <div class="font-semibold text-lg">ระบบแจ้งซ่อมออนไลน์</div>
+  </nav>
 </div>
-</nav>
+
 <h1 class="text-2xl font-bold text-center text-blue-600 mb-4">ระบบจัดการงานซ่อม</h1>
 
 <!-- Tabs -->
@@ -29,7 +30,6 @@
   </div>
 </div>
 
-<!-- Global Filter -->
 <div id="globalFilter" class="max-w-7xl mx-auto bg-white p-3 rounded-lg shadow mb-3 grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
   <div class="md:col-span-3">
     <label class="font-semibold">จากวันที่</label>
@@ -44,11 +44,7 @@
     <input list="deptList" id="filterDept" class="w-full border border-blue-400 rounded px-2 py-1" placeholder="พิมพ์เพื่อค้นหา"/>
     <datalist id="deptList"></datalist>
   </div>
-  <div class="md:col-span-3 flex gap-3 items-center">
-    <label class="flex items-center gap-2"><input type="checkbox" id="statusUnfinished" checked /> ไม่จบงาน</label>
-    <label class="flex items-center gap-2"><input type="checkbox" id="statusFinished" /> จบงาน</label>
-  </div>
-  <div class="md:col-span-12 flex gap-2">
+  <div class="md:col-span-3 flex gap-2 items-center">
     <button id="filterBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">ค้นหา</button>
     <button id="resetBtn" class="bg-gray-200 px-3 py-2 rounded hover:bg-gray-300">ล้างเงื่อนไข</button>
   </div>
@@ -98,17 +94,6 @@
         <textarea id="editProblem" class="w-full border border-blue-400 rounded px-2 py-1" rows="2"></textarea>
       </div>
 
-      <!-- วิเคราะห์สาเหตุ -->
-      <div>
-        <label class="font-semibold">วิเคราะห์สาเหตุ</label>
-        <textarea id="editCause" class="w-full border border-blue-400 rounded px-2 py-1" rows="2"></textarea>
-      </div>
-
-      <div>
-        <label class="font-semibold">ความคิดเห็น</label>
-        <textarea id="editComment" class="w-full border border-blue-400 rounded px-2 py-1" rows="2"></textarea>
-      </div>
-
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
           <label class="font-semibold">เวลาเริ่มงาน</label>
@@ -118,6 +103,16 @@
           <label class="font-semibold">เวลาสิ้นสุดงาน</label>
           <input type="datetime-local" id="editEndTime" class="w-full border border-blue-400 rounded px-2 py-1"/>
         </div>
+      </div>
+
+      <div>
+        <label class="font-semibold">วิเคราะห์สาเหตุ</label>
+        <textarea id="editCause" class="w-full border border-blue-400 rounded px-2 py-1" rows="2"></textarea>
+      </div>
+
+      <div>
+        <label class="font-semibold">ความคิดเห็น / วิธีการแก้ไข</label>
+        <textarea id="editComment" class="w-full border border-blue-400 rounded px-2 py-1" rows="2"></textarea>
       </div>
 
       <div>
@@ -147,6 +142,7 @@ let empData = [];
 let deptData = [];
 let machineData = [];
 let currentRow = null;
+let startBeforeSave = null; // เวลาเริ่มจับตอนเปิด Edit/Add-on
 
 /* ===== HELPERS ===== */
 const api = (table, payload) =>
@@ -174,6 +170,27 @@ const toInputLocal = (iso) => {
 
 function unique(arr){ return [...new Set(arr)]; }
 
+// เวลา HH:MM:SS สำหรับ StartBeforeSave / EndBeforeSave
+function formatTimeOnly(date) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+// คำนวณเวลาที่ใช้จาก เวลาเริ่ม + เวลาจบ (ใช้กับ RepairTechnicians)
+
+
+// ms → Duration (h:mm:ss) ใช้กับคอลัมน์ TimeBeforeSave (Duration)
+function formatDurationMsToAppsheet(msDiff) {
+  let totalSeconds = Math.floor(msDiff / 1000);
+  if (totalSeconds < 0) totalSeconds = 0;
+
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  const pad2 = (n) => String(n).padStart(2, "0");
+  return `${hours}:${pad2(minutes)}:${pad2(seconds)}`;
+}
+
 /* ===== LOAD DATA ===== */
 async function loadAll(expression = "TRUE") {
   const container = document.getElementById("cardsContainer");
@@ -192,13 +209,16 @@ async function loadAll(expression = "TRUE") {
     deptData = Array.isArray(dept) ? dept : [];
     machineData = Array.isArray(machine) ? machine : [];
 
+    // datalist หน่วยงาน/เครื่อง
     const deptList = document.getElementById("deptList");
-    deptList.innerHTML = unique(deptData.map(d => d.DeptNameEng).filter(Boolean))
+    deptList.innerHTML = unique(deptData.map(d => d.DeptNameEngEngEngEng).filter(Boolean))
       .map(x => `<option value="${x}">`).join("");
 
     const machineList = document.getElementById("machineList");
-    machineList.innerHTML = machineData.map(m =>
-      `<option value="${m.MachineCode}">${m.MachineName||m.MachineCode}</option>`).join("");
+
+ machineList.innerHTML = machineData.map(m =>
+  `<option value="${m.MachineCode}">${m["รายชื่อเครื่องจักร"]||m.MachineCode}</option>`).join("");
+
 
     renderTable();
   } catch (e) {
@@ -207,7 +227,6 @@ async function loadAll(expression = "TRUE") {
   }
 }
 
-/* ===== RENDER TABLE ===== */
 function renderTable() {
   const container = document.getElementById("cardsContainer");
   if (!techniciansData.length) {
@@ -215,47 +234,102 @@ function renderTable() {
     return;
   }
 
+  // ===== 1) จัดกลุ่มตามเลขที่ใบแจ้งซ่อม =====
+  const groups = {}; // key = เลขที่ใบแจ้งซ่อม
+
+  techniciansData.forEach(r => {
+    const reqNo = r["เลขที่ใบแจ้งซ่อม"];
+    if (!reqNo) return;
+
+    if (!groups[reqNo]) {
+      // สร้างโครงหลักจากแถวแรกของใบแจ้งนี้
+      groups[reqNo] = {
+        reqNo,
+        rows: [],
+        deptCode: r["หน่วยงาน"] || "",
+        machineCode: r["รหัสเครื่อง"] || "",
+        problem: r["รายละเอียดอาการเสีย"] || "",
+        comment: r["การแก้ไขความคิดเห็น"] || "",
+        startTime: r["เวลาเริ่ม"] || "",
+        timeUsed: r["TimeBeforeSave"] || r.TimeBeforeSave || "",
+      };
+    }
+    groups[reqNo].rows.push(r);
+  });
+
+  // แปลง groups → array สำหรับ render
+  const groupedRows = Object.values(groups);
+
+  if (!groupedRows.length) {
+    container.innerHTML = `<p class="text-center text-gray-500">ไม่พบงาน</p>`;
+    return;
+  }
+
+  // ===== 2) สร้างตาราง =====
   let html = `
   <table class="w-full border-collapse bg-white shadow rounded text-sm">
     <thead class="bg-blue-600 text-white">
       <tr>
-        <th class="px-2 py-1 border whitespace-nowrap">เลขที่ใบแจ้งซ่อม</th>
-        <th class="px-2 py-1 border whitespace-nowrap">รหัสช่าง</th>
-        <th class="px-2 py-1 border whitespace-nowrap">สถานะงาน</th>
-        <th class="px-2 py-1 border whitespace-nowrap">เวลาเริ่ม</th>
-        <th class="px-2 py-1 border whitespace-nowrap">ความคิดเห็น</th>
-        <th class="px-2 py-1 border whitespace-nowrap">หน่วยงาน</th>
-        <th class="px-2 py-1 border whitespace-nowrap">รหัสเครื่อง</th>
+        <th class="px-2 py-1 border whitespace-nowrap">ว/ด/ป</th>
+        <th class="px-2 py-1 border whitespace-nowrap">ช่างผู้ทำ</th>
+        <th class="px-2 py-1 border whitespace-nowrap">ใบแจ้งซ่อม</th>
+        <th class="px-2 py-1 border whitespace-nowrap">แผนก</th>
+        <th class="px-2 py-1 border whitespace-nowrap">รายชื่อเครื่องจักร</th>
         <th class="px-2 py-1 border whitespace-nowrap">อาการเสีย</th>
+        <th class="px-2 py-1 border whitespace-nowrap">ความคิดเห็น</th>
         <th class="px-2 py-1 border whitespace-nowrap">จัดการ</th>
       </tr>
     </thead>
     <tbody>`;
 
-  techniciansData.forEach(r => {
-    const empNames = r.EmpCode ? r.EmpCode.split(",").map(c => {
-      const e = empData.find(x => x.EmpCode === c.trim());
-      return e ? e.EmpName : c;
-    }).join(", ") : "-";
+  // ===== 3) วนทีละ "ใบแจ้ง" หลังรวมช่างแล้ว =====
+  groupedRows.forEach(g => {
+    // รวมชื่อช่างจากแถวทั้งหมดของใบแจ้งนี้
+    const empCodes = g.rows
+      .map(r => r.EmpCode || "")
+      .join(",")                 // รวมทุกแถวเป็นสตริงเดียว
+      .split(",")                // แยกเป็น array
+      .map(c => c.trim())
+      .filter(c => c);           // ตัดค่าว่าง
 
-    const machineName = r["รหัสเครื่อง"]
-      ? (machineData.find(m => m.MachineCode === r["รหัสเครื่อง"])?.MachineName || r["รหัสเครื่อง"])
+    const uniqueEmpCodes = [...new Set(empCodes)]; // เอาไม่ให้ซ้ำ
+
+    const empNames = uniqueEmpCodes.length
+      ? uniqueEmpCodes.map(code => {
+          const e = empData.find(x => x.EmpCode === code);
+          return e ? e.EmpName : code;
+        }).join(", ")
       : "-";
+
+    // แผนก → DeptNameEng
+    const deptFull = g.deptCode
+      ? (deptData.find(d => d.DeptCode === g.deptCode)?.DeptNameEng || g.deptCode)
+      : "-";
+
+    // ชื่อเครื่องจาก MachineMaster
+    const machineName = g.machineCode
+      ? (machineData.find(m => m.MachineCode === g.machineCode)?.["รายชื่อเครื่องจักร"] || g.machineCode)
+      : "-";
+
+    // วันที่จากเวลาเริ่ม
+    const dateDisplay = g.startTime ? fmtDateTimeCell(g.startTime).split(" ")[0] : "-";
 
     html += `
       <tr class="border-b">
-        <td class="px-2 py-1">${r["เลขที่ใบแจ้งซ่อม"]||"-"}</td>
+        <td class="px-2 py-1">${dateDisplay}</td>
         <td class="px-2 py-1">${empNames}</td>
-        <td class="px-2 py-1">${r["สถานะของงานช่าง"]||"-"}</td>
-        <td class="px-2 py-1">${fmtDateTimeCell(r["เวลาเริ่ม"])}</td>
-        <td class="px-2 py-1">${r["การแก้ไขความคิดเห็น"]||"-"}</td>
-        <td class="px-2 py-1">${r["หน่วยงาน"]||"-"}</td>
+        <td class="px-2 py-1">${g.reqNo}</td>
+        <td class="px-2 py-1">${deptFull}</td>
         <td class="px-2 py-1">${machineName}</td>
-        <td class="px-2 py-1">${r["รายละเอียดอาการเสีย"]||"-"}</td>
+        <td class="px-2 py-1">${g.problem || "-"}</td>
+        <td class="px-2 py-1">${g.comment || "-"}</td>
         <td class="px-2 py-1">
           <div class="flex gap-1">
-            <button class="bg-blue-600 text-white px-2 py-1 rounded" onclick="openEdit('${r.ID}')">Edit</button>
-            <button class="bg-green-600 text-white px-2 py-1 rounded" onclick="openAddon('${r.ID}')">ต่อใบแจ้ง</button>
+            <!-- เวลา Edit / ต่อใบแจ้ง ให้เลือกจากแถวแรกของใบแจ้งนี้ -->
+            <button class="bg-blue-600 text-white px-2 py-1 rounded"
+                    onclick="openEdit('${g.rows[0].ID}')">Edit</button>
+            <button class="bg-green-600 text-white px-2 py-1 rounded"
+                    onclick="openAddon('${g.rows[0].ID}')">ต่อใบแจ้ง</button>
           </div>
         </td>
       </tr>`;
@@ -265,7 +339,7 @@ function renderTable() {
   container.innerHTML = html;
 }
 
-/* ===== MODAL HELPERS ===== */
+/* ===== MODAL TOOLS ===== */
 function fillEmpChoices(selectedCsv="") {
   const wrap = document.getElementById("empContainer");
   wrap.innerHTML = "";
@@ -280,7 +354,9 @@ function fillEmpChoices(selectedCsv="") {
       wrap.appendChild(item);
     });
 }
+
 function clearParts(){ document.getElementById("partsContainer").innerHTML=""; }
+
 function addPartRow(item="", qty="", unit=""){
   const row = document.createElement("div");
   row.className = "flex gap-2 items-center";
@@ -292,12 +368,15 @@ function addPartRow(item="", qty="", unit=""){
   document.getElementById("partsContainer").appendChild(row);
 }
 
-/* ===== OPEN EDIT ===== */
+/* ===== OPEN EDIT / ADDON ===== */
 function openEdit(id){
   mode = "edit";
   const r = techniciansData.find(x => x.ID === id);
   if (!r) return;
   currentRow = r;
+
+  // เริ่มจับเวลา
+  startBeforeSave = new Date();
 
   document.getElementById("modalTitle").textContent = "แก้ไขงานซ่อม";
   document.getElementById("editRequestNumber").value = r["เลขที่ใบแจ้งซ่อม"] || "";
@@ -313,11 +392,7 @@ function openEdit(id){
 
   fillEmpChoices(r.EmpCode || "");
   clearParts();
-  const parts = partsData.filter(p => 
-    p["เลขที่ใบแจ้งซ่อม"] === r["เลขที่ใบแจ้งซ่อม"] && 
-    (p.EmpCode||"") === (r.EmpCode||"") &&
-    p["รหัสเครื่อง"] === r["รหัสเครื่อง"]
-  );
+  const parts = partsData.filter(p => p["เลขที่ใบแจ้งซ่อม"] === r["เลขที่ใบแจ้งซ่อม"] && (p.EmpCode||"") === (r.EmpCode||""));
   if (parts.length) parts.forEach(p => addPartRow(p["รายการอะไหล่"], p["จำนวน"], p["หน่วย"]));
   if (!parts.length) addPartRow();
 
@@ -325,12 +400,14 @@ function openEdit(id){
   document.getElementById("editModal").classList.add("flex");
 }
 
-/* ===== OPEN ADDON (ต่อใบแจ้งซ่อม) ===== */
 function openAddon(id){
   mode = "addon";
   const r = techniciansData.find(x => x.ID === id);
   if (!r) return;
   currentRow = r;
+
+  // เริ่มจับเวลา
+  startBeforeSave = new Date();
 
   document.getElementById("modalTitle").textContent = "บันทึกใบแจ้งซ่อมต่อ (สร้างรายการใหม่ต่อช่างที่เลือก)";
   document.getElementById("editRequestNumber").value = r["เลขที่ใบแจ้งซ่อม"] || "";
@@ -344,7 +421,7 @@ function openAddon(id){
   document.getElementById("editStatusFinished").checked = false;
   document.getElementById("editStatusUnfinished").checked = true;
 
-  fillEmpChoices(""); // เลือกช่างใหม่
+  fillEmpChoices(""); // ให้เลือกช่างชุดใหม่
   clearParts();
   addPartRow();
 
@@ -352,7 +429,7 @@ function openAddon(id){
   document.getElementById("editModal").classList.add("flex");
 }
 
-/* ===== SUBMIT FORM ===== */
+/* ===== SUBMIT ===== */
 document.getElementById("editForm").addEventListener("submit", async (e)=>{
   e.preventDefault();
 
@@ -373,14 +450,33 @@ document.getElementById("editForm").addEventListener("submit", async (e)=>{
   if (!reqNo) { alert("กรุณาระบุเลขที่ใบแจ้งซ่อม"); return; }
   if (!dept) { alert("กรุณาระบุหน่วยงาน"); return; }
   if (!machineCode) { alert("กรุณาระบุรหัสเครื่อง"); return; }
-  if (mode==="addon" && !selectedEmp.length) { alert("กรุณาเลือกช่างอย่างน้อย 1 คน"); return; }
 
+  if (mode === "addon" && !selectedEmp.length) {
+    alert("กรุณาเลือกช่างอย่างน้อย 1 คน");
+    return;
+  }
+
+  // parts rows
   const partRows = Array.from(document.querySelectorAll("#partsContainer > div")).map((div,i)=>({
     Seq: i+1,
     Item: div.querySelector(".part-item").value?.trim() || "",
     Qty: div.querySelector(".part-qty").value || "",
     Unit: div.querySelector(".part-unit").value?.trim() || ""
   })).filter(p => p.Item);
+
+  // ===== จับเวลา Start/End/Duration ก่อนบันทึก =====
+  const endBeforeSaveDate = new Date();
+  const startBeforeSaveDate = startBeforeSave || endBeforeSaveDate;
+
+  const startBeforeSaveStr = formatTimeOnly(startBeforeSaveDate);
+  const endBeforeSaveStr   = formatTimeOnly(endBeforeSaveDate);
+  const timeBeforeSaveStr  = formatDurationMsToAppsheet(endBeforeSaveDate - startBeforeSaveDate);
+
+  console.log("DEBUG TIME SAVE =>", {
+    startBeforeSaveStr,
+    endBeforeSaveStr,
+    timeBeforeSaveStr
+  });
 
   try {
     if (mode === "edit") {
@@ -398,11 +494,15 @@ document.getElementById("editForm").addEventListener("submit", async (e)=>{
         "สถานะของงานช่าง": status,
         EmpCode: (currentRow.EmpCode || ""),
         UpdatedBy: (currentRow.EmpCode || ""),
-        DateModified: new Date().toISOString()
+        DateModified: new Date().toISOString(),
+
+        StartBeforeSave: startBeforeSaveStr,
+        EndBeforeSave: endBeforeSaveStr,
+        TimeBeforeSave: timeBeforeSaveStr
       };
       await api("RepairTechnicians", { Action: "Edit", Rows: [payload] });
 
-      // เพิ่มอะไหล่ชุดใหม่ (ไม่ลบของเก่า)
+      // อะไหล่: Add ต่อท้าย (ถ้าต้องการลบของเดิม ต้องเพิ่ม logic Delete เพิ่มเอง)
       for (const p of partRows) {
         await api("RepairParts", { Action: "Add", Rows: [{
           "เลขที่ใบแจ้งซ่อม": reqNo,
@@ -415,7 +515,7 @@ document.getElementById("editForm").addEventListener("submit", async (e)=>{
         }]});
       }
     } else {
-      // addon: เพิ่มแถวใหม่ต่อช่างแต่ละคน
+      // addon: สร้างรายการใหม่ต่อ Emp ใหม
       for (const emp of selectedEmp) {
         const techRow = {
           "เลขที่ใบแจ้งซ่อม": reqNo,
@@ -429,7 +529,11 @@ document.getElementById("editForm").addEventListener("submit", async (e)=>{
           "สถานะของงานช่าง": status,
           EmpCode: emp,
           UpdatedBy: emp,
-          DateModified: new Date().toISOString()
+          DateModified: new Date().toISOString(),
+
+          StartBeforeSave: startBeforeSaveStr,
+          EndBeforeSave: endBeforeSaveStr,
+          TimeBeforeSave: timeBeforeSaveStr
         };
         await api("RepairTechnicians", { Action: "Add", Rows: [techRow] });
 
@@ -450,6 +554,7 @@ document.getElementById("editForm").addEventListener("submit", async (e)=>{
     alert("บันทึกเรียบร้อย");
     document.getElementById("editModal").classList.add("hidden");
     document.getElementById("editModal").classList.remove("flex");
+    startBeforeSave = null; // reset
     await applyFilter();
   } catch (e) {
     console.error(e);
@@ -462,37 +567,44 @@ document.getElementById("addPartBtn").onclick = () => addPartRow();
 document.getElementById("modalCancelBtn").onclick = () => {
   document.getElementById("editModal").classList.add("hidden");
   document.getElementById("editModal").classList.remove("flex");
+  startBeforeSave = null;
 };
-
-/* ===== FILTER ===== */
-async function applyFilter(){
-  const s = document.getElementById("filterStart").value;
-  const e = document.getElementById("filterEnd").value;
+function parseThaiDate(input) {
+  if(!input) return null;
+  const parts = input.split('-'); // yyyy-mm-dd
+  if(parts.length !== 3) return null;
+  const year = parseInt(parts[0],10) - 543; // แปลง พ.ศ → ค.ศ
+  const month = parts[1];
+  const day = parts[2];
+  return `${year}-${month}-${day}`;
+}
+async function applyFilter() {
+  const s = document.getElementById("filterStart").value; // yyyy-mm-dd
+  const e = document.getElementById("filterEnd").value;   // yyyy-mm-dd
   const dept = document.getElementById("filterDept").value?.trim();
-  const uf = document.getElementById("statusUnfinished").checked;
-  const f  = document.getElementById("statusFinished").checked;
 
   let exp = "TRUE";
 
+  // เงื่อนไขช่วงวันที่
   if (s && e) {
-    exp = `AND(${exp}, DATE([เวลาเริ่ม]) >= DATE("${s}"), DATE([เวลาเริ่ม]) <= DATE("${e}"))`;
+    exp = `AND(${exp}, [เวลาเริ่ม] >= "${s}T00:00:00", [เวลาเริ่ม] <= "${e}T23:59:59")`;
   } else if (s && !e) {
-    exp = `AND(${exp}, DATE([เวลาเริ่ม]) >= DATE("${s}"))`;
+    exp = `AND(${exp}, [เวลาเริ่ม] >= "${s}T00:00:00")`;
   } else if (!s && e) {
-    exp = `AND(${exp}, DATE([เวลาเริ่ม]) <= DATE("${e}"))`;
+    exp = `AND(${exp}, [เวลาเริ่ม] <= "${e}T23:59:59")`;
   }
 
+  // เงื่อนไขหน่วยงาน
   if (dept) {
-    exp = `AND(${exp}, [หน่วยงาน] = "${dept}")`;
+    exp = `AND(${exp}, CONTAINS([หน่วยงาน], "${dept}"))`;
   }
 
-  const statusList = [];
-  if (uf) statusList.push(`[สถานะของงานช่าง] <> "จบงาน"`);
-  if (f)  statusList.push(`[สถานะของงานช่าง] = "จบงาน"`);
-  if (statusList.length === 1) exp = `AND(${exp}, ${statusList[0]})`;
-
-  await loadAll(exp);
+  await loadAll(exp); // เรียกโหลดข้อมูลตาม Expression
 }
+
+
+
+
 
 document.getElementById("filterBtn").onclick = applyFilter;
 document.getElementById("resetBtn").onclick = async ()=>{
@@ -512,6 +624,7 @@ document.getElementById("tabEditBtn").onclick = ()=>{
   document.getElementById("tabAddonBtn").classList.remove("tab-active");
   document.getElementById("tabAddonBtn").classList.add("tab-inactive");
 };
+
 document.getElementById("tabAddonBtn").onclick = ()=>{
   mode = "addon";
   document.getElementById("tabAddonBtn").classList.add("tab-active");
@@ -520,7 +633,7 @@ document.getElementById("tabAddonBtn").onclick = ()=>{
   document.getElementById("tabEditBtn").classList.add("tab-inactive");
 };
 
-/* ===== ROW OPENERS ===== */
+/* ===== GLOBAL HOOKS FOR BUTTONS ===== */
 window.openEdit = openEdit;
 window.openAddon = openAddon;
 
