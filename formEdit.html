@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="th">
 <head>
 <meta charset="UTF-8" />
@@ -98,6 +98,17 @@
         <textarea id="editProblem" class="w-full border border-blue-400 rounded px-2 py-1" rows="2"></textarea>
       </div>
 
+      <!-- วิเคราะห์สาเหตุ -->
+      <div>
+        <label class="font-semibold">วิเคราะห์สาเหตุ</label>
+        <textarea id="editCause" class="w-full border border-blue-400 rounded px-2 py-1" rows="2"></textarea>
+      </div>
+
+      <div>
+        <label class="font-semibold">ความคิดเห็น</label>
+        <textarea id="editComment" class="w-full border border-blue-400 rounded px-2 py-1" rows="2"></textarea>
+      </div>
+
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <div>
           <label class="font-semibold">เวลาเริ่มงาน</label>
@@ -107,11 +118,6 @@
           <label class="font-semibold">เวลาสิ้นสุดงาน</label>
           <input type="datetime-local" id="editEndTime" class="w-full border border-blue-400 rounded px-2 py-1"/>
         </div>
-      </div>
-
-      <div>
-        <label class="font-semibold">ความคิดเห็น</label>
-        <textarea id="editComment" class="w-full border border-blue-400 rounded px-2 py-1" rows="2"></textarea>
       </div>
 
       <div>
@@ -153,7 +159,6 @@ const api = (table, payload) =>
 const fmtDateTimeCell = (iso) => {
   if (!iso) return "-";
   const d = new Date(iso);
-  // แสดงแบบ 24 ชม. ไม่เอา AM/PM
   return d.toLocaleString('th-TH', {
     year: 'numeric', month: '2-digit', day: '2-digit',
     hour: '2-digit', minute: '2-digit', hour12: false
@@ -187,7 +192,6 @@ async function loadAll(expression = "TRUE") {
     deptData = Array.isArray(dept) ? dept : [];
     machineData = Array.isArray(machine) ? machine : [];
 
-    // datalist หน่วยงาน/เครื่อง
     const deptList = document.getElementById("deptList");
     deptList.innerHTML = unique(deptData.map(d => d.DeptNameEng).filter(Boolean))
       .map(x => `<option value="${x}">`).join("");
@@ -203,7 +207,7 @@ async function loadAll(expression = "TRUE") {
   }
 }
 
-/* ===== RENDER ===== */
+/* ===== RENDER TABLE ===== */
 function renderTable() {
   const container = document.getElementById("cardsContainer");
   if (!techniciansData.length) {
@@ -229,13 +233,11 @@ function renderTable() {
     <tbody>`;
 
   techniciansData.forEach(r => {
-    // EmpName (รองรับกรณีมีหลาย EmpCode คั่นด้วย ,)
     const empNames = r.EmpCode ? r.EmpCode.split(",").map(c => {
       const e = empData.find(x => x.EmpCode === c.trim());
       return e ? e.EmpName : c;
     }).join(", ") : "-";
 
-    // MachineName
     const machineName = r["รหัสเครื่อง"]
       ? (machineData.find(m => m.MachineCode === r["รหัสเครื่อง"])?.MachineName || r["รหัสเครื่อง"])
       : "-";
@@ -263,7 +265,7 @@ function renderTable() {
   container.innerHTML = html;
 }
 
-/* ===== MODAL ===== */
+/* ===== MODAL HELPERS ===== */
 function fillEmpChoices(selectedCsv="") {
   const wrap = document.getElementById("empContainer");
   wrap.innerHTML = "";
@@ -290,6 +292,7 @@ function addPartRow(item="", qty="", unit=""){
   document.getElementById("partsContainer").appendChild(row);
 }
 
+/* ===== OPEN EDIT ===== */
 function openEdit(id){
   mode = "edit";
   const r = techniciansData.find(x => x.ID === id);
@@ -301,6 +304,7 @@ function openEdit(id){
   document.getElementById("editDept").value = r["หน่วยงาน"] || "";
   document.getElementById("editMachineCode").value = r["รหัสเครื่อง"] || "";
   document.getElementById("editProblem").value = r["รายละเอียดอาการเสีย"] || "";
+  document.getElementById("editCause").value = r["วิเคราะห์สาเหตุ"] || "";
   document.getElementById("editComment").value = r["การแก้ไขความคิดเห็น"] || "";
   document.getElementById("editStartTime").value = toInputLocal(r["เวลาเริ่ม"]);
   document.getElementById("editEndTime").value = toInputLocal(r["เวลาจบ"]);
@@ -309,7 +313,11 @@ function openEdit(id){
 
   fillEmpChoices(r.EmpCode || "");
   clearParts();
-  const parts = partsData.filter(p => p["เลขที่ใบแจ้งซ่อม"] === r["เลขที่ใบแจ้งซ่อม"] && (p.EmpCode||"") === (r.EmpCode||""));
+  const parts = partsData.filter(p => 
+    p["เลขที่ใบแจ้งซ่อม"] === r["เลขที่ใบแจ้งซ่อม"] && 
+    (p.EmpCode||"") === (r.EmpCode||"") &&
+    p["รหัสเครื่อง"] === r["รหัสเครื่อง"]
+  );
   if (parts.length) parts.forEach(p => addPartRow(p["รายการอะไหล่"], p["จำนวน"], p["หน่วย"]));
   if (!parts.length) addPartRow();
 
@@ -317,6 +325,7 @@ function openEdit(id){
   document.getElementById("editModal").classList.add("flex");
 }
 
+/* ===== OPEN ADDON (ต่อใบแจ้งซ่อม) ===== */
 function openAddon(id){
   mode = "addon";
   const r = techniciansData.find(x => x.ID === id);
@@ -328,13 +337,14 @@ function openAddon(id){
   document.getElementById("editDept").value = r["หน่วยงาน"] || "";
   document.getElementById("editMachineCode").value = r["รหัสเครื่อง"] || "";
   document.getElementById("editProblem").value = r["รายละเอียดอาการเสีย"] || "";
+  document.getElementById("editCause").value = r["วิเคราะห์สาเหตุ"] || "";
   document.getElementById("editComment").value = "";
   document.getElementById("editStartTime").value = "";
   document.getElementById("editEndTime").value = "";
   document.getElementById("editStatusFinished").checked = false;
   document.getElementById("editStatusUnfinished").checked = true;
 
-  fillEmpChoices(""); // ให้ผู้ใช้เลือกช่างชุดใหม่
+  fillEmpChoices(""); // เลือกช่างใหม่
   clearParts();
   addPartRow();
 
@@ -342,20 +352,20 @@ function openAddon(id){
   document.getElementById("editModal").classList.add("flex");
 }
 
-/* ===== SUBMIT ===== */
+/* ===== SUBMIT FORM ===== */
 document.getElementById("editForm").addEventListener("submit", async (e)=>{
   e.preventDefault();
 
   const reqNo = document.getElementById("editRequestNumber").value?.trim();
   const dept = document.getElementById("editDept").value?.trim();
   const machineCodeInput = document.getElementById("editMachineCode").value?.trim();
-  // ถ้าเลือกจาก datalist อาจเป็นรหัสหรือชื่อเครื่อง ให้คงเป็นรหัส (MachineCode) ถ้าใส่ชื่อ ให้พยายามหา code
   const machineFound = machineData.find(m => m.MachineCode === machineCodeInput || m.MachineName === machineCodeInput);
   const machineCode = machineFound ? machineFound.MachineCode : machineCodeInput;
 
   const problem = document.getElementById("editProblem").value?.trim();
+  const cause = document.getElementById("editCause").value?.trim();
   const comment = document.getElementById("editComment").value?.trim();
-  const startTime = document.getElementById("editStartTime").value; // yyyy-mm-ddThh:mm
+  const startTime = document.getElementById("editStartTime").value;
   const endTime = document.getElementById("editEndTime").value;
   const status = document.getElementById("editStatusFinished").checked ? "จบงาน" : "ไม่จบงาน";
   const selectedEmp = Array.from(document.querySelectorAll(".emp-checkbox:checked")).map(i=>i.value);
@@ -363,9 +373,8 @@ document.getElementById("editForm").addEventListener("submit", async (e)=>{
   if (!reqNo) { alert("กรุณาระบุเลขที่ใบแจ้งซ่อม"); return; }
   if (!dept) { alert("กรุณาระบุหน่วยงาน"); return; }
   if (!machineCode) { alert("กรุณาระบุรหัสเครื่อง"); return; }
-  if (!selectedEmp.length) { alert("กรุณาเลือกช่างอย่างน้อย 1 คน"); return; }
+  if (mode==="addon" && !selectedEmp.length) { alert("กรุณาเลือกช่างอย่างน้อย 1 คน"); return; }
 
-  // parts rows
   const partRows = Array.from(document.querySelectorAll("#partsContainer > div")).map((div,i)=>({
     Seq: i+1,
     Item: div.querySelector(".part-item").value?.trim() || "",
@@ -375,7 +384,6 @@ document.getElementById("editForm").addEventListener("submit", async (e)=>{
 
   try {
     if (mode === "edit") {
-      // แก้ไขแถวปัจจุบัน (ใช้ Emp เดิมเท่านั้น ไม่แยก)
       const payload = {
         ID: currentRow.ID,
         Version: (currentRow.Version || 0) + 1,
@@ -383,17 +391,18 @@ document.getElementById("editForm").addEventListener("submit", async (e)=>{
         "หน่วยงาน": dept,
         "รหัสเครื่อง": machineCode,
         "รายละเอียดอาการเสีย": problem,
+        "วิเคราะห์สาเหตุ": cause,
         "การแก้ไขความคิดเห็น": comment,
         "เวลาเริ่ม": startTime,
         "เวลาจบ": endTime,
         "สถานะของงานช่าง": status,
-        EmpCode: (currentRow.EmpCode || ""), // ไม่เปลี่ยนชุดช่างในโหมดแก้ไข
+        EmpCode: (currentRow.EmpCode || ""),
         UpdatedBy: (currentRow.EmpCode || ""),
         DateModified: new Date().toISOString()
       };
       await api("RepairTechnicians", { Action: "Edit", Rows: [payload] });
 
-      // บันทึกอะไหล่ (แนวทางง่าย: เพิ่มต่อ; ถ้าต้องการลบของเดิมจำเป็นต้องมีคีย์ ID ของ RepairParts เพื่อ Delete)
+      // เพิ่มอะไหล่ชุดใหม่ (ไม่ลบของเก่า)
       for (const p of partRows) {
         await api("RepairParts", { Action: "Add", Rows: [{
           "เลขที่ใบแจ้งซ่อม": reqNo,
@@ -406,13 +415,14 @@ document.getElementById("editForm").addEventListener("submit", async (e)=>{
         }]});
       }
     } else {
-      // addon: แยกบันทึกต่อช่างแต่ละคน (ไม่กระทบแถวเดิม)
+      // addon: เพิ่มแถวใหม่ต่อช่างแต่ละคน
       for (const emp of selectedEmp) {
         const techRow = {
           "เลขที่ใบแจ้งซ่อม": reqNo,
           "หน่วยงาน": dept,
           "รหัสเครื่อง": machineCode,
           "รายละเอียดอาการเสีย": problem,
+          "วิเคราะห์สาเหตุ": cause,
           "การแก้ไขความคิดเห็น": comment,
           "เวลาเริ่ม": startTime,
           "เวลาจบ": endTime,
@@ -440,7 +450,6 @@ document.getElementById("editForm").addEventListener("submit", async (e)=>{
     alert("บันทึกเรียบร้อย");
     document.getElementById("editModal").classList.add("hidden");
     document.getElementById("editModal").classList.remove("flex");
-    // reload ตาม filter ปัจจุบัน
     await applyFilter();
   } catch (e) {
     console.error(e);
@@ -457,15 +466,14 @@ document.getElementById("modalCancelBtn").onclick = () => {
 
 /* ===== FILTER ===== */
 async function applyFilter(){
-  const s = document.getElementById("filterStart").value; // yyyy-mm-dd
-  const e = document.getElementById("filterEnd").value;   // yyyy-mm-dd
+  const s = document.getElementById("filterStart").value;
+  const e = document.getElementById("filterEnd").value;
   const dept = document.getElementById("filterDept").value?.trim();
   const uf = document.getElementById("statusUnfinished").checked;
   const f  = document.getElementById("statusFinished").checked;
 
   let exp = "TRUE";
 
-  // ช่วงวันที่: ใช้ DATE([เวลาเริ่ม]) ระหว่าง start..end (รวม boundary)
   if (s && e) {
     exp = `AND(${exp}, DATE([เวลาเริ่ม]) >= DATE("${s}"), DATE([เวลาเริ่ม]) <= DATE("${e}"))`;
   } else if (s && !e) {
@@ -482,7 +490,6 @@ async function applyFilter(){
   if (uf) statusList.push(`[สถานะของงานช่าง] <> "จบงาน"`);
   if (f)  statusList.push(`[สถานะของงานช่าง] = "จบงาน"`);
   if (statusList.length === 1) exp = `AND(${exp}, ${statusList[0]})`;
-  // ถ้าไม่ติ๊กเลย จะได้ TRUE (แสดงทั้งหมด) / ถ้าติ๊กทั้งคู่ก็ไม่ต้องเพิ่มเงื่อนไข
 
   await loadAll(exp);
 }
@@ -513,7 +520,7 @@ document.getElementById("tabAddonBtn").onclick = ()=>{
   document.getElementById("tabEditBtn").classList.add("tab-inactive");
 };
 
-/* ===== ROW OPENERS (for inline buttons) ===== */
+/* ===== ROW OPENERS ===== */
 window.openEdit = openEdit;
 window.openAddon = openAddon;
 
@@ -522,4 +529,3 @@ loadAll("TRUE");
 </script>
 </body>
 </html>
-
