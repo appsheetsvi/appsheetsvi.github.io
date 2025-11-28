@@ -252,7 +252,7 @@ td.request-number:hover { color:#2563eb; }
     <button onclick="resetSearch()">รีเซ็ต</button>
   </div>
 </div>
-
+<div id="resultSummary" class="mb-1 text-sm font-semibold text-gray-700"></div>
 <div class="table-container">
   <table id="dataTable" style="display:none;">
     <thead>
@@ -614,20 +614,27 @@ function renderTable(){
 
   });
 
-  rows.sort((a,b)=>b.startDate-a.startDate);
+    rows.sort((a,b)=>b.startDate-a.startDate);
 
-  if(rows.length>0){
-    table.style.display="table";
-    noData.style.display="none";
-    tbody.innerHTML = rows.map(r=>r.rowHtml).join("");
+  const totalRows = rows.length;
+  const summaryEl = document.getElementById("resultSummary");
+
+  if(totalRows > 0){
+    table.style.display = "table";
+    noData.style.display = "none";
+    tbody.innerHTML = rows.map(r => r.rowHtml).join("");
+    // แสดงจำนวนรายการด้านบนตาราง
+    summaryEl.textContent = `ผลการค้นหา: ${totalRows} รายการ`;
   }else{
-    table.style.display="none";
-    noData.style.display="block";
+    table.style.display = "none";
+    noData.style.display = "block";
+    summaryEl.textContent = `ผลการค้นหา: 0 รายการ`;
   }
 
   // อัปเดตกกราฟด้วยข้อมูลที่กรองแล้ว
   updateCharts(filteredForChart);
 }
+
 
 function showHistory(requestNumber){
   const modal = document.getElementById("historyModal");
@@ -835,4 +842,5 @@ window.addEventListener("DOMContentLoaded", () => {
 </script>
 </body>
 </html>
+
 
