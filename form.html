@@ -249,29 +249,67 @@ function createMachineRow(){
 
   // Logic คัดลอกข้อมูลระหว่างช่าง
   techContainer.querySelectorAll('input[type="checkbox"][name^="autoCopy_"]').forEach(cb=>{
-    cb.addEventListener("change", ()=>{
-      if(!cb.checked) return;
-      const code = cb.name.replace("autoCopy_","");
-      const sourceDiv = techContainer.querySelector(`input[value="${code}"]`).closest(".tech-checkbox");
-      const data = {
-        comment: sourceDiv.querySelector(`textarea[name="comment_${code}"]`).value,
-        start: sourceDiv.querySelector(`input[name="start_${code}"]`).value,
-        end: sourceDiv.querySelector(`input[name="end_${code}"]`).value,
-        status: [...sourceDiv.querySelectorAll(`input[name="status_${code}"]:checked`)].map(c=>c.value)
-      };
-      techContainer.querySelectorAll(".tech-checkbox").forEach(tc=>{
-        const empCode = tc.querySelector('input[name="ช่างผู้รับผิดชอบ"]').value;
-        if(empCode!==code){
-          tc.querySelector(`textarea[name="comment_${empCode}"]`).value = data.comment;
-          tc.querySelector(`input[name="start_${empCode}"]`).value = data.start;
-          tc.querySelector(`input[name="end_${empCode}"]`).value = data.end;
-          tc.querySelectorAll(`input[name="status_${empCode}"]`).forEach(cbx=>{
-            cbx.checked = data.status.includes(cbx.value);
-          });
-        }
-      });
+  cb.addEventListener("change", ()=>{
+    if(!cb.checked) return;
+    const code = cb.name.replace("autoCopy_","");
+    const sourceDiv = techContainer.querySelector(`input[value="${code}"]`).closest(".tech-checkbox");
+    const data = {
+      comment: sourceDiv.querySelector(`textarea[name="comment_${code}"]`).value,
+      start: sourceDiv.querySelector(`input[name="start_${code}"]`).value,
+      end: sourceDiv.querySelector(`input[name="end_${code}"]`).value,
+      status: [...sourceDiv.querySelectorAll(`input[name="status_${code}"]:checked`)].map(c=>c.value)
+    };
+    techContainer.querySelectorAll(".tech-checkbox").forEach(tc=>{
+      const empCode = tc.querySelector('input[name="ช่างผู้รับผิดชอบ"]').value;
+      if(empCode!==code){
+        tc.querySelector(`textarea[name="comment_${empCode}"]`).value = data.comment;
+        tc.querySelector(`input[name="start_${empCode}"]`).value = data.start;
+        tc.querySelector(`input[name="end_${empCode}"]`).value = data.end;
+        tc.querySelectorAll(`input[name="status_${empCode}"]`).forEach(cbx=>{
+          cbx.checked = data.status.includes(cbx.value);
+        });
+      }
     });
   });
+});
+function copyFirstTechTimeInMachine(machine){
+  const techs = machine.querySelectorAll(".tech-checkbox");
+  if(techs.length === 0) return;
+
+  const firstTc = techs[0];
+
+  // ถ้ายังไม่มีเวลา ไม่ต้อง copy
+  const startInput = firstTc.querySelector('input[name^="start_"]');
+  const endInput = firstTc.querySelector('input[name^="end_"]');
+  if(!startInput.value || !endInput.value) return;
+
+  const startVal = startInput.value;
+  const endVal = endInput.value;
+
+  techs.forEach(tc=>{
+    if(tc === firstTc) return;
+    const empCode = tc.querySelector('input[name="ช่างผู้รับผิดชอบ"]').value;
+    tc.querySelector(`input[name="start_${empCode}"]`).value = startVal;
+    tc.querySelector(`input[name="end_${empCode}"]`).value = endVal;
+  });
+}
+
+
+function copyFirstTechTimeInMachine(machine){
+  const techs = machine.querySelectorAll(".tech-checkbox");
+  if(techs.length === 0) return;
+
+  const firstTc = techs[0];
+  const startVal = firstTc.querySelector('input[name^="start_"]').value;
+  const endVal = firstTc.querySelector('input[name^="end_"]').value;
+
+  techs.forEach(tc=>{
+    if(tc === firstTc) return;
+    const empCode = tc.querySelector('input[name="ช่างผู้รับผิดชอบ"]').value;
+    tc.querySelector(`input[name="start_${empCode}"]`).value = startVal;
+    tc.querySelector(`input[name="end_${empCode}"]`).value = endVal;
+  });
+}
 
   // Autocomplete รายชื่อเครื่อง
   const searchInput = div.querySelector(".machineSearch");
@@ -302,6 +340,46 @@ function createMachineRow(){
   return div;
 }
 
+// ----- คัดลอกเวลาและ Checkbox จากเครื่องแรกไปทุกเครื่อง ----- //
+function copyFirstMachineTechToAllMachines(){
+  const machines = document.querySelectorAll(".machine-container");
+  if(machines.length < 2) return;
+
+  const firstMachine = machines[0];
+  const firstTechs = firstMachine.querySelectorAll(".tech-checkbox");
+
+  machines.forEach((machine, idx) => {
+    if(idx === 0) return; // skip เครื่องแรก
+    const techs = machine.querySelectorAll(".tech-checkbox");
+    techs.forEach(tc => {
+      const empCode = tc.querySelector('input[name="ช่างผู้รับผิดชอบ"]').value;
+      const firstTc = Array.from(firstTechs).find(f => 
+        f.querySelector('input[name="ช่างผู้รับผิดชอบ"]').value === empCode
+      );
+      if(firstTc){
+        // คัดลอก checkbox
+        tc.querySelector('input[name="ช่างผู้รับผิดชอบ"]').checked =
+          firstTc.querySelector('input[name="ช่างผู้รับผิดชอบ"]').checked;
+        // คัดลอก start/end ถ้ามีกรอก
+        const startVal = firstTc.querySelector(`input[name="start_${empCode}"]`).value;
+        const endVal = firstTc.querySelector(`input[name="end_${empCode}"]`).value;
+        if(startVal) tc.querySelector(`input[name="start_${empCode}"]`).value = startVal;
+        if(endVal) tc.querySelector(`input[name="end_${empCode}"]`).value = endVal;
+      }
+    });
+  });
+}
+
+// เรียกใช้เมื่อมีการเปลี่ยนค่าในเครื่องแรก
+document.addEventListener("change", e => {
+  const machines = document.querySelectorAll(".machine-container");
+  if(machines.length === 0) return;
+  if(e.target.closest(".machine-container") === machines[0]){
+    copyFirstMachineTechToAllMachines();
+  }
+});
+
+
 // ------- Department search -------
 $("deptSearch").addEventListener("input", e=>{
   const val=e.target.value.toLowerCase();
@@ -327,6 +405,34 @@ $("deptSearch").addEventListener("input", e=>{
     });
   $("deptList").classList.remove("hidden");
 });
+
+function copyFirstMachineTechToAllMachines(){
+  const machines = document.querySelectorAll(".machine-container");
+  if(machines.length < 2) return;
+
+  const firstMachine = machines[0];
+  const firstTechs = firstMachine.querySelectorAll(".tech-checkbox");
+
+  machines.forEach((machine, idx) => {
+    if(idx === 0) return; // skip เครื่องแรก
+
+    const techs = machine.querySelectorAll(".tech-checkbox");
+    techs.forEach(tc => {
+      const empCode = tc.querySelector('input[name="ช่างผู้รับผิดชอบ"]').value;
+      const firstTc = Array.from(firstTechs).find(f => 
+        f.querySelector('input[name="ช่างผู้รับผิดชอบ"]').value === empCode
+      );
+      if(firstTc){
+        tc.querySelector('input[name="ช่างผู้รับผิดชอบ"]').checked =
+          firstTc.querySelector('input[name="ช่างผู้รับผิดชอบ"]').checked;
+        tc.querySelector(`input[name="start_${empCode}"]`).value =
+          firstTc.querySelector(`input[name="start_${empCode}"]`).value;
+        tc.querySelector(`input[name="end_${empCode}"]`).value =
+          firstTc.querySelector(`input[name="end_${empCode}"]`).value;
+      }
+    });
+  });
+}
 
 // ------- PM Group search -------
 $("pmGroupSearch").addEventListener("input", ()=>{
@@ -391,7 +497,8 @@ $("pmGroupSearch").addEventListener("input", ()=>{
           });
 
           $("machinesContainer").appendChild(row);
-        });
+          
+        });        
       };
       ul.appendChild(li);
     });
