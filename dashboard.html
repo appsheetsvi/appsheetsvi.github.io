@@ -187,6 +187,22 @@ td.request-number:hover { color:#2563eb; }
   word-wrap: break-word;
   overflow: hidden; 
 }
+.chart-wrapper {
+  display: flex;
+  justify-content: flex-start; /* เปลี่ยนจาก center -> flex-start */
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.chart-box {
+  width: 100px;  /* เล็กลง */
+  height: 100px; /* เล็กลง */
+  padding:0.5rem;
+  background:transparent;
+  border-radius:8px;
+  box-shadow:none;
+}
 
 </style>
 </head>
@@ -842,5 +858,6 @@ window.addEventListener("DOMContentLoaded", () => {
 </script>
 </body>
 </html>
+
 
 
