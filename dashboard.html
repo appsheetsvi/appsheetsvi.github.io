@@ -203,6 +203,26 @@ td.request-number:hover { color:#2563eb; }
   border-radius:8px;
   box-shadow:none;
 }
+.chart-wrapper {
+  display: flex;
+  justify-content: flex-start;
+  flex-wrap: nowrap;       /* ถ้าต้องการให้ 2 อันอยู่แถวเดียว */
+  gap: 4rem;               /* ← ปรับตรงนี้!  เพิ่มช่องว่าง */
+  margin-bottom: 0.5rem;
+}
+
+
+/* ขยายคอลัมน์ ช่างผู้ทำ */
+#dataTable th[data-label="ช่างผู้ทำ"],
+#dataTable td[data-label="ช่างผู้ทำ"] {
+    min-width: 60px;      /* กำหนดความกว้างขั้นต่ำ */
+    width: 50px;           /* กำหนดความกว้างที่ต้องการ */
+    font-size: 0.70rem;     /* ปรับขนาดตัวอักษร */
+    white-space: nowrap;    /* ไม่ตัดบรรทัด */
+    overflow: visible;      /* ให้ข้อความแสดงเต็ม */
+    text-overflow: unset;   /* ไม่ใส่ ... */
+}
+
 
 
 </style>
@@ -855,6 +875,25 @@ window.addEventListener("DOMContentLoaded", () => {
   const oneDayAgo = new Date(today.getTime() - 1*24*60*60*1000);
   document.getElementById("searchDateFrom").value = oneDayAgo.toISOString().split("T")[0];
   document.getElementById("searchDateTo").value = today.toISOString().split("T")[0];
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+    // เลือกทุกช่องคอลัมน์ "ช่างผู้ทำ"
+    const cells = document.querySelectorAll('#dataTable td[data-label="ช่างผู้ทำ"]');
+
+    cells.forEach(cell => {
+        let raw = cell.textContent.trim(); // ดึงข้อความ
+        if (!raw) return; // ถ้าว่างข้ามไป
+
+        // แยกชื่อด้วยเครื่องหมายจุลภาค
+        let names = raw.split(/[,，]+/).map(n => n.trim()).filter(n => n !== "");
+
+        if (names.length > 1) {
+            const firstPart = names.slice(0, -1).join(", "); // ชื่อก่อนชื่อสุดท้าย
+            const lastName = names[names.length - 1];        // ชื่อสุดท้าย
+            cell.innerHTML = `${firstPart}<br>${lastName}`;  // ใส่ <br> ให้ชื่อสุดท้ายลงล่าง
+        }
+    });
 });
 </script>
 </body>
