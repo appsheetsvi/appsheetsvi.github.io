@@ -29,26 +29,55 @@
     <button id="tabAddonBtn" class="tab tab-inactive ml-2">บันทึกใบแจ้งซ่อมต่อ</button>
   </div>
 </div>
+    <!ส่วนรายงานหัวตาราง--->
+<!-- REPORT FILTER -->
+<div class="max-w-7xl mx-auto bg-white p-3 rounded-lg shadow mb-3">
+  <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
 
-<div id="globalFilter" class="max-w-7xl mx-auto bg-white p-3 rounded-lg shadow mb-3 grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
-  <div class="md:col-span-3">
-    <label class="font-semibold">จากวันที่</label>
-    <input type="date" id="filterStart" class="w-full border border-blue-400 rounded px-2 py-1" />
-  </div>
-  <div class="md:col-span-3">
-    <label class="font-semibold">ถึงวันที่</label>
-    <input type="date" id="filterEnd" class="w-full border border-blue-400 rounded px-2 py-1" />
-  </div>
-  <div class="md:col-span-3">
-    <label class="font-semibold">หน่วยงาน</label>
-    <input list="deptList" id="filterDept" class="w-full border border-blue-400 rounded px-2 py-1" placeholder="พิมพ์เพื่อค้นหา"/>
-    <datalist id="deptList"></datalist>
-  </div>
-  <div class="md:col-span-3 flex gap-2 items-center">
-    <button id="filterBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">ค้นหา</button>
-    <button id="resetBtn" class="bg-gray-200 px-3 py-2 rounded hover:bg-gray-300">ล้างเงื่อนไข</button>
+    <div class="md:col-span-3">
+      <label class="font-semibold text-sm">จากวันที่</label>
+      <input type="date" id="filterStart"
+        class="w-full border border-blue-400 rounded px-2 py-1">
+    </div>
+
+    <div class="md:col-span-3">
+      <label class="font-semibold text-sm">ถึงวันที่</label>
+      <input type="date" id="filterEnd"
+        class="w-full border border-blue-400 rounded px-2 py-1">
+    </div>
+
+    <div class="md:col-span-3">
+      <label class="font-semibold text-sm">หน่วยงาน</label>
+      <select id="filterDept"
+        class="w-full border border-blue-400 rounded px-2 py-1">
+        <option value="">-- ทุกแผนก --</option>
+      </select>
+    </div>
+
+    <div class="md:col-span-3">
+      <label class="font-semibold text-sm">สถานะ</label>
+      <select id="filterStatus"
+        class="w-full border border-blue-400 rounded px-2 py-1">
+        <option value="">-- ทั้งหมด --</option>
+        <option value="ไม่จบงาน">ไม่จบงาน</option>
+        <option value="จบงาน">จบงาน</option>
+      </select>
+    </div>
+
+    <div class="md:col-span-12 flex gap-2 justify-end mt-2">
+      <button onclick="applyFilter()"
+        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+        🔍 ค้นหา
+      </button>
+      <button onclick="resetFilter()"
+        class="bg-gray-200 px-4 py-2 rounded hover:bg-gray-300">
+        ล้างเงื่อนไข
+      </button>
+    </div>
+
   </div>
 </div>
+
 
 <!-- ตารางงานซ่อม -->
 <div class="max-w-7xl mx-auto overflow-x-auto" id="cardsContainer">กำลังโหลดข้อมูล...</div>
@@ -191,11 +220,41 @@ function formatDurationMsToAppsheet(msDiff) {
   return `${hours}:${pad2(minutes)}:${pad2(seconds)}`;
 }
 
+   function buildDeptDropdown() {
+  const deptSelect = document.getElementById("filterDept");
+  const selectedValue = deptSelect.value; // จำค่าที่เลือกไว้
+
+  deptSelect.innerHTML = `<option value="">-- ทุกหน่วยงาน --</option>`;
+
+  deptData.forEach(d => {
+    if (d.DeptCode && d.DeptNameEng) {
+      const opt = document.createElement("option");
+      opt.value = d.DeptCode;          // ค่าไว้กรอง
+      opt.textContent = d.DeptNameEng; // ค่าไว้แสดง
+      deptSelect.appendChild(opt);
+    }
+  });
+
+  // คืนค่าที่เลือกไว้
+  deptSelect.value = selectedValue;
+}
+
+  
 /* ===== LOAD DATA ===== */
 async function loadAll(expression = "TRUE") {
   const container = document.getElementById("cardsContainer");
-  container.textContent = "กำลังโหลดข้อมูล...";
-  try {
+ // ✅ Loader สวย ๆ
+  container.innerHTML = `
+    <div class="flex flex-col items-center justify-center py-20 text-gray-500">
+      <svg class="animate-spin h-8 w-8 text-blue-600 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+      </svg>
+      <span>กำลังโหลดข้อมูล...</span>
+    </div>
+  `;
+
+ try {
     const [tech, parts, emp, dept, machine] = await Promise.all([
       api("RepairTechnicians", { Action: "Find", Expression: expression }),
       api("RepairParts", { Action: "Find", Expression: "TRUE" }),
@@ -203,27 +262,18 @@ async function loadAll(expression = "TRUE") {
       api("Department", { Action: "Find", Expression: "TRUE" }),
       api("MachineMaster", { Action: "Find", Expression: "TRUE" }),
     ]);
+
     techniciansData = Array.isArray(tech) ? tech : [];
     partsData = Array.isArray(parts) ? parts : [];
     empData = Array.isArray(emp) ? emp : [];
     deptData = Array.isArray(dept) ? dept : [];
     machineData = Array.isArray(machine) ? machine : [];
 
-    // datalist หน่วยงาน/เครื่อง
-    const deptList = document.getElementById("deptList");
-    deptList.innerHTML = unique(deptData.map(d => d.DeptNameEngEngEngEng).filter(Boolean))
-      .map(x => `<option value="${x}">`).join("");
-
-    const machineList = document.getElementById("machineList");
-
- machineList.innerHTML = machineData.map(m =>
-  `<option value="${m.MachineCode}">${m["รายชื่อเครื่องจักร"]||m.MachineCode}</option>`).join("");
-
-
+    buildDeptDropdown();
     renderTable();
   } catch (e) {
     console.error(e);
-    container.textContent = "โหลดข้อมูลผิดพลาด";
+    container.innerHTML = `<p class="text-center text-red-500 py-10">โหลดข้อมูลผิดพลาด</p>`;
   }
 }
 
@@ -277,6 +327,7 @@ function renderTable() {
         <th class="px-2 py-1 border whitespace-nowrap">รายชื่อเครื่องจักร</th>
         <th class="px-2 py-1 border whitespace-nowrap">อาการเสีย</th>
         <th class="px-2 py-1 border whitespace-nowrap">ความคิดเห็น</th>
+        <th class="pz-2 py-1 border whitespace-nowrap">สถานงาน</th>
         <th class="px-2 py-1 border whitespace-nowrap">จัดการ</th>
       </tr>
     </thead>
@@ -313,26 +364,36 @@ function renderTable() {
 
     // วันที่จากเวลาเริ่ม
     const dateDisplay = g.startTime ? fmtDateTimeCell(g.startTime).split(" ")[0] : "-";
+          // สถานะ
+const statusDisplay = g.rows[0]["สถานะของงานช่าง"] || "-";
 
-    html += `
-      <tr class="border-b">
-        <td class="px-2 py-1">${dateDisplay}</td>
-        <td class="px-2 py-1">${empNames}</td>
-        <td class="px-2 py-1">${g.reqNo}</td>
-        <td class="px-2 py-1">${deptFull}</td>
-        <td class="px-2 py-1">${machineName}</td>
-        <td class="px-2 py-1">${g.problem || "-"}</td>
-        <td class="px-2 py-1">${g.comment || "-"}</td>
-        <td class="px-2 py-1">
-          <div class="flex gap-1">
-            <!-- เวลา Edit / ต่อใบแจ้ง ให้เลือกจากแถวแรกของใบแจ้งนี้ -->
-            <button class="bg-blue-600 text-white px-2 py-1 rounded"
-                    onclick="openEdit('${g.rows[0].ID}')">Edit</button>
-            <button class="bg-green-600 text-white px-2 py-1 rounded"
-                    onclick="openAddon('${g.rows[0].ID}')">ต่อใบแจ้ง</button>
-          </div>
-        </td>
-      </tr>`;
+// กำหนดสีตามสถานะ
+let statusClass = "";
+if(statusDisplay === "จบงาน") statusClass = "bg-green-200 text-green-800";
+else if(statusDisplay === "ไม่จบงาน") statusClass = "bg-red-200 text-red-800";
+
+html += `
+  <tr class="border-b">
+    <td class="px-2 py-1">${dateDisplay}</td>
+    <td class="px-2 py-1">${empNames}</td>
+    <td class="px-2 py-1">${g.reqNo}</td>
+    <td class="px-2 py-1">${deptFull}</td>
+    <td class="px-2 py-1">${machineName}</td>
+    <td class="px-2 py-1">${g.problem || "-"}</td>
+    <td class="px-2 py-1">${g.comment || "-"}</td>
+    <td class="px-2 py-1 w-32 break-words">
+      <span class="px-2 py-0.5 rounded ${statusClass}">${statusDisplay}</span>
+    </td>
+    <td class="px-2 py-1">
+      <div class="flex gap-1">
+        <button class="bg-blue-600 text-white px-2 py-1 rounded"
+                onclick="openEdit('${g.rows[0].ID}')">Edit</button>
+        <button class="bg-green-600 text-white px-2 py-1 rounded"
+                onclick="openAddon('${g.rows[0].ID}')">ต่อใบแจ้ง</button>
+      </div>
+    </td>
+  </tr>`;
+
   });
 
   html += `</tbody></table>`;
@@ -578,67 +639,35 @@ function parseThaiDate(input) {
   const day = parts[2];
   return `${year}-${month}-${day}`;
 }
-async function applyFilter() {
-  const s = document.getElementById("filterStart").value; // yyyy-mm-dd
-  const e = document.getElementById("filterEnd").value;   // yyyy-mm-dd
-  const dept = document.getElementById("filterDept").value?.trim();
-
-  let exp = "TRUE";
-
-  // เงื่อนไขช่วงวันที่
-  if (s && e) {
-    exp = `AND(${exp}, [เวลาเริ่ม] >= "${s}T00:00:00", [เวลาเริ่ม] <= "${e}T23:59:59")`;
-  } else if (s && !e) {
-    exp = `AND(${exp}, [เวลาเริ่ม] >= "${s}T00:00:00")`;
-  } else if (!s && e) {
-    exp = `AND(${exp}, [เวลาเริ่ม] <= "${e}T23:59:59")`;
-  }
-
-  // เงื่อนไขหน่วยงาน
-  if (dept) {
-    exp = `AND(${exp}, CONTAINS([หน่วยงาน], "${dept}"))`;
-  }
-
-  await loadAll(exp); // เรียกโหลดข้อมูลตาม Expression
-}
-
-
-
-
-
-document.getElementById("filterBtn").onclick = applyFilter;
-document.getElementById("resetBtn").onclick = async ()=>{
-  document.getElementById("filterStart").value = "";
-  document.getElementById("filterEnd").value = "";
-  document.getElementById("filterDept").value = "";
-  document.getElementById("statusUnfinished").checked = true;
-  document.getElementById("statusFinished").checked = false;
+// ==================== FILTER ====================
+async function applyFilter(){
+  const s=document.getElementById("filterStart").value;
+  const e=document.getElementById("filterEnd").value;
+  const dept=document.getElementById("filterDept").value?.trim();
+  const status=document.getElementById("filterStatus").value?.trim();
   await loadAll("TRUE");
-};
+  let filtered=techniciansData;
+  if(s) filtered=filtered.filter(r=>r["เวลาเริ่ม"] && new Date(r["เวลาเริ่ม"])>=new Date(s+"T00:00:00"));
+  if(e) filtered=filtered.filter(r=>r["เวลาเริ่ม"] && new Date(r["เวลาเริ่ม"])<=new Date(e+"T23:59:59"));
+  if(dept) filtered=filtered.filter(r=>r["หน่วยงาน"]===dept);
+  if(status) filtered=filtered.filter(r=>r["สถานะของงานช่าง"]===status);
+  const old=techniciansData; techniciansData=filtered; renderTable(); techniciansData=old;
+}
+function resetFilter(){document.getElementById("filterStart").value="";document.getElementById("filterEnd").value="";document.getElementById("filterDept").value="";document.getElementById("filterStatus").value=""; applyFilter();}
 
-/* ===== TABS ===== */
-document.getElementById("tabEditBtn").onclick = ()=>{
-  mode = "edit";
-  document.getElementById("tabEditBtn").classList.add("tab-active");
-  document.getElementById("tabEditBtn").classList.remove("tab-inactive");
-  document.getElementById("tabAddonBtn").classList.remove("tab-active");
-  document.getElementById("tabAddonBtn").classList.add("tab-inactive");
-};
+// ==================== TABS ====================
+document.getElementById("tabEditBtn").onclick=()=>{mode="edit"; document.getElementById("tabEditBtn").classList.add("tab-active"); document.getElementById("tabAddonBtn").classList.remove("tab-active");};
+document.getElementById("tabAddonBtn").onclick=()=>{mode="addon"; document.getElementById("tabAddonBtn").classList.add("tab-active"); document.getElementById("tabEditBtn").classList.remove("tab-active");};
 
-document.getElementById("tabAddonBtn").onclick = ()=>{
-  mode = "addon";
-  document.getElementById("tabAddonBtn").classList.add("tab-active");
-  document.getElementById("tabAddonBtn").classList.remove("tab-inactive");
-  document.getElementById("tabEditBtn").classList.remove("tab-active");
-  document.getElementById("tabEditBtn").classList.add("tab-inactive");
-};
+// ==================== INIT ====================
+document.addEventListener("DOMContentLoaded",async()=>{
+  const today=new Date(); const start=new Date(today); start.setDate(today.getDate()-2);
+  document.getElementById("filterStart").value=start.toISOString().slice(0,10);
+  document.getElementById("filterEnd").value=today.toISOString().slice(0,10);
 
-/* ===== GLOBAL HOOKS FOR BUTTONS ===== */
-window.openEdit = openEdit;
-window.openAddon = openAddon;
-
-/* ===== INIT ===== */
-loadAll("TRUE");
+  // ✅ โหลด + กรองทันที
+  await applyFilter();
+});
 </script>
 </body>
 </html>
