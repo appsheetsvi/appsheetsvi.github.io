@@ -104,6 +104,18 @@ td.request-number:hover { color:#2563eb; }
     width:40%;
     flex-shrink:0;
   }
+  
+ /* ✅ แก้เฉพาะ ใบแจ้งซ่อม + แผนก */
+  #dataTable td[data-label="ใบแจ้งซ่อม"],
+  #dataTable td[data-label="แผนก"]{
+    justify-content:flex-start;   /* สำคัญ */
+    gap:0.4rem;
+  }
+
+  #dataTable td[data-label="ใบแจ้งซ่อม"]::before,
+  #dataTable td[data-label="แผนก"]::before{
+    width:auto;
+  }
 }
 
 /* Card สำหรับ History Modal บนมือถือ */
@@ -898,5 +910,6 @@ document.addEventListener("DOMContentLoaded", function () {
 </script>
 </body>
 </html>
+
 
 
