@@ -69,53 +69,116 @@ td.request-number:hover { color:#2563eb; }
 #historyModal thead { background:#2563eb; color:white; position:sticky; top:0; z-index:5; }
 
 /* Responsive: แสดงตารางแบบ card บนมือถือ */
-/* สำหรับหน้าจอเล็ก (มือถือ) เท่านั้น */
-@media (max-width:768px){
-  /* ตารางหลักเปลี่ยนเป็น Card */
-  #dataTable, #dataTable thead, #dataTable tbody, #dataTable th, #dataTable td, #dataTable tr {
-    display:block;
-    width:100%;
-  }
-  #dataTable thead { display:none; }
+@media (max-width:768px) {
+    /* --- 1. ปรับแถบค้นหา (Filter) ให้สวยงามแบบแอปมือถือ --- */
+    .search-bar { 
+        display: flex !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+        background: #ffffff !important;
+        padding: 12px !important;
+        border-radius: 16px !important; /* ขอบมนสวยงาม */
+        box-shadow: 0 4px 15px rgba(0,0,0,0.08) !important;
+        margin-bottom: 15px !important;
+        border: 1px solid #eef2f6 !important;
+    }
 
-  #dataTable tbody tr {
-    background:#ffffff;
-    margin-bottom:1rem;
-    border-radius:12px;
-    padding:0.8rem 1rem;
-    box-shadow:0 2px 6px rgba(0,0,0,0.1);
-    word-wrap:break-word;
-  }
+    /* จัดแต่ละช่องให้เหมือนแคปซูลข้อมูล */
+    .search-bar > div { 
+        display: flex !important;
+        flex-direction: row !important; 
+        align-items: center !important;
+        flex: 1 1 calc(50% - 8px) !important; /* เรียงคู่กัน 2 ช่องต่อแถว */
+        background: #f8fafc !important;
+        padding: 4px 8px !important;
+        border-radius: 10px !important;
+        border: 1px solid #cbd5e1 !important;
+        min-width: 140px !important;
+    }
 
-  #dataTable tbody td {
-    border:none;
-    display:flex;
-    justify-content:space-between;
-    padding:0.3rem 0;
-    flex-wrap:wrap;
-    font-size:0.85rem;
-    word-break: break-word;
-  }
+    /* ปรับชื่อหัวข้อในช่อง Filter */
+    .search-bar p { 
+        font-size: 0.65rem !important; 
+        margin: 0 6px 0 0 !important; 
+        color: #64748b !important;
+        font-weight: bold !important;
+        white-space: nowrap !important;
+    }
 
-  #dataTable tbody td::before {
-    content: attr(data-label);
-    font-weight:600;
-    color:#2563eb;
-    width:40%;
-    flex-shrink:0;
-  }
-  
- /* ✅ แก้เฉพาะ ใบแจ้งซ่อม + แผนก */
-  #dataTable td[data-label="ใบแจ้งซ่อม"],
-  #dataTable td[data-label="แผนก"]{
-    justify-content:flex-start;   /* สำคัญ */
-    gap:0.4rem;
-  }
+    /* ปรับช่อง Input/Select ให้กลืนไปกับพื้นหลัง */
+    .search-bar select, .search-bar input { 
+        font-size: 0.75rem !important; 
+        padding: 2px !important; 
+        border: none !important; 
+        background: transparent !important;
+        width: 100% !important;
+        color: #1e293b !important;
+        outline: none !important;
+        height: 28px !important;
+    }
 
-  #dataTable td[data-label="ใบแจ้งซ่อม"]::before,
-  #dataTable td[data-label="แผนก"]::before{
-    width:auto;
-  }
+    /* ส่วนของ Checkbox ให้แสดงแยกแถว */
+    .search-bar label { 
+        flex: 1 1 100% !important; 
+        font-size: 0.75rem !important;
+        padding: 5px !important;
+        color: #475569 !important;
+        display: flex !important;
+        align-items: center !important;
+        background: transparent !important;
+        border: none !important;
+    }
+
+    /* ปุ่ม ค้นหา และ รีเซ็ต */
+    .search-bar div:last-child {
+        flex: 1 1 100% !important;
+        display: flex !important;
+        gap: 8px !important;
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+        margin-top: 5px !important;
+    }
+
+    .search-bar button { 
+        flex: 1 !important; 
+        height: 36px !important; 
+        border-radius: 10px !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.5px !important;
+        box-shadow: 0 4px 6px rgba(37, 99, 235, 0.1) !important;
+    }
+
+    /* --- 2. ปรับ Card ให้กระทัดรัด (Minimal Card) --- */
+    #dataTable thead { display: none !important; }
+    #dataTable, #dataTable tbody, #dataTable tr, #dataTable td { display: block !important; width: 100% !important; }
+
+    #dataTable tbody tr {
+        background: #ffffff !important;
+        margin-bottom: 8px !important;
+        border-radius: 12px !important;
+        padding: 10px !important;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important;
+        border-left: 5px solid #2563eb !important;
+    }
+
+    #dataTable td {
+        display: flex !important;
+        justify-content: flex-start !important;
+        padding: 3px 0 !important;
+        border: none !important;
+        border-bottom: 1px solid #f1f5f9 !important;
+        font-size: 0.8rem !important;
+    }
+
+    #dataTable td::before {
+        content: attr(data-label) " : ";
+        font-weight: bold !important;
+        color: #94a3b8 !important;
+        min-width: 80px !important;
+        font-size: 0.7rem !important;
+    }
 }
 
 /* Card สำหรับ History Modal บนมือถือ */
