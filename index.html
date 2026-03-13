@@ -218,8 +218,19 @@ id="pmAlertModal">
 
 </div>
 
-<div class="modal-body"
-id="pmListContainer"></div>
+<div class="modal-body">
+
+<input type="text"
+class="form-control mb-3"
+placeholder="🔍 ค้นหาเครื่อง..."
+id="searchPM"
+onkeyup="filterPM()">
+
+<div id="pmSummary" class="mb-3 fw-bold"></div>
+
+<div id="pmListContainer"></div>
+
+</div>
 
 <div class="modal-footer">
 
@@ -245,47 +256,31 @@ const appId="ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
 const apiKey="V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
 const apiBase=`https://api.appsheet.com/api/v2/apps/${appId}/tables/`;
 
-
-/* format วันที่ */
-
 function formatThaiDate(date){
-
 const d = String(date.getDate()).padStart(2,'0');
 const m = String(date.getMonth()+1).padStart(2,'0');
 const y = date.getFullYear()+543;
-
 return `${d}/${m}/${y}`;
-
 }
-
-
-/* โหลด table */
 
 async function fetchTable(table){
 
 const res = await fetch(`${apiBase}${table}/Action`,{
-
 method:"POST",
-
 headers:{
 "ApplicationAccessKey":apiKey,
 "Content-Type":"application/json"
 },
-
 body:JSON.stringify({
 Action:"Find",
 Properties:{},
 Rows:[]
 })
-
 });
 
 return await res.json();
 
 }
-
-
-/* ตรวจสอบ PM */
 
 async function checkPMAndRedirect(){
 
@@ -297,6 +292,8 @@ fetchTable("RepairTechnicians")
 ]);
 
 const alerts=[];
+let overdueCount=0;
+let warningCount=0;
 
 const today = new Date();
 today.setHours(0,0,0,0);
@@ -308,9 +305,6 @@ String(r.GroupCode) === String(g.GroupCode)
 );
 
 if(history.length===0) return;
-
-
-/* หา record ล่าสุด */
 
 let lastDate=null;
 
@@ -330,9 +324,6 @@ lastDate=d;
 
 if(!lastDate) return;
 
-
-/* คำนวณ PM */
-
 const pmDays=parseInt(g.PmTime1);
 const alertBefore=parseInt(g.AlertBefore);
 
@@ -346,9 +337,6 @@ const alertDate=new Date(dueDate);
 alertDate.setDate(alertDate.getDate()-alertBefore);
 alertDate.setHours(0,0,0,0);
 
-
-/* ตรวจสอบแจ้งเตือน */
-
 if(today>=alertDate){
 
 const diffDays=Math.ceil((dueDate-today)/(1000*60*60*24));
@@ -359,10 +347,12 @@ let text="เหลือ "+diffDays+" วัน";
 if(diffDays<0){
 status="overdue";
 text="เกิน "+Math.abs(diffDays)+" วัน";
+overdueCount++;
+}else{
+warningCount++;
 }
 
 alerts.push({
-
 name:g.GroupName,
 last:formatThaiDate(lastDate),
 due:formatThaiDate(dueDate),
@@ -370,7 +360,6 @@ pm:pmDays,
 alert:alertBefore,
 status:status,
 text:text
-
 });
 
 }
@@ -379,6 +368,17 @@ text:text
 
 
 if(alerts.length>0){
+
+alerts.sort((a,b)=>{
+if(a.status==="overdue" && b.status!=="overdue") return -1;
+if(a.status!=="overdue" && b.status==="overdue") return 1;
+return 0;
+});
+
+document.getElementById("pmSummary").innerHTML=
+`แจ้งเตือน PM ${alerts.length} เครื่อง | 
+<span style="color:#ff9800">เหลือ ${warningCount}</span> | 
+<span style="color:#e53935">เกิน ${overdueCount}</span>`;
 
 document.getElementById("pmListContainer").innerHTML=
 
@@ -435,8 +435,31 @@ window.location.href="Menu.html";
 
 }
 
+function filterPM(){
 
-/* LOGIN */
+const keyword=document
+.getElementById("searchPM")
+.value
+.toLowerCase();
+
+const cards=document.querySelectorAll(".pm-card");
+
+cards.forEach(card=>{
+
+const name=card
+.querySelector(".pm-name")
+.innerText
+.toLowerCase();
+
+if(name.includes(keyword)){
+card.style.display="block";
+}else{
+card.style.display="none";
+}
+
+});
+
+}
 
 document.getElementById("loginForm")
 .addEventListener("submit",async(e)=>{
