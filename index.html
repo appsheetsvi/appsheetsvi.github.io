@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="th">
 <head>
 
@@ -30,157 +30,98 @@ padding:20px;
 }
 
 .login-card{
-
 background:white;
-
 padding:40px;
-
 border-radius:22px;
-
 box-shadow:0 20px 40px rgba(0,0,0,0.15);
-
 max-width:420px;
-
 width:100%;
-
 }
 
 .login-title{
-
 font-weight:600;
-
 color:#0d6efd;
-
 }
 
 .form-control{
-
 border-radius:10px;
-
 padding:12px;
-
 font-size:15px;
-
 }
 
 .btn-primary{
-
 border-radius:10px;
-
 padding:12px;
-
 font-weight:500;
-
 }
 
 /* POPUP */
 
 .modal-dialog{
-
 max-width:800px;
-
 }
 
 .modal-content{
-
 border-radius:20px;
-
 border:0;
-
 box-shadow:0 20px 50px rgba(0,0,0,0.2);
-
 }
 
 .modal-header{
-
 font-size:20px;
-
 padding:18px 22px;
-
 }
 
 .modal-body{
-
 max-height:420px;
-
 overflow:auto;
-
 padding:22px;
-
 }
 
 /* PM CARD */
 
 .pm-card{
-
 background:white;
-
 border-radius:16px;
-
 padding:18px 20px;
-
 margin-bottom:14px;
-
 border-left:6px solid #ff9800;
-
 box-shadow:0 4px 12px rgba(0,0,0,0.08);
-
 }
 
 .pm-overdue{
-
 border-left:6px solid #e53935;
-
 background:#fff5f5;
-
 }
 
 .pm-warning{
-
 border-left:6px solid #ff9800;
-
 background:#fffaf2;
-
 }
 
 .pm-name{
-
 font-weight:600;
-
 font-size:16px;
-
 color:#0d6efd;
-
 margin-bottom:6px;
-
 }
 
 .pm-line{
-
 font-size:14px;
-
 margin-bottom:4px;
-
 }
 
 .pm-status{
-
 font-size:14px;
-
 font-weight:600;
-
 }
 
 .overdue{
-
 color:#e53935;
-
 }
 
 .warning{
-
 color:#ff9800;
-
 }
 
 /* MOBILE */
@@ -188,47 +129,30 @@ color:#ff9800;
 @media(max-width:768px){
 
 body{
-
 background:white;
-
 }
 
 .login-card{
-
 box-shadow:none;
-
 border-radius:0;
-
 height:100vh;
-
 display:flex;
-
 flex-direction:column;
-
 justify-content:center;
-
 }
 
 .modal-dialog{
-
 max-width:100%;
-
 margin:0;
-
 }
 
 .modal-content{
-
 height:100vh;
-
 border-radius:0;
-
 }
 
 .modal-body{
-
 max-height:none;
-
 }
 
 }
@@ -264,9 +188,7 @@ required>
 <button type="submit"
 id="loginBtn"
 class="btn btn-primary w-100">
-
 เข้าสู่ระบบ
-
 </button>
 
 </form>
@@ -303,9 +225,7 @@ id="pmListContainer"></div>
 
 <button class="btn btn-primary w-100"
 onclick="window.location.href='Menu.html'">
-
 รับทราบ
-
 </button>
 
 </div>
@@ -353,11 +273,9 @@ headers:{
 },
 
 body:JSON.stringify({
-
 Action:"Find",
 Properties:{},
 Rows:[]
-
 })
 
 });
@@ -374,16 +292,13 @@ async function checkPMAndRedirect(){
 try{
 
 const [groups,repairs] = await Promise.all([
-
 fetchTable("MachineGroup"),
 fetchTable("RepairTechnicians")
-
 ]);
 
 const alerts=[];
 
 const today = new Date();
-
 today.setHours(0,0,0,0);
 
 groups.forEach(g=>{
@@ -418,19 +333,17 @@ if(!lastDate) return;
 
 /* คำนวณ PM */
 
-const pmDays=parseInt(g.PmTime1)||0;
-const alertBefore=parseInt(g.AlertBefore)||0;
+const pmDays=parseInt(g.PmTime1);
+const alertBefore=parseInt(g.AlertBefore);
+
+if(!pmDays || !alertBefore) return;
 
 const dueDate=new Date(lastDate);
-
 dueDate.setDate(dueDate.getDate()+pmDays);
-
 dueDate.setHours(0,0,0,0);
 
 const alertDate=new Date(dueDate);
-
 alertDate.setDate(alertDate.getDate()-alertBefore);
-
 alertDate.setHours(0,0,0,0);
 
 
@@ -444,10 +357,8 @@ let status="warning";
 let text="เหลือ "+diffDays+" วัน";
 
 if(diffDays<0){
-
 status="overdue";
 text="เกิน "+Math.abs(diffDays)+" วัน";
-
 }
 
 alerts.push({
@@ -455,6 +366,8 @@ alerts.push({
 name:g.GroupName,
 last:formatThaiDate(lastDate),
 due:formatThaiDate(dueDate),
+pm:pmDays,
+alert:alertBefore,
 status:status,
 text:text
 
@@ -485,6 +398,14 @@ ${i.name}
 ⏰ ครบกำหนด : ${i.due}
 </div>
 
+<div class="pm-line">
+⚙ รอบ PM : ${i.pm} วัน
+</div>
+
+<div class="pm-line">
+🔔 แจ้งเตือนก่อน : ${i.alert} วัน
+</div>
+
 <div class="pm-status ${i.status}">
 ${i.status==="overdue"?"🔴":"🟠"} ${i.text}
 </div>
@@ -508,7 +429,6 @@ window.location.href="Menu.html";
 catch(e){
 
 console.log(e);
-
 window.location.href="Menu.html";
 
 }
@@ -519,7 +439,6 @@ window.location.href="Menu.html";
 /* LOGIN */
 
 document.getElementById("loginForm")
-
 .addEventListener("submit",async(e)=>{
 
 e.preventDefault();
@@ -530,10 +449,8 @@ const pass=document.getElementById("password").value.trim();
 const data=await fetchTable("Emp");
 
 const user=data.find(d=>
-
 String(d.EmpCode)===code &&
 String(d.Password)===pass
-
 );
 
 if(user){
