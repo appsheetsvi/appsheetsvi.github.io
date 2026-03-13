@@ -63,7 +63,17 @@ body { font-family:'Kanit', sans-serif; background:#f0f4ff; }
       <label class="font-semibold">PmTime (นาที)</label>
       <input type="number" id="gPmTime" min="0" placeholder="0" class="w-full border-2 border-blue-300 rounded px-2 py-1">
     </div>
+    <div class="mb-3">
+<label class="font-semibold">กำหนดรอบ PM</label>
+<input type="number" id="gPmTime1"
+class="w-full border rounded px-2 py-1">
+</div>
 
+<div class="mb-3">
+<label class="font-semibold">กำหนด แจ้งเตือนล่ว่งหน้า</label>
+<input type="number" id="gAlertBefore"
+class="w-full border rounded px-2 py-1">
+</div>
     <div class="mb-4 relative">
       <label class="font-semibold">เครื่องจักรในกลุ่ม</label>
       <input type="text" id="machineInput" placeholder="🔍 พิมพ์ชื่อเครื่องจักร..." class="w-full border-2 border-blue-300 rounded px-2 py-1">
@@ -95,6 +105,8 @@ body { font-family:'Kanit', sans-serif; background:#f0f4ff; }
         <th class="border px-2 py-1">วิเคราะห์สาเหตุ</th>
         <th class="border px-2 py-1">การแก้ไขความคิดเห็น</th>
         <th class="border px-2 py-1">PmTime</th>
+        <th>PmTime</th>
+        <th>AlertBefore</th>
         <th class="border px-2 py-1">Action</th>
       </tr>
     </thead>
@@ -212,6 +224,8 @@ document.getElementById("searchGroupPM").addEventListener("input",()=>{
       document.getElementById("gCauseAnalysis").value = g["วิเคราะห์สาเหตุ"] || "";
       document.getElementById("gComment").value = g["การแก้ไขความคิดเห็น"] || "";
       document.getElementById("gPmTime").value = g["PmTime"] || 0;
+      document.getElementById("gPmTime1").value = g["PmTime1"] || "";
+      document.getElementById("gAlertBefore").value = g["AlertBefore"] || "";
       selectedMachines = machinesData.filter(m=>m.GroupCode===g.GroupCode).map(m=>m["รายชื่อเครื่องจักร1"]);
       renderSelectedMachines();
       editRow = g;
@@ -242,6 +256,8 @@ function renderGroupTable(){
       <td class="border px-2 py-1">${g["วิเคราะห์สาเหตุ"] || ""}</td>
       <td class="border px-2 py-1">${g["การแก้ไขความคิดเห็น"] || ""}</td>
       <td class="border px-2 py-1">${g["PmTime"] || 0}</td>
+      <td class="border px-2 py-1">${g["PmTime1"] || 0}</td>
+      <td class="border px-2 py-1">${g["AlertBefore"] || 0}</td>
       <td class="border px-2 py-1">
         <button class="bg-green-600 text-white px-2 py-1 rounded editBtn">แก้ไข</button>
       </td>`;
@@ -253,6 +269,8 @@ function renderGroupTable(){
       document.getElementById("gCauseAnalysis").value = g["วิเคราะห์สาเหตุ"] || "";
       document.getElementById("gComment").value = g["การแก้ไขความคิดเห็น"] || "";
       document.getElementById("gPmTime").value = g["PmTime"] || 0;
+      document.getElementById("gPmTime1").value = g["PmTime1"] || "";
+      document.getElementById("gAlertBefore").value = g["AlertBefore"] || "";
       selectedMachines = machinesData.filter(m=>m.GroupCode===g.GroupCode).map(m=>m["รายชื่อเครื่องจักร1"]);
       renderSelectedMachines();
       editRow = g;
@@ -271,6 +289,8 @@ function resetForm(){
   document.getElementById("gCauseAnalysis").value="";
   document.getElementById("gComment").value="";
   document.getElementById("gPmTime").value="";
+  document.getElementById("gPmTime1").value="";
+  document.getElementById("gAlertBefore").value="";
   selectedMachines=[];
   renderSelectedMachines();
   editRow=null;
@@ -297,6 +317,8 @@ async function addOrEditMachineGroup(isEdit=false){
   const cause = document.getElementById("gCauseAnalysis").value.trim();
   const comment = document.getElementById("gComment").value.trim();
   const pmTime = parseInt(document.getElementById("gPmTime").value)||0;
+  const pmTime1 = parseInt(document.getElementById("gPmTime1").value)||0;
+  const alertBefore = parseInt(document.getElementById("gAlertBefore").value)||0;
 
   if(!gCode || !gName || !gDept){ alert("กรุณากรอกข้อมูลครบทุกช่อง"); return; }
 
@@ -309,6 +331,8 @@ async function addOrEditMachineGroup(isEdit=false){
     "วิเคราะห์สาเหตุ": cause,
     "การแก้ไขความคิดเห็น": comment,
     "PmTime": pmTime,
+     "PmTime1": pmTime1,
+     "AlertBefore": alertBefore,
     ModifiedBy: currentEmp,
     ModifiedDate: timestamp
   };
