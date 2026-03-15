@@ -1,407 +1,393 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="th">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MachineGroup Full</title>
-<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-<style>
-body { font-family:'Kanit', sans-serif; background:#f0f4ff; }
-.tag { background:#3b82f6; color:white; padding:2px 6px; margin:2px; border-radius:5px; display:inline-flex; align-items:center; cursor:move; }
-.tag button { margin-left:4px; font-weight:bold; background:none; border:none; color:white; cursor:pointer; }
-.autocomplete-suggestions { position:absolute; background:#fff; border:1px solid #93c5fd; border-radius:6px; max-height:150px; overflow-y:auto; z-index:10; display:none; width:100%; }
-.autocomplete-suggestion { padding:0.5rem; cursor:pointer; }
-.autocomplete-suggestion:hover { background:#e0f2fe; }
-.table-container { overflow-x:auto; }
-.success-msg { font-size:1.5rem; color:#16a34a; font-weight:bold; text-align:center; margin-top:0.5rem; }
-.search-icon { position:absolute; right:10px; top:50%; transform:translateY(-50%); cursor:pointer; color:#3b82f6; }
-.groupcode-label { display:inline-block; background:#3b82f6; color:white; padding:2px 6px; border-radius:4px; font-weight:bold; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MachineGroup Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Kanit', sans-serif; background: #f8fafc; }
+        input, textarea, select { font-size: 14px; padding: 6px 8px !important; }
+        th, td { padding: 10px 12px !important; font-size: 13px; }
+        
+        /* สไตล์ช่องค้นหาแบบขีดเส้นใต้ */
+        .input-underline {
+            border: none;
+            border-bottom: 2px solid #cbd5e1;
+            border-radius: 0;
+            background: transparent;
+            transition: border-color 0.3s;
+            width: 80%; /* ลดความยาวลงตามที่ต้องการ */
+            margin: 0 auto;
+            display: block;
+        }
+        .input-underline:focus {
+            outline: none;
+            border-bottom-color: #2563eb;
+        }
+
+        .tag { background: #3b82f6; color: white; padding: 4px 12px; margin: 4px; border-radius: 20px; display: inline-flex; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .tag button { margin-left: 8px; font-weight: bold; color: #fee2e2; }
+        
+        .autocomplete-suggestions { position: absolute; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; max-height: 200px; overflow-y: auto; z-index: 50; width: 100%; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .autocomplete-suggestion { padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #f1f5f9; }
+        .autocomplete-suggestion:hover { background: #eff6ff; color: #1e40af; }
+        
+        .groupcode-label { display: inline-block; background: #1e3a8a; color: white; padding: 4px 14px; border-radius: 99px; font-weight: bold; font-size: 14px; }
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: none; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(2px); }
+    </style>
 </head>
-<body class="p-4">
-<nav class="bg-blue-600 text-white p-4 flex justify-between items-center">
-<a href="https://appsheetsvi.github.io/Menu.html" class="font-semibold">🏠 Home</a>
-<div class="font-semibold text-lg">ระบบแจ้งซ่อมออนไลน์</div>
+<body class="p-4 md:p-8">
+
+<div id="loading" class="loading-overlay flex-col">
+    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700 mb-2"></div>
+    <span class="text-blue-900 font-medium">กำลังดำเนินการ...</span>
+</div>
+
+<nav class="max-w-5xl mx-auto bg-white p-4 flex justify-between items-center rounded-2xl shadow-sm mb-8 border border-gray-100">
+    <a href="https://appsheetsvi.github.io/Menu.html" class="text-blue-600 font-semibold hover:text-blue-800 transition">🏠 หน้าหลัก</a>
+    <div class="font-bold text-gray-800 text-lg uppercase tracking-wide">Machine Group (PM)</div>
+    <div class="w-10"></div>
 </nav>
 
-<h1 class="text-2xl font-bold text-center text-blue-800 mb-6">MachineGroup</h1>
+<div class="max-w-xl mx-auto bg-white p-8 rounded-3xl shadow-xl border border-gray-100 mb-12">
+    <form id="groupForm" onsubmit="return false;">
+        <div class="text-center mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">ตั้งค่ากลุ่มเครื่องจักร</h2>
+            <div class="relative">
+                <input type="text" id="searchGroupPM" placeholder="🔍 พิมพ์ชื่อกลุ่มเพื่อค้นหา..." class="input-underline text-center">
+                <div id="searchGroupPMSuggestions" class="autocomplete-suggestions left-0 right-0 mx-auto w-4/5"></div>
+            </div>
+        </div>
 
-<!-- ฟอร์มเพิ่ม/แก้ไขกลุ่ม -->
-<div class="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow-lg mb-6">
-  <form id="groupForm" onsubmit="return false;">
-    <div class="mb-4">
-      <label class="font-semibold text-gray-700">ค้นหา MachineGroup</label>
-      <input type="text" id="searchGroupPM" placeholder="🔍 พิมพ์ชื่อกลุ่ม..." class="w-full border-2 border-blue-300 rounded px-2 py-1">
-      <div id="searchGroupPMSuggestions" class="autocomplete-suggestions"></div>
-    </div>
+        <div class="flex justify-between items-center mb-6 bg-blue-50 p-3 rounded-2xl">
+            <span class="text-sm font-semibold text-blue-800 ml-2">Group Code:</span>
+            <div id="gGroupCode" class="groupcode-label">---</div>
+        </div>
 
-    <div class="mb-4">
-      <label class="font-semibold text-gray-700">GroupCode</label>
-      <div id="gGroupCode" class="groupcode-label">---</div>
-    </div>
-    <div class="mb-4">
-      <label class="font-semibold">GroupName</label>
-      <input type="text" id="gGroupName" required placeholder="กรอกชื่อกลุ่ม..." class="w-full border-2 border-blue-300 rounded px-2 py-1">
-    </div>
-    <div class="mb-4">
-      <label class="font-semibold">DeptCode</label>
-      <select id="gDeptCode" required class="w-full border-2 border-blue-300 rounded px-2 py-1"></select>
-    </div>
-    <div class="mb-4">
-      <label class="font-semibold">รายละเอียดอาการเสีย</label>
-      <textarea id="gProblemDetail" placeholder="กรอกอาการเสีย..." class="w-full border-2 border-blue-300 rounded px-2 py-1"></textarea>
-    </div>
-    <div class="mb-4">
-      <label class="font-semibold">วิเคราะห์สาเหตุ</label>
-      <textarea id="gCauseAnalysis" placeholder="วิเคราะห์สาเหตุ..." class="w-full border-2 border-blue-300 rounded px-2 py-1"></textarea>
-    </div>
-    <div class="mb-4">
-      <label class="font-semibold">การแก้ไขความคิดเห็น</label>
-      <textarea id="gComment" placeholder="กรอกความคิดเห็น..." class="w-full border-2 border-blue-300 rounded px-2 py-1"></textarea>
-    </div>
-    <div class="mb-4">
-      <label class="font-semibold">PmTime (นาที)</label>
-      <input type="number" id="gPmTime" min="0" placeholder="0" class="w-full border-2 border-blue-300 rounded px-2 py-1">
-    </div>
-    <div class="mb-3">
-<label class="font-semibold">กำหนดรอบ PM</label>
-<input type="number" id="gPmTime1"
-class="w-full border rounded px-2 py-1">
+        <div class="grid grid-cols-1 gap-5 mb-6">
+            <div>
+                <label class="block text-sm font-semibold text-gray-600 mb-1">GroupName (PM)</label>
+                <input type="text" id="gGroupName" required class="w-full border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition">
+            </div>
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-600 mb-1">Department (แผนกที่รับผิดชอบ)</label>
+                <select id="gDeptCode" required class="w-full border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-100 outline-none"></select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">รอบ PM (วัน)</label>
+                    <input type="number" id="gPmTime1" value="0" class="w-full border border-gray-200 rounded-xl">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-red-500 mb-1 uppercase">แจ้งเตือนล่วงหน้า (วัน)</label>
+                    <input type="number" id="gAlertBefore" value="0" class="w-full border border-red-100 rounded-xl">
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <label class="block text-sm font-semibold text-gray-600 mb-2">รายละเอียดทางเทคนิค</label>
+            <textarea id="gProblemDetail" placeholder="รายละเอียดอาการเสีย..." class="w-full border border-gray-200 rounded-xl mb-2 h-20 p-3"></textarea>
+            <textarea id="gCauseAnalysis" placeholder="การวิเคราะห์สาเหตุ..." class="w-full border border-gray-200 rounded-xl mb-2 h-20 p-3"></textarea>
+            <textarea id="gComment" placeholder="หมายเหตุ/การแก้ไข..." class="w-full border border-gray-200 rounded-xl h-20 p-3"></textarea>
+        </div>
+
+        <div class="mb-8 relative">
+            <label class="block text-sm font-semibold text-blue-700 mb-2">เพิ่มเครื่องจักรในกลุ่ม</label>
+            <input type="text" id="machineInput" placeholder="🔍 ค้นหารหัสหรือชื่อเครื่องจักร..." class="w-full border-2 border-blue-50 rounded-xl focus:border-blue-300 outline-none p-3">
+            <div id="machineSuggestions" class="autocomplete-suggestions"></div>
+            <div id="groupMachines" class="mt-3 flex flex-wrap"></div>
+        </div>
+
+        <div class="flex gap-3">
+            <button id="groupAddBtn" type="button" class="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition">บันทึกข้อมูล</button>
+            <button id="groupEditBtn" type="button" class="flex-1 bg-green-600 text-white py-4 rounded-2xl font-bold hover:bg-green-700 hidden transition shadow-lg shadow-green-100">ยืนยันการแก้ไข</button>
+            <button id="groupCancelBtn" type="button" class="bg-gray-100 text-gray-500 px-6 py-4 rounded-2xl hover:bg-gray-200 hidden transition font-medium">ยกเลิก</button>
+        </div>
+        <div id="groupMsg" class="mt-4 p-3 bg-green-50 text-green-700 text-center rounded-xl hidden font-bold animate-pulse">สำเร็จ! ข้อมูลถูกอัปเดตแล้ว</div>
+    </form>
 </div>
 
-<div class="mb-3">
-<label class="font-semibold">กำหนด แจ้งเตือนล่ว่งหน้า</label>
-<input type="number" id="gAlertBefore"
-class="w-full border rounded px-2 py-1">
-</div>
-    <div class="mb-4 relative">
-      <label class="font-semibold">เครื่องจักรในกลุ่ม</label>
-      <input type="text" id="machineInput" placeholder="🔍 พิมพ์ชื่อเครื่องจักร..." class="w-full border-2 border-blue-300 rounded px-2 py-1">
-      <div id="machineSuggestions" class="autocomplete-suggestions"></div>
-      <div id="groupMachines" class="mt-2 flex flex-wrap"></div>
+<div class="max-w-6xl mx-auto bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+    <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-6">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800">รายงานกลุ่มเครื่องจักร</h2>
+            <p class="text-gray-400 text-sm italic mt-1">* กรุณาค้นหาเพื่อเปิดดูข้อมูลในตาราง</p>
+        </div>
+        <input type="text" id="searchAll" placeholder="🔍 ค้นหา GroupName หรือ Department..." class="border-2 border-gray-100 rounded-2xl px-6 py-3 w-full md:w-1/2 focus:border-blue-400 outline-none transition shadow-sm">
     </div>
-
-    <div class="flex gap-2 mb-2">
-      <button id="groupAddBtn" type="button" class="bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-800">เพิ่มกลุ่ม</button>
-      <button id="groupEditBtn" type="button" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 hidden">แก้ไขกลุ่ม</button>
-      <button id="groupCancelBtn" type="button" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 hidden">ยกเลิก</button>
+    
+    <div class="overflow-x-auto">
+        <table id="groupTable" class="w-full">
+            <thead>
+                <tr class="text-gray-400 text-xs uppercase tracking-widest border-b border-gray-100">
+                    <th class="text-left pb-4">Group Code</th>
+                    <th class="text-left pb-4">GroupName (PM)</th>
+                    <th class="text-left pb-4">Department (ชื่อเต็ม)</th>
+                    <th class="text-center pb-4">รอบ PM</th>
+                    <th class="text-center pb-4">Action</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr>
+                    <td colspan="5" class="text-center py-20 text-gray-300">
+                        <div class="flex flex-col items-center">
+                            <span class="text-4xl mb-2">🔍</span>
+                            <span>พิมพ์สิ่งที่ต้องการค้นหาด้านบน</span>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
     </div>
-    <div id="groupMsg" class="success-msg hidden">บันทึกสำเร็จ!</div>
-  </form>
-</div>
-
-<!-- ตารางรายงาน -->
-<div class="max-w-5xl mx-auto bg-white p-4 rounded-xl shadow-lg table-container">
-  <h2 class="text-xl font-semibold mb-2">MachineGroup(PM)</h2>
-  <input type="text" id="searchAll" placeholder="🔍 ค้นหาทุกคอลัมน์..." class="w-full border-2 border-blue-300 rounded px-2 py-1 mb-2">
-  <table id="groupTable" class="min-w-full table-auto border border-gray-300">
-    <thead>
-      <tr class="bg-blue-100">
-        <th class="border px-2 py-1">#</th>
-        <th class="border px-2 py-1">GroupCode</th>
-        <th class="border px-2 py-1">GroupName(PM)</th>
-        <th class="border px-2 py-1">DeptNameEng</th>
-        <th class="border px-2 py-1">รายละเอียดอาการเสีย</th>
-        <th class="border px-2 py-1">วิเคราะห์สาเหตุ</th>
-        <th class="border px-2 py-1">การแก้ไขความคิดเห็น</th>
-        <th class="border px-2 py-1">PmTime</th>
-        <th>PmTime</th>
-        <th>AlertBefore</th>
-        <th class="border px-2 py-1">Action</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
 </div>
 
 <script>
-const appId="ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
-const apiKey="V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
+const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
+const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
 const currentEmp = localStorage.getItem("EmpCode") || "EMP001";
 
-let machinesData=[], groupsData=[], deptsData=[], selectedMachines=[], editRow=null;
+let machinesData = [], groupsData = [], deptsData = [], selectedMachines = [], originalMachines = [];
 
-// Fetch Table
-async function fetchTable(tableName){
-  try{
-    const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/${tableName}/Find`,{
-      method:"POST",
-      headers:{ "Content-Type":"application/json","ApplicationAccessKey":apiKey },
-      body: JSON.stringify({})
-    });
-    const text = await res.text();
-    return text ? JSON.parse(text) : [];
-  } catch(e){ console.error(tableName+" fetch error:", e); return []; }
+async function apiCall(tableName, action, rows) {
+    toggleLoading(true);
+    try {
+        const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/${tableName}/Action`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "ApplicationAccessKey": apiKey },
+            body: JSON.stringify({ Action: action, Rows: rows || [] })
+        });
+        return await res.json();
+    } catch (e) { return null; } finally { toggleLoading(false); }
 }
 
-// Load Dropdowns
-async function loadDropdowns(){
-  deptsData = await fetchTable("Department");
-  const deptSelect = document.getElementById("gDeptCode");
-  deptSelect.innerHTML = '<option value="">-- เลือกแผนก --</option>';
-  deptsData.forEach(d=>{
-    const opt = document.createElement("option");
-    opt.value = d.DeptCode;
-    opt.textContent = `${d.DeptCode} : ${d.DeptNameEng || d.DeptName || d.DeptCode}`;
-    deptSelect.appendChild(opt);
-  });
-}
+function toggleLoading(show) { document.getElementById("loading").style.display = show ? "flex" : "none"; }
 
-// Generate GroupCode
-async function generateGroupCode(){
-  groupsData = await fetchTable("MachineGroup");
-  const date = new Date();
-  const yyyy = date.getFullYear();
-  const mm = (date.getMonth()+1).toString().padStart(2,'0');
-  let max=0;
-  groupsData.forEach(g=>{
-    if(g.GroupCode?.startsWith(`${yyyy}${mm}`)){
-      const n=parseInt(g.GroupCode.slice(-3));
-      if(n>max) max=n;
-    }
-  });
-  document.getElementById("gGroupCode").textContent = `${yyyy}${mm}${(max+1).toString().padStart(3,'0')}`;
-}
-
-// Render Selected Machines
-function renderSelectedMachines(){
-  const container = document.getElementById("groupMachines");
-  container.innerHTML="";
-  selectedMachines.forEach(m=>{
-    const div=document.createElement("div");
-    div.className="tag";
-    div.draggable=true;
-    div.innerHTML=`<span>${m}</span><button type="button">&times;</button>`;
-    div.querySelector("button").addEventListener("click",()=>{
-      selectedMachines = selectedMachines.filter(x=>x!==m);
-      renderSelectedMachines();
-    });
-    container.appendChild(div);
-  });
-}
-
-// Auto-complete Machines
-document.getElementById("machineInput").addEventListener("input",()=>{
-  const val = document.getElementById("machineInput").value.toLowerCase();
-  const dept = document.getElementById("gDeptCode").value;
-  const suggDiv = document.getElementById("machineSuggestions");
-  if(!val || !dept){ suggDiv.style.display="none"; return;}
-  const filtered = machinesData.filter(m=>m.DeptCode===dept && m["รายชื่อเครื่องจักร1"]?.toLowerCase().includes(val));
-  suggDiv.innerHTML="";
-  filtered.forEach(m=>{
-    const div=document.createElement("div");
-    div.className="autocomplete-suggestion";
-    div.textContent = m["รายชื่อเครื่องจักร1"];
-    div.addEventListener("click",()=>{
-      if(!selectedMachines.includes(m["รายชื่อเครื่องจักร1"])){
-        selectedMachines.push(m["รายชื่อเครื่องจักร1"]);
-        renderSelectedMachines();
-      }
-      document.getElementById("machineInput").value="";
-      suggDiv.style.display="none";
-    });
-    suggDiv.appendChild(div);
-  });
-  suggDiv.style.display = filtered.length>0?"block":"none";
-});
-
-// Search GroupName PM
-document.getElementById("searchGroupPM").addEventListener("input",()=>{
-  const val = document.getElementById("searchGroupPM").value.toLowerCase();
-  const suggDiv = document.getElementById("searchGroupPMSuggestions");
-  if(!val){ suggDiv.style.display="none"; return;}
-  const filtered = groupsData.filter(g=>g.GroupName?.toLowerCase().includes(val));
-  suggDiv.innerHTML="";
-  filtered.forEach(g=>{
-    const div=document.createElement("div");
-    div.className="autocomplete-suggestion";
-    div.textContent = g.GroupName;
-    div.addEventListener("click",()=>{
-      document.getElementById("gGroupCode").textContent = g.GroupCode;
-      document.getElementById("gGroupName").value = g.GroupName;
-      document.getElementById("gDeptCode").value = g.DeptCode;
-      document.getElementById("gProblemDetail").value = g["รายละเอียดอาการเสีย"] || "";
-      document.getElementById("gCauseAnalysis").value = g["วิเคราะห์สาเหตุ"] || "";
-      document.getElementById("gComment").value = g["การแก้ไขความคิดเห็น"] || "";
-      document.getElementById("gPmTime").value = g["PmTime"] || 0;
-      document.getElementById("gPmTime1").value = g["PmTime1"] || "";
-      document.getElementById("gAlertBefore").value = g["AlertBefore"] || "";
-      selectedMachines = machinesData.filter(m=>m.GroupCode===g.GroupCode).map(m=>m["รายชื่อเครื่องจักร1"]);
-      renderSelectedMachines();
-      editRow = g;
-      document.getElementById("groupAddBtn").classList.add("hidden");
-      document.getElementById("groupEditBtn").classList.remove("hidden");
-      document.getElementById("groupCancelBtn").classList.remove("hidden");
-      suggDiv.style.display="none";
-    });
-    suggDiv.appendChild(div);
-  });
-  suggDiv.style.display = filtered.length>0?"block":"none";
-});
-
-// Render Group Table
-function renderGroupTable(){
-  const tbody = document.querySelector("#groupTable tbody");
-  tbody.innerHTML="";
-  groupsData.forEach((g,index)=>{
-    const tr=document.createElement("tr");
-    const dept = deptsData.find(d=>d.DeptCode===g.DeptCode);
-    const deptNameEng = dept?.DeptNameEng || g.DeptCode;
-    tr.innerHTML = `
-      <td class="border px-2 py-1">${index+1}</td>
-      <td class="border px-2 py-1">${g.GroupCode}</td>
-      <td class="border px-2 py-1">${g.GroupName}</td>
-      <td class="border px-2 py-1">${deptNameEng}</td>
-      <td class="border px-2 py-1">${g["รายละเอียดอาการเสีย"] || ""}</td>
-      <td class="border px-2 py-1">${g["วิเคราะห์สาเหตุ"] || ""}</td>
-      <td class="border px-2 py-1">${g["การแก้ไขความคิดเห็น"] || ""}</td>
-      <td class="border px-2 py-1">${g["PmTime"] || 0}</td>
-      <td class="border px-2 py-1">${g["PmTime1"] || 0}</td>
-      <td class="border px-2 py-1">${g["AlertBefore"] || 0}</td>
-      <td class="border px-2 py-1">
-        <button class="bg-green-600 text-white px-2 py-1 rounded editBtn">แก้ไข</button>
-      </td>`;
-    tr.querySelector(".editBtn").addEventListener("click",()=>{
-      document.getElementById("gGroupCode").textContent = g.GroupCode;
-      document.getElementById("gGroupName").value = g.GroupName;
-      document.getElementById("gDeptCode").value = g.DeptCode;
-      document.getElementById("gProblemDetail").value = g["รายละเอียดอาการเสีย"] || "";
-      document.getElementById("gCauseAnalysis").value = g["วิเคราะห์สาเหตุ"] || "";
-      document.getElementById("gComment").value = g["การแก้ไขความคิดเห็น"] || "";
-      document.getElementById("gPmTime").value = g["PmTime"] || 0;
-      document.getElementById("gPmTime1").value = g["PmTime1"] || "";
-      document.getElementById("gAlertBefore").value = g["AlertBefore"] || "";
-      selectedMachines = machinesData.filter(m=>m.GroupCode===g.GroupCode).map(m=>m["รายชื่อเครื่องจักร1"]);
-      renderSelectedMachines();
-      editRow = g;
-      document.getElementById("groupAddBtn").classList.add("hidden");
-      document.getElementById("groupEditBtn").classList.remove("hidden");
-      document.getElementById("groupCancelBtn").classList.remove("hidden");
-    });
-    tbody.appendChild(tr);
-  });
-}
-
-// Reset Form
-function resetForm(){
-  document.getElementById("groupForm").reset();
-  document.getElementById("gProblemDetail").value="";
-  document.getElementById("gCauseAnalysis").value="";
-  document.getElementById("gComment").value="";
-  document.getElementById("gPmTime").value="";
-  document.getElementById("gPmTime1").value="";
-  document.getElementById("gAlertBefore").value="";
-  selectedMachines=[];
-  renderSelectedMachines();
-  editRow=null;
-  document.getElementById("groupAddBtn").classList.remove("hidden");
-  document.getElementById("groupEditBtn").classList.add("hidden");
-  document.getElementById("groupCancelBtn").classList.add("hidden");
-  generateGroupCode();
-  document.getElementById("groupMsg").classList.add("hidden");
-}
-
-// Show Success Message
-function showSuccess(){
-  const msg = document.getElementById("groupMsg");
-  msg.classList.remove("hidden");
-  setTimeout(()=>msg.classList.add("hidden"),3000);
-}
-
-// Add / Edit
-async function addOrEditMachineGroup(isEdit=false){
-  const gCode = document.getElementById("gGroupCode").textContent.trim();
-  const gName = document.getElementById("gGroupName").value.trim();
-  const gDept = document.getElementById("gDeptCode").value.trim();
-  const problem = document.getElementById("gProblemDetail").value.trim();
-  const cause = document.getElementById("gCauseAnalysis").value.trim();
-  const comment = document.getElementById("gComment").value.trim();
-  const pmTime = parseInt(document.getElementById("gPmTime").value)||0;
-  const pmTime1 = parseInt(document.getElementById("gPmTime1").value)||0;
-  const alertBefore = parseInt(document.getElementById("gAlertBefore").value)||0;
-
-  if(!gCode || !gName || !gDept){ alert("กรุณากรอกข้อมูลครบทุกช่อง"); return; }
-
-  const timestamp = new Date().toISOString();
-  const groupObj = {
-    GroupCode: gCode,
-    GroupName: gName,
-    DeptCode: gDept,
-    "รายละเอียดอาการเสีย": problem,
-    "วิเคราะห์สาเหตุ": cause,
-    "การแก้ไขความคิดเห็น": comment,
-    "PmTime": pmTime,
-     "PmTime1": pmTime1,
-     "AlertBefore": alertBefore,
-    ModifiedBy: currentEmp,
-    ModifiedDate: timestamp
-  };
-
-  const action = isEdit?"Edit":"Add";
-  if(!isEdit){
-    groupObj.CreatedBy = currentEmp;
-    groupObj.CreatedDate = timestamp;
-  }
-
-  try{
-    const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineGroup/Action`,{
-      method:"POST",
-      headers:{ "Content-Type":"application/json","ApplicationAccessKey": apiKey },
-      body: JSON.stringify({Action:action, Rows:[groupObj]})
-    });
-    const result = await res.json();
-    console.log(action+" result:", result);
-    if(result?.Rows && result.Rows.length>0){
-      if(isEdit){
-        const idx = groupsData.findIndex(g=>g.GroupCode===gCode);
-        if(idx>=0) groupsData[idx] = {...groupsData[idx], ...groupObj};
-      } else {
-        groupsData.push(groupObj);
-      }
-
-      // Update machines
-      for(const mName of selectedMachines){
-        const machine = machinesData.find(m=>m["รายชื่อเครื่องจักร1"]===mName);
-        if(machine){
-          await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/MachineMaster/Action`,{
-            method:"POST",
-            headers:{ "Content-Type":"application/json","ApplicationAccessKey": apiKey },
-            body:JSON.stringify({ Action:"Edit", Rows:[{"รหัสเครื่อง":machine["รหัสเครื่อง"], "GroupCode":gCode}] })
-          });
-          machine.GroupCode=gCode;
-        }
-      }
-      renderGroupTable();
-      resetForm();
-      showSuccess();
-    } else {
-      alert("ไม่สามารถบันทึก MachineGroup ได้ ตรวจสอบฟิลด์ required หรือชื่อฟิลด์");
-    }
-  } catch(err){ console.error(action+" MachineGroup error:", err); alert("เกิดข้อผิดพลาด"); }
-}
-
-// Event Listeners
-document.getElementById("groupAddBtn").addEventListener("click", ()=>addOrEditMachineGroup(false));
-document.getElementById("groupEditBtn").addEventListener("click", ()=>addOrEditMachineGroup(true));
-document.getElementById("groupCancelBtn").addEventListener("click", resetForm);
-
-// Search Table All Columns
-document.getElementById("searchAll").addEventListener("input",()=>{
-  const val = document.getElementById("searchAll").value.toLowerCase();
-  const tbody = document.querySelector("#groupTable tbody");
-  Array.from(tbody.rows).forEach(r=>{
-    r.style.display = Array.from(r.cells).some(td=>td.textContent.toLowerCase().includes(val))?"":"none";
-  });
-});
-
-// Initial Load
-(async()=>{
-  machinesData = await fetchTable("MachineMaster");
-  await loadDropdowns();
-  await generateGroupCode();
-  groupsData = await fetchTable("MachineGroup");
-  renderGroupTable();
+(async () => {
+    const [m, d, g] = await Promise.all([
+        apiCall("MachineMaster", "Find"),
+        apiCall("Department", "Find"),
+        apiCall("MachineGroup", "Find")
+    ]);
+    machinesData = m || [];
+    deptsData = d || [];
+    groupsData = g || [];
+    renderDepts();
+    generateGroupCode();
 })();
+
+function renderDepts() {
+    const select = document.getElementById("gDeptCode");
+    select.innerHTML = '<option value="">-- เลือกแผนก --</option>';
+    deptsData.forEach(d => {
+        const opt = document.createElement("option");
+        opt.value = d.DeptCode;
+        opt.textContent = `${d.DeptCode} : ${d.DeptNameEng || d.DeptName}`;
+        select.appendChild(opt);
+    });
+}
+
+function generateGroupCode() {
+    const date = new Date();
+    const prefix = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+    let max = 0;
+    groupsData.forEach(g => {
+        if (g.GroupCode?.startsWith(prefix)) {
+            const num = parseInt(g.GroupCode.slice(-3));
+            if (num > max) max = num;
+        }
+    });
+    document.getElementById("gGroupCode").textContent = `${prefix}${(max + 1).toString().padStart(3, '0')}`;
+}
+
+// ค้นหาในตาราง และแสดง Department ชื่อเต็ม
+document.getElementById("searchAll").addEventListener("input", e => {
+    const val = e.target.value.trim().toLowerCase();
+    const tbody = document.getElementById("tableBody");
+    
+    if (!val) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-20 text-gray-300 italic">พิมพ์สิ่งที่ต้องการค้นหาด้านบน</td></tr>`;
+        return;
+    }
+
+    const filtered = groupsData.filter(g => {
+        const d = deptsData.find(dept => dept.DeptCode === g.DeptCode);
+        const dName = (d?.DeptNameEng || d?.DeptName || "").toLowerCase();
+        return g.GroupCode?.toLowerCase().includes(val) || 
+               g.GroupName?.toLowerCase().includes(val) ||
+               g.DeptCode?.toLowerCase().includes(val) ||
+               dName.includes(val);
+    });
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-20 text-red-300">ไม่พบกลุ่มเครื่องจักรที่ตรงกับคำค้น</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = "";
+    filtered.forEach(g => {
+        const deptObj = deptsData.find(d => d.DeptCode === g.DeptCode);
+        const deptFullName = deptObj ? (deptObj.DeptNameEng || deptObj.DeptName) : g.DeptCode;
+        
+        const tr = document.createElement("tr");
+        tr.className = "border-b border-gray-50 hover:bg-blue-50/50 transition duration-200 group";
+        tr.innerHTML = `
+            <td class="py-4 font-bold text-blue-900">${g.GroupCode}</td>
+            <td class="py-4 text-gray-700">${g.GroupName}</td>
+            <td class="py-4 text-gray-500 font-medium">${deptFullName}</td>
+            <td class="py-4 text-center text-gray-600">${g.PmTime1 || 0} วัน</td>
+            <td class="py-4 text-center">
+                <button onclick="editGroup('${g.GroupCode}')" class="bg-white border border-blue-200 text-blue-600 px-4 py-1.5 rounded-xl hover:bg-blue-600 hover:text-white transition shadow-sm">แก้ไข</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
+});
+
+// Machine selection
+document.getElementById("machineInput").addEventListener("input", e => {
+    const val = e.target.value.toLowerCase();
+    const dept = document.getElementById("gDeptCode").value;
+    const suggDiv = document.getElementById("machineSuggestions");
+    if (!val || !dept) { suggDiv.style.display = "none"; return; }
+    
+    const filtered = machinesData.filter(m => m.DeptCode === dept && m["รายชื่อเครื่องจักร1"]?.toLowerCase().includes(val));
+    suggDiv.innerHTML = "";
+    filtered.forEach(m => {
+        const div = document.createElement("div");
+        div.className = "autocomplete-suggestion";
+        div.textContent = m["รายชื่อเครื่องจักร1"];
+        div.onclick = () => {
+            if (!selectedMachines.includes(m["รายชื่อเครื่องจักร1"])) {
+                selectedMachines.push(m["รายชื่อเครื่องจักร1"]);
+                renderTags();
+            }
+            e.target.value = "";
+            suggDiv.style.display = "none";
+        };
+        suggDiv.appendChild(div);
+    });
+    suggDiv.style.display = filtered.length ? "block" : "none";
+});
+
+function renderTags() {
+    const container = document.getElementById("groupMachines");
+    container.innerHTML = "";
+    selectedMachines.forEach(name => {
+        const span = document.createElement("span");
+        span.className = "tag text-xs";
+        span.innerHTML = `${name} <button type="button" onclick="removeTag('${name}')">&times;</button>`;
+        container.appendChild(span);
+    });
+}
+
+function removeTag(name) {
+    selectedMachines = selectedMachines.filter(n => n !== name);
+    renderTags();
+}
+
+async function saveGroup(isEdit) {
+    const gCode = document.getElementById("gGroupCode").textContent;
+    const gName = document.getElementById("gGroupName").value.trim();
+    const gDept = document.getElementById("gDeptCode").value;
+    if (!gName || !gDept) return alert("กรุณาระบุชื่อกลุ่มและแผนก");
+
+    const payload = {
+        GroupCode: gCode, GroupName: gName, DeptCode: gDept,
+        "รายละเอียดอาการเสีย": document.getElementById("gProblemDetail").value,
+        "วิเคราะห์สาเหตุ": document.getElementById("gCauseAnalysis").value,
+        "การแก้ไขความคิดเห็น": document.getElementById("gComment").value,
+        PmTime1: parseInt(document.getElementById("gPmTime1").value) || 0,
+        AlertBefore: parseInt(document.getElementById("gAlertBefore").value) || 0,
+        ModifiedBy: currentEmp, ModifiedDate: new Date().toISOString()
+    };
+
+    if (!isEdit) { payload.CreatedBy = currentEmp; payload.CreatedDate = payload.ModifiedDate; }
+
+    const result = await apiCall("MachineGroup", isEdit ? "Edit" : "Add", [payload]);
+    if (!result) return alert("บันทึกไม่สำเร็จ");
+
+    const machineUpdates = [];
+    selectedMachines.forEach(mName => {
+        const m = machinesData.find(x => x["รายชื่อเครื่องจักร1"] === mName);
+        if (m) machineUpdates.push({ "รหัสเครื่อง": m["รหัสเครื่อง"], "GroupCode": gCode });
+    });
+
+    if (isEdit) {
+        const removed = originalMachines.filter(name => !selectedMachines.includes(name));
+        removed.forEach(mName => {
+            const m = machinesData.find(x => x["รายชื่อเครื่องจักร1"] === mName);
+            if (m) machineUpdates.push({ "รหัสเครื่อง": m["รหัสเครื่อง"], "GroupCode": "" });
+        });
+    }
+
+    if (machineUpdates.length > 0) {
+        await apiCall("MachineMaster", "Edit", machineUpdates);
+        machineUpdates.forEach(upd => {
+            const idx = machinesData.findIndex(m => m["รหัสเครื่อง"] === upd["รหัสเครื่อง"]);
+            if (idx !== -1) machinesData[idx].GroupCode = upd.GroupCode;
+        });
+    }
+
+    groupsData = await apiCall("MachineGroup", "Find") || [];
+    resetForm();
+    document.getElementById("groupMsg").classList.remove("hidden");
+    setTimeout(() => document.getElementById("groupMsg").classList.add("hidden"), 3000);
+}
+
+function editGroup(code) {
+    const g = groupsData.find(x => x.GroupCode === code);
+    if (!g) return;
+    document.getElementById("gGroupCode").textContent = g.GroupCode;
+    document.getElementById("gGroupName").value = g.GroupName;
+    document.getElementById("gDeptCode").value = g.DeptCode;
+    document.getElementById("gProblemDetail").value = g["รายละเอียดอาการเสีย"] || "";
+    document.getElementById("gCauseAnalysis").value = g["วิเคราะห์สาเหตุ"] || "";
+    document.getElementById("gComment").value = g["การแก้ไขความคิดเห็น"] || "";
+    document.getElementById("gPmTime1").value = g.PmTime1 || 0;
+    document.getElementById("gAlertBefore").value = g.AlertBefore || 0;
+
+    selectedMachines = machinesData.filter(m => m.GroupCode === code).map(m => m["รายชื่อเครื่องจักร1"]);
+    originalMachines = [...selectedMachines];
+    renderTags();
+
+    document.getElementById("groupAddBtn").classList.add("hidden");
+    document.getElementById("groupEditBtn").classList.remove("hidden");
+    document.getElementById("groupCancelBtn").classList.remove("hidden");
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function resetForm() {
+    document.getElementById("groupForm").reset();
+    selectedMachines = []; originalMachines = []; renderTags(); generateGroupCode();
+    document.getElementById("groupAddBtn").classList.remove("hidden");
+    document.getElementById("groupEditBtn").classList.add("hidden");
+    document.getElementById("groupCancelBtn").classList.add("hidden");
+}
+
+document.getElementById("groupAddBtn").onclick = () => saveGroup(false);
+document.getElementById("groupEditBtn").onclick = () => saveGroup(true);
+document.getElementById("groupCancelBtn").onclick = resetForm;
+
+document.getElementById("searchGroupPM").addEventListener("input", e => {
+    const val = e.target.value.toLowerCase();
+    const suggDiv = document.getElementById("searchGroupPMSuggestions");
+    if (!val) { suggDiv.style.display = "none"; return; }
+    const filtered = groupsData.filter(g => g.GroupName?.toLowerCase().includes(val));
+    suggDiv.innerHTML = "";
+    filtered.forEach(g => {
+        const div = document.createElement("div");
+        div.className = "autocomplete-suggestion";
+        div.textContent = g.GroupName;
+        div.onclick = () => { editGroup(g.GroupCode); suggDiv.style.display = "none"; e.target.value = ""; };
+        suggDiv.appendChild(div);
+    });
+    suggDiv.style.display = filtered.length ? "block" : "none";
+});
 </script>
 </body>
 </html>
