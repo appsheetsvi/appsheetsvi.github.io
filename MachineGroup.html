@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="th">
 <head>
     <meta charset="UTF-8">
@@ -7,142 +7,128 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Kanit', sans-serif; background: #f8fafc; }
+        body { font-family: 'Kanit', sans-serif; background: #f0f4ff; }
         input, textarea, select { font-size: 14px; padding: 6px 8px !important; }
-        th, td { padding: 10px 12px !important; font-size: 13px; }
-        
-        /* สไตล์ช่องค้นหาแบบขีดเส้นใต้ */
-        .input-underline {
-            border: none;
-            border-bottom: 2px solid #cbd5e1;
-            border-radius: 0;
-            background: transparent;
-            transition: border-color 0.3s;
-            width: 80%; /* ลดความยาวลงตามที่ต้องการ */
-            margin: 0 auto;
-            display: block;
-        }
-        .input-underline:focus {
-            outline: none;
-            border-bottom-color: #2563eb;
-        }
-
-        .tag { background: #3b82f6; color: white; padding: 4px 12px; margin: 4px; border-radius: 20px; display: inline-flex; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        th, td { padding: 8px 10px !important; font-size: 13px; }
+        .tag { background: #3b82f6; color: white; padding: 4px 10px; margin: 4px; border-radius: 20px; display: inline-flex; align-items: center; }
         .tag button { margin-left: 8px; font-weight: bold; color: #fee2e2; }
-        
-        .autocomplete-suggestions { position: absolute; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; max-height: 200px; overflow-y: auto; z-index: 50; width: 100%; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-        .autocomplete-suggestion { padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #f1f5f9; }
-        .autocomplete-suggestion:hover { background: #eff6ff; color: #1e40af; }
-        
-        .groupcode-label { display: inline-block; background: #1e3a8a; color: white; padding: 4px 14px; border-radius: 99px; font-weight: bold; font-size: 14px; }
-        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); display: none; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(2px); }
+        .autocomplete-suggestions { position: absolute; background: #fff; border: 1px solid #93c5fd; border-radius: 6px; max-height: 200px; overflow-y: auto; z-index: 50; width: 100%; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .autocomplete-suggestion { padding: 8px 12px; cursor: pointer; border-bottom: 1px solid #f3f4f6; }
+        .autocomplete-suggestion:hover { background: #eff6ff; }
+        .groupcode-label { display: inline-block; background: #1e40af; color: white; padding: 4px 12px; border-radius: 6px; font-weight: bold; }
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.7); display: none; justify-content: center; align-items: center; z-index: 100; }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-4">
 
 <div id="loading" class="loading-overlay flex-col">
     <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700 mb-2"></div>
-    <span class="text-blue-900 font-medium">กำลังดำเนินการ...</span>
+    <span>กำลังประมวลผล...</span>
 </div>
 
-<nav class="max-w-5xl mx-auto bg-white p-4 flex justify-between items-center rounded-2xl shadow-sm mb-8 border border-gray-100">
-    <a href="https://appsheetsvi.github.io/Menu.html" class="text-blue-600 font-semibold hover:text-blue-800 transition">🏠 หน้าหลัก</a>
-    <div class="font-bold text-gray-800 text-lg uppercase tracking-wide">Machine Group (PM)</div>
-    <div class="w-10"></div>
+<nav class="bg-blue-600 text-white p-4 flex justify-between items-center rounded-lg shadow-md mb-6">
+    <a href="https://appsheetsvi.github.io/Menu.html" class="hover:underline">🏠 Home</a>
+    <div class="font-semibold text-lg">ระบบจัดการ Machine Group (PM)</div>
 </nav>
 
-<div class="max-w-xl mx-auto bg-white p-8 rounded-3xl shadow-xl border border-gray-100 mb-12">
-    <form id="groupForm" onsubmit="return false;">
-        <div class="text-center mb-8">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4">ตั้งค่ากลุ่มเครื่องจักร</h2>
-            <div class="relative">
-                <input type="text" id="searchGroupPM" placeholder="🔍 พิมพ์ชื่อกลุ่มเพื่อค้นหา..." class="input-underline text-center">
-                <div id="searchGroupPMSuggestions" class="autocomplete-suggestions left-0 right-0 mx-auto w-4/5"></div>
-            </div>
-        </div>
-
-        <div class="flex justify-between items-center mb-6 bg-blue-50 p-3 rounded-2xl">
-            <span class="text-sm font-semibold text-blue-800 ml-2">Group Code:</span>
-            <div id="gGroupCode" class="groupcode-label">---</div>
-        </div>
-
-        <div class="grid grid-cols-1 gap-5 mb-6">
-            <div>
-                <label class="block text-sm font-semibold text-gray-600 mb-1">GroupName (PM)</label>
-                <input type="text" id="gGroupName" required class="w-full border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none transition">
-            </div>
-
-            <div>
-                <label class="block text-sm font-semibold text-gray-600 mb-1">Department (แผนกที่รับผิดชอบ)</label>
-                <select id="gDeptCode" required class="w-full border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-100 outline-none"></select>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-xs font-bold text-gray-500 mb-1 uppercase">รอบ PM (วัน)</label>
-                    <input type="number" id="gPmTime1" value="0" class="w-full border border-gray-200 rounded-xl">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-red-500 mb-1 uppercase">แจ้งเตือนล่วงหน้า (วัน)</label>
-                    <input type="number" id="gAlertBefore" value="0" class="w-full border border-red-100 rounded-xl">
-                </div>
-            </div>
-        </div>
-
-        <div class="mb-6">
-            <label class="block text-sm font-semibold text-gray-600 mb-2">รายละเอียดทางเทคนิค</label>
-            <textarea id="gProblemDetail" placeholder="รายละเอียดอาการเสีย..." class="w-full border border-gray-200 rounded-xl mb-2 h-20 p-3"></textarea>
-            <textarea id="gCauseAnalysis" placeholder="การวิเคราะห์สาเหตุ..." class="w-full border border-gray-200 rounded-xl mb-2 h-20 p-3"></textarea>
-            <textarea id="gComment" placeholder="หมายเหตุ/การแก้ไข..." class="w-full border border-gray-200 rounded-xl h-20 p-3"></textarea>
-        </div>
-
-        <div class="mb-8 relative">
-            <label class="block text-sm font-semibold text-blue-700 mb-2">เพิ่มเครื่องจักรในกลุ่ม</label>
-            <input type="text" id="machineInput" placeholder="🔍 ค้นหารหัสหรือชื่อเครื่องจักร..." class="w-full border-2 border-blue-50 rounded-xl focus:border-blue-300 outline-none p-3">
-            <div id="machineSuggestions" class="autocomplete-suggestions"></div>
-            <div id="groupMachines" class="mt-3 flex flex-wrap"></div>
-        </div>
-
-        <div class="flex gap-3">
-            <button id="groupAddBtn" type="button" class="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition">บันทึกข้อมูล</button>
-            <button id="groupEditBtn" type="button" class="flex-1 bg-green-600 text-white py-4 rounded-2xl font-bold hover:bg-green-700 hidden transition shadow-lg shadow-green-100">ยืนยันการแก้ไข</button>
-            <button id="groupCancelBtn" type="button" class="bg-gray-100 text-gray-500 px-6 py-4 rounded-2xl hover:bg-gray-200 hidden transition font-medium">ยกเลิก</button>
-        </div>
-        <div id="groupMsg" class="mt-4 p-3 bg-green-50 text-green-700 text-center rounded-xl hidden font-bold animate-pulse">สำเร็จ! ข้อมูลถูกอัปเดตแล้ว</div>
-    </form>
-</div>
-
-<div class="max-w-6xl mx-auto bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
-    <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-6">
-        <div>
-            <h2 class="text-2xl font-bold text-gray-800">รายงานกลุ่มเครื่องจักร</h2>
-            <p class="text-gray-400 text-sm italic mt-1">* กรุณาค้นหาเพื่อเปิดดูข้อมูลในตาราง</p>
-        </div>
-        <input type="text" id="searchAll" placeholder="🔍 ค้นหา GroupName หรือ Department..." class="border-2 border-gray-100 rounded-2xl px-6 py-3 w-full md:w-1/2 focus:border-blue-400 outline-none transition shadow-sm">
-    </div>
+<div class="max-w-4xl mx-auto flex flex-col gap-6">
     
-    <div class="overflow-x-auto">
-        <table id="groupTable" class="w-full">
-            <thead>
-                <tr class="text-gray-400 text-xs uppercase tracking-widest border-b border-gray-100">
-                    <th class="text-left pb-4">Group Code</th>
-                    <th class="text-left pb-4">GroupName (PM)</th>
-                    <th class="text-left pb-4">Department (ชื่อเต็ม)</th>
-                    <th class="text-center pb-4">รอบ PM</th>
-                    <th class="text-center pb-4">Action</th>
-                </tr>
-            </thead>
-            <tbody id="tableBody">
-                <tr>
-                    <td colspan="5" class="text-center py-20 text-gray-300">
-                        <div class="flex flex-col items-center">
-                            <span class="text-4xl mb-2">🔍</span>
-                            <span>พิมพ์สิ่งที่ต้องการค้นหาด้านบน</span>
+    <div class="bg-white p-6 rounded-xl shadow-lg border-t-4 border-blue-500">
+        <form id="groupForm" onsubmit="return false;">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-blue-800">ข้อมูลกลุ่ม</h2>
+                <div class="text-right">
+                    <label class="block text-xs font-semibold text-gray-500">GroupCode</label>
+                    <div id="gGroupCode" class="groupcode-label">---</div>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <div class="mb-4">
+                        <label class="block font-semibold text-gray-700 text-sm">ค้นหากลุ่มเดิมเพื่อแก้ไข</label>
+                        <input type="text" id="searchGroupPM" placeholder="🔍 พิมพ์ชื่อกลุ่ม..." class="w-full border-2 border-blue-100 rounded focus:border-blue-500 outline-none">
+                        <div id="searchGroupPMSuggestions" class="autocomplete-suggestions"></div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block font-semibold text-sm">GroupName (PM)</label>
+                        <input type="text" id="gGroupName" required class="w-full border-2 border-blue-100 rounded">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block font-semibold text-sm">Department</label>
+                        <select id="gDeptCode" required class="w-full border-2 border-blue-100 rounded"></select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 mb-4">
+                        <div>
+                            <label class="block text-xs font-semibold">PmTime (นาที)</label>
+                            <input type="number" id="gPmTime" value="0" class="w-full border rounded">
                         </div>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+                        <div>
+                            <label class="block text-xs font-semibold">รอบ PM (วัน)</label>
+                            <input type="number" id="gPmTime1" value="0" class="w-full border rounded">
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-xs font-semibold text-red-500">แจ้งเตือนล่วงหน้า (วัน)</label>
+                        <input type="number" id="gAlertBefore" value="0" class="w-full border rounded border-red-200">
+                    </div>
+                </div>
+
+                <div>
+                    <div class="mb-4">
+                        <label class="block font-semibold text-sm">รายละเอียด/วิเคราะห์/แก้ไข</label>
+                        <textarea id="gProblemDetail" placeholder="อาการเสีย..." class="w-full border rounded mb-1 text-xs" rows="2"></textarea>
+                        <textarea id="gCauseAnalysis" placeholder="สาเหตุ..." class="w-full border rounded mb-1 text-xs" rows="2"></textarea>
+                        <textarea id="gComment" placeholder="การแก้ไข..." class="w-full border rounded text-xs" rows="2"></textarea>
+                    </div>
+
+                    <div class="mb-4 relative">
+                        <label class="block font-semibold text-blue-700 text-sm">เครื่องจักรในกลุ่ม</label>
+                        <input type="text" id="machineInput" placeholder="🔍 ค้นหาเครื่องจักรที่จะเพิ่ม..." class="w-full border-2 border-blue-300 rounded">
+                        <div id="machineSuggestions" class="autocomplete-suggestions"></div>
+                        <div id="groupMachines" class="mt-2 flex flex-wrap max-h-32 overflow-y-auto border border-dashed border-gray-200 p-2 rounded"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex gap-2 mt-4">
+                <button id="groupAddBtn" type="button" class="flex-1 bg-blue-700 text-white py-2 rounded-lg font-bold hover:bg-blue-800 transition">บันทึกกลุ่มใหม่</button>
+                <button id="groupEditBtn" type="button" class="flex-1 bg-green-600 text-white py-2 rounded-lg font-bold hover:bg-green-700 hidden">ยืนยันการแก้ไข</button>
+                <button id="groupCancelBtn" type="button" class="w-24 bg-gray-400 text-white py-2 rounded-lg hover:bg-gray-500 hidden">ยกเลิก</button>
+            </div>
+            <div id="groupMsg" class="mt-4 p-2 bg-green-100 text-green-700 text-center rounded hidden">บันทึกสำเร็จ!</div>
+        </form>
+    </div>
+
+    <div class="bg-white p-6 rounded-xl shadow-lg">
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
+            <h2 class="text-xl font-bold">รายงานกลุ่มเครื่องจักร</h2>
+            <input type="text" id="searchAll" placeholder="🔍 พิมพ์เพื่อค้นหารายงาน..." class="border-2 border-blue-200 rounded-lg px-4 py-2 w-full md:w-1/2 focus:border-blue-500 outline-none">
+        </div>
+        
+        <div id="reportContainer" style="display: none;">
+            <div class="overflow-x-auto">
+                <table id="groupTable" class="w-full border-collapse">
+                    <thead>
+                        <tr class="bg-gray-100 text-gray-600">
+                            <th class="border-b text-left">GroupCode</th>
+                            <th class="border-b text-left">GroupName</th>
+                            <th class="border-b text-left">Dept</th>
+                            <th class="border-b text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="emptySearchMsg" class="text-center py-10 text-gray-400 italic">
+            กรุณาพิมพ์ในช่องค้นหาเพื่อแสดงข้อมูลรายงาน
+        </div>
     </div>
 </div>
 
@@ -151,7 +137,7 @@ const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
 const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
 const currentEmp = localStorage.getItem("EmpCode") || "EMP001";
 
-let machinesData = [], groupsData = [], deptsData = [], selectedMachines = [], originalMachines = [];
+let machinesData = [], groupsData = [], deptsData = [], selectedMachines = [], originalMachines = [], editRow = null;
 
 async function apiCall(tableName, action, rows) {
     toggleLoading(true);
@@ -162,21 +148,31 @@ async function apiCall(tableName, action, rows) {
             body: JSON.stringify({ Action: action, Rows: rows || [] })
         });
         return await res.json();
-    } catch (e) { return null; } finally { toggleLoading(false); }
+    } catch (e) {
+        console.error(`Error ${action} ${tableName}:`, e);
+        return null;
+    } finally {
+        toggleLoading(false);
+    }
 }
 
-function toggleLoading(show) { document.getElementById("loading").style.display = show ? "flex" : "none"; }
+async function fetchTable(tableName) {
+    const res = await apiCall(tableName, "Find", []);
+    return res || [];
+}
+
+function toggleLoading(show) {
+    document.getElementById("loading").style.display = show ? "flex" : "none";
+}
 
 (async () => {
-    const [m, d, g] = await Promise.all([
-        apiCall("MachineMaster", "Find"),
-        apiCall("Department", "Find"),
-        apiCall("MachineGroup", "Find")
+    [machinesData, deptsData, groupsData] = await Promise.all([
+        fetchTable("MachineMaster"),
+        fetchTable("Department"),
+        fetchTable("MachineGroup")
     ]);
-    machinesData = m || [];
-    deptsData = d || [];
-    groupsData = g || [];
     renderDepts();
+    renderGroupTable();
     generateGroupCode();
 })();
 
@@ -204,57 +200,11 @@ function generateGroupCode() {
     document.getElementById("gGroupCode").textContent = `${prefix}${(max + 1).toString().padStart(3, '0')}`;
 }
 
-// ค้นหาในตาราง และแสดง Department ชื่อเต็ม
-document.getElementById("searchAll").addEventListener("input", e => {
-    const val = e.target.value.trim().toLowerCase();
-    const tbody = document.getElementById("tableBody");
-    
-    if (!val) {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-20 text-gray-300 italic">พิมพ์สิ่งที่ต้องการค้นหาด้านบน</td></tr>`;
-        return;
-    }
-
-    const filtered = groupsData.filter(g => {
-        const d = deptsData.find(dept => dept.DeptCode === g.DeptCode);
-        const dName = (d?.DeptNameEng || d?.DeptName || "").toLowerCase();
-        return g.GroupCode?.toLowerCase().includes(val) || 
-               g.GroupName?.toLowerCase().includes(val) ||
-               g.DeptCode?.toLowerCase().includes(val) ||
-               dName.includes(val);
-    });
-
-    if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="text-center py-20 text-red-300">ไม่พบกลุ่มเครื่องจักรที่ตรงกับคำค้น</td></tr>`;
-        return;
-    }
-
-    tbody.innerHTML = "";
-    filtered.forEach(g => {
-        const deptObj = deptsData.find(d => d.DeptCode === g.DeptCode);
-        const deptFullName = deptObj ? (deptObj.DeptNameEng || deptObj.DeptName) : g.DeptCode;
-        
-        const tr = document.createElement("tr");
-        tr.className = "border-b border-gray-50 hover:bg-blue-50/50 transition duration-200 group";
-        tr.innerHTML = `
-            <td class="py-4 font-bold text-blue-900">${g.GroupCode}</td>
-            <td class="py-4 text-gray-700">${g.GroupName}</td>
-            <td class="py-4 text-gray-500 font-medium">${deptFullName}</td>
-            <td class="py-4 text-center text-gray-600">${g.PmTime1 || 0} วัน</td>
-            <td class="py-4 text-center">
-                <button onclick="editGroup('${g.GroupCode}')" class="bg-white border border-blue-200 text-blue-600 px-4 py-1.5 rounded-xl hover:bg-blue-600 hover:text-white transition shadow-sm">แก้ไข</button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
-});
-
-// Machine selection
 document.getElementById("machineInput").addEventListener("input", e => {
     const val = e.target.value.toLowerCase();
     const dept = document.getElementById("gDeptCode").value;
     const suggDiv = document.getElementById("machineSuggestions");
     if (!val || !dept) { suggDiv.style.display = "none"; return; }
-    
     const filtered = machinesData.filter(m => m.DeptCode === dept && m["รายชื่อเครื่องจักร1"]?.toLowerCase().includes(val));
     suggDiv.innerHTML = "";
     filtered.forEach(m => {
@@ -301,22 +251,21 @@ async function saveGroup(isEdit) {
         "รายละเอียดอาการเสีย": document.getElementById("gProblemDetail").value,
         "วิเคราะห์สาเหตุ": document.getElementById("gCauseAnalysis").value,
         "การแก้ไขความคิดเห็น": document.getElementById("gComment").value,
+        PmTime: parseInt(document.getElementById("gPmTime").value) || 0,
         PmTime1: parseInt(document.getElementById("gPmTime1").value) || 0,
         AlertBefore: parseInt(document.getElementById("gAlertBefore").value) || 0,
         ModifiedBy: currentEmp, ModifiedDate: new Date().toISOString()
     };
 
     if (!isEdit) { payload.CreatedBy = currentEmp; payload.CreatedDate = payload.ModifiedDate; }
-
     const result = await apiCall("MachineGroup", isEdit ? "Edit" : "Add", [payload]);
-    if (!result) return alert("บันทึกไม่สำเร็จ");
+    if (!result) return alert("บันทึกกลุ่มไม่สำเร็จ");
 
     const machineUpdates = [];
     selectedMachines.forEach(mName => {
         const m = machinesData.find(x => x["รายชื่อเครื่องจักร1"] === mName);
         if (m) machineUpdates.push({ "รหัสเครื่อง": m["รหัสเครื่อง"], "GroupCode": gCode });
     });
-
     if (isEdit) {
         const removed = originalMachines.filter(name => !selectedMachines.includes(name));
         removed.forEach(mName => {
@@ -324,7 +273,6 @@ async function saveGroup(isEdit) {
             if (m) machineUpdates.push({ "รหัสเครื่อง": m["รหัสเครื่อง"], "GroupCode": "" });
         });
     }
-
     if (machineUpdates.length > 0) {
         await apiCall("MachineMaster", "Edit", machineUpdates);
         machineUpdates.forEach(upd => {
@@ -333,10 +281,29 @@ async function saveGroup(isEdit) {
         });
     }
 
-    groupsData = await apiCall("MachineGroup", "Find") || [];
+    groupsData = await fetchTable("MachineGroup");
+    renderGroupTable();
     resetForm();
     document.getElementById("groupMsg").classList.remove("hidden");
     setTimeout(() => document.getElementById("groupMsg").classList.add("hidden"), 3000);
+}
+
+function renderGroupTable() {
+    const tbody = document.querySelector("#groupTable tbody");
+    tbody.innerHTML = "";
+    groupsData.forEach(g => {
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-blue-50";
+        tr.innerHTML = `
+            <td class="border-b py-2">${g.GroupCode}</td>
+            <td class="border-b py-2">${g.GroupName}</td>
+            <td class="border-b py-2">${g.DeptCode}</td>
+            <td class="border-b py-2 text-center">
+                <button onclick="editGroup('${g.GroupCode}')" class="text-blue-600 font-bold hover:underline">แก้ไข</button>
+            </td>
+        `;
+        tbody.appendChild(tr);
+    });
 }
 
 function editGroup(code) {
@@ -348,13 +315,12 @@ function editGroup(code) {
     document.getElementById("gProblemDetail").value = g["รายละเอียดอาการเสีย"] || "";
     document.getElementById("gCauseAnalysis").value = g["วิเคราะห์สาเหตุ"] || "";
     document.getElementById("gComment").value = g["การแก้ไขความคิดเห็น"] || "";
+    document.getElementById("gPmTime").value = g.PmTime || 0;
     document.getElementById("gPmTime1").value = g.PmTime1 || 0;
     document.getElementById("gAlertBefore").value = g.AlertBefore || 0;
-
     selectedMachines = machinesData.filter(m => m.GroupCode === code).map(m => m["รายชื่อเครื่องจักร1"]);
     originalMachines = [...selectedMachines];
     renderTags();
-
     document.getElementById("groupAddBtn").classList.add("hidden");
     document.getElementById("groupEditBtn").classList.remove("hidden");
     document.getElementById("groupCancelBtn").classList.remove("hidden");
@@ -363,7 +329,8 @@ function editGroup(code) {
 
 function resetForm() {
     document.getElementById("groupForm").reset();
-    selectedMachines = []; originalMachines = []; renderTags(); generateGroupCode();
+    selectedMachines = []; originalMachines = [];
+    renderTags(); generateGroupCode();
     document.getElementById("groupAddBtn").classList.remove("hidden");
     document.getElementById("groupEditBtn").classList.add("hidden");
     document.getElementById("groupCancelBtn").classList.add("hidden");
@@ -373,6 +340,7 @@ document.getElementById("groupAddBtn").onclick = () => saveGroup(false);
 document.getElementById("groupEditBtn").onclick = () => saveGroup(true);
 document.getElementById("groupCancelBtn").onclick = resetForm;
 
+// Search Logic สำหรับแก้ไข
 document.getElementById("searchGroupPM").addEventListener("input", e => {
     const val = e.target.value.toLowerCase();
     const suggDiv = document.getElementById("searchGroupPMSuggestions");
@@ -388,6 +356,25 @@ document.getElementById("searchGroupPM").addEventListener("input", e => {
     });
     suggDiv.style.display = filtered.length ? "block" : "none";
 });
+
+// Search Table Logic (แสดงเมื่อค้นหาเท่านั้น)
+document.getElementById("searchAll").oninput = (e) => {
+    const val = e.target.value.trim().toLowerCase();
+    const reportDiv = document.getElementById("reportContainer");
+    const emptyMsg = document.getElementById("emptySearchMsg");
+    const rows = document.querySelectorAll("#groupTable tbody tr");
+    
+    if (val === "") {
+        reportDiv.style.display = "none";
+        emptyMsg.style.display = "block";
+    } else {
+        reportDiv.style.display = "block";
+        emptyMsg.style.display = "none";
+        rows.forEach(r => {
+            r.style.display = r.innerText.toLowerCase().includes(val) ? "" : "none";
+        });
+    }
+};
 </script>
 </body>
 </html>
