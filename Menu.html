@@ -11,7 +11,7 @@
       --m-navy: #1976d2; 
       --m-red: #e53935;  
       --m-bg: #f8fafc;
-      --footer-blue: #e3f2fd; /* สีฟ้าอ่อนพาสเทล */
+      --footer-blue: #e3f2fd;
       --footer-text: #1565c0;
     }
 
@@ -19,9 +19,7 @@
       font-family: 'Kanit', sans-serif;
       background-color: var(--m-bg);
       margin: 0;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
+      padding-bottom: 60px; /* เว้นที่ว่างด้านล่างให้ Footer ไม่ทับเนื้อหา */
     }
 
     .navbar {
@@ -32,34 +30,22 @@
     }
     .navbar-brand { font-weight: 600; font-size: 1rem; color: white !important; }
     
-    .user-top-info {
-      color: white;
-      font-size: 0.8rem;
-      opacity: 0.95;
-    }
-
+    .user-top-info { color: white; font-size: 0.75rem; opacity: 0.95; }
     .btn-logout-m {
-      background: white;
-      color: var(--m-navy);
-      border: none;
-      padding: 3px 10px;
-      border-radius: 4px;
-      font-size: 0.7rem;
-      font-weight: 500;
+      background: white; color: var(--m-navy); border: none;
+      padding: 3px 10px; border-radius: 4px; font-size: 0.7rem; font-weight: 500;
     }
 
     .menu-container {
       max-width: 850px;
-      margin: 15px auto; 
+      margin: 10px auto; 
       padding: 0 15px;
-      flex: 1;
-      overflow-y: auto;
     }
 
     .card-menu {
       border: 1px solid #edf2f7;
       border-radius: 12px;
-      padding: 15px 5px;
+      padding: 12px 5px; /* กระชับขนาดลง */
       text-align: center;
       background: white;
       box-shadow: 0 2px 4px rgba(0,0,0,0.02);
@@ -73,53 +59,44 @@
     }
 
     .card-menu:active { background: #f0f4ff; transform: scale(0.98); }
+    .menu-icon { font-size: 1.6rem; margin-bottom: 5px; }
+    .menu-label { font-size: 0.75rem; font-weight: 500; color: #333; line-height: 1.2; }
 
-    .menu-icon {
-      font-size: 1.8rem;
-      margin-bottom: 5px;
-    }
-    
-    .menu-label {
-      font-size: 0.8rem;
-      font-weight: 500;
-      color: #333;
-      line-height: 1.2;
-    }
-
-    /* โซนรายงาน (ล่างสุด) */
+    /* โซนรายงาน */
     .report-zone {
-      margin-top: 25px; /* เว้นระยะห่างจากกลุ่มบน */
-      padding-top: 15px;
+      margin-top: 20px;
+      padding-top: 10px;
       border-top: 1px dashed #cbd5e1;
     }
 
     .menu-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
+      gap: 10px;
     }
 
-    /* ปรับ Layout ในคอมพิวเตอร์ */
     @media (min-width: 768px) {
       .menu-grid { grid-template-columns: repeat(4, 1fr); gap: 20px; }
       .menu-icon { font-size: 2.2rem; }
       .menu-label { font-size: 0.9rem; }
       .navbar-brand { font-size: 1.2rem; }
-      
-      /* ในคอมฯ ให้รายงานอยู่คอลัมน์ซ้ายสุดของแถวใหม่ */
-      .report-card-wrapper {
-        grid-column: 1;
-      }
+      .report-card-wrapper { grid-column: 1; }
     }
 
+    /* แก้ปัญหา Footer มองไม่เห็นในมือถือ */
     .footer-version {
       background: var(--footer-blue);
       color: var(--footer-text);
       text-align: center;
-      padding: 10px 0;
-      font-size: 0.7rem;
+      padding: 12px 0;
+      font-size: 0.65rem;
       border-top: 1px solid rgba(21, 101, 192, 0.1);
+      position: fixed; /* ติดขอบล่างตลอด */
+      bottom: 0;
+      left: 0;
       width: 100%;
+      z-index: 1000;
+      font-weight: 500;
     }
   </style>
 </head>
@@ -136,7 +113,7 @@
       </div>
     </div>
     <div class="container-fluid px-3 d-block d-md-none mt-1">
-      <div class="user-top-info" style="font-size: 0.7rem;">
+      <div class="user-top-info">
         👤 <span id="userDisplayMobile">กำลังโหลด...</span>
       </div>
     </div>
@@ -150,28 +127,24 @@
           <p class="menu-label">เพิ่มใบแจ้งซ่อมใหม่</p>
         </div>
       </a>
-
       <a href="formEdit.html" class="text-decoration-none">
         <div class="card card-menu">
           <span class="menu-icon">🧰</span>
           <p class="menu-label">บันทึกใบแจ้งซ่อม(ต่อ)</p>
         </div>
       </a>
-
       <a href="search.html" class="text-decoration-none">
         <div class="card card-menu">
           <span class="menu-icon">🔍</span>
-          <p class="menu-label">ค้นหาและแก้ไข</p>
+          <p class="menu-label">ค้นหาและแก้ไขใบแจ้งซ่อม</p>
         </div>
       </a>
-
       <a href="MachineMaster.html" class="text-decoration-none">
         <div class="card card-menu">
           <span class="menu-icon">🏭</span>
           <p class="menu-label">เพิ่มข้อมูลเครื่องจักร</p>
         </div>
       </a>
-
       <a href="MachineGroup.html" class="text-decoration-none">
         <div class="card card-menu">
           <span class="menu-icon">⚙️</span>
@@ -210,7 +183,6 @@
           document.getElementById("userDisplayMobile").textContent = fullName.trim();
       }
     }
-
     function logout() {
       if(confirm("ยืนยันการออกจากระบบ?")) {
         localStorage.clear();
