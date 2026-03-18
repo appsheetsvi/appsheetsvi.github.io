@@ -18,12 +18,12 @@ body{ font-family:'Kanit',sans-serif; background:linear-gradient(135deg,#1e88e5,
 /* MODAL / POPUP */
 .modal-content { border-radius: 20px; border: none; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
 .modal-header { background-color: #ffc107; color: #000; padding: 15px 20px; border: none; }
-.modal-body { background-color: #f1f5f9; padding: 20px; max-height: 70vh; overflow-y: auto; }
+.modal-body { background-color: #f1f5f9; padding: 20px; max-height: 80vh; overflow-y: auto; }
 
 /* DASHBOARD TABLE (3 Columns) */
 .pm-dashboard {
     display: flex;
-    border: 2px solid #adb5bd; /* เส้นขอบเข้ม */
+    border: 2px solid #adb5bd;
     border-radius: 12px;
     overflow: hidden;
     margin-bottom: 20px;
@@ -33,7 +33,7 @@ body{ font-family:'Kanit',sans-serif; background:linear-gradient(135deg,#1e88e5,
     flex: 1;
     padding: 15px 5px;
     text-align: center;
-    border-right: 2px solid #adb5bd; /* เส้นแบ่งกลางเข้ม */
+    border-right: 2px solid #adb5bd;
 }
 .stat-column:last-child { border-right: none; }
 .stat-label { display: block; font-size: 13px; font-weight: 600; color: #495057; margin-bottom: 5px; border-bottom: 1px solid #dee2e6; padding-bottom: 5px; }
@@ -43,7 +43,8 @@ body{ font-family:'Kanit',sans-serif; background:linear-gradient(135deg,#1e88e5,
 .stat-overdue { color: #dc3545; background-color: #fff5f5; }
 .stat-warning { color: #fd7e14; background-color: #fffaf0; }
 
-/* PM CARD STYLE */
+/* PM CARD STYLE - แถวเดียวตามเดิม */
+#pmListContainer { display: block; }
 .pm-card {
     background: white; border-radius: 15px; padding: 18px; margin-bottom: 15px;
     border-left: 8px solid #fd7e14; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
@@ -51,7 +52,8 @@ body{ font-family:'Kanit',sans-serif; background:linear-gradient(135deg,#1e88e5,
 }
 .pm-card:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.1); }
 .pm-overdue { border-left-color: #dc3545; }
-.pm-name { font-weight: 600; font-size: 17px; color: #1e293b; margin-bottom: 8px; }
+.pm-name { font-weight: 600; font-size: 17px; color: #1e293b; margin-bottom: 2px; }
+.pm-dept { font-size: 14px; color: #0d6efd; font-weight: 500; margin-bottom: 8px; }
 .pm-line { font-size: 14px; color: #475569; margin-bottom: 3px; }
 .pm-status { font-size: 15px; font-weight: 700; margin-top: 10px; }
 .overdue { color: #dc3545; }
@@ -60,21 +62,12 @@ body{ font-family:'Kanit',sans-serif; background:linear-gradient(135deg,#1e88e5,
 /* MODAL FOOTER */
 .modal-footer { border: none; padding: 15px 20px; background: #fff; }
 .btn-entry { background: #0d6efd; color: #fff; border-radius: 12px; padding: 12px; font-weight: 600; width: 100%; border: none; font-size: 16px; }
-.btn-entry:hover { background: #0b5ed7; }
 
-/* RESPONSIVE FOR DESKTOP (คอมพิวเตอร์) */
-@media (min-width: 992px) {
-    .modal-dialog { max-width: 800px; }
-    .pm-dashboard { margin-bottom: 30px; }
-    .stat-column { padding: 20px 10px; }
-}
-
-/* RESPONSIVE FOR MOBILE (มือถือ) */
+/* RESPONSIVE */
+@media (min-width: 992px) { .modal-dialog { max-width: 800px; } }
 @media (max-width: 767px) {
     .login-card { border-radius: 0; box-shadow: none; height: 100vh; display: flex; flex-direction: column; justify-content: center; }
     .modal-dialog { margin: 10px; }
-    .stat-value { font-size: 18px; }
-    .stat-label { font-size: 11px; }
 }
 </style>
 </head>
@@ -104,7 +97,7 @@ body{ font-family:'Kanit',sans-serif; background:linear-gradient(135deg,#1e88e5,
                 <h5 class="modal-title fw-bold">⚠️ รายการแจ้งเตือน PM</h5>
             </div>
             <div class="modal-body">
-                <input type="text" class="form-control mb-3" placeholder="🔍 ค้นหาชื่อเครื่อง..." id="searchPM" onkeyup="filterPM()">
+                <input type="text" class="form-control mb-3" placeholder="🔍 ค้นหาชื่อเครื่อง หรือ หน่วยงาน..." id="searchPM" onkeyup="filterPM()">
 
                 <div class="pm-dashboard">
                     <div class="stat-column stat-total">
@@ -155,9 +148,10 @@ async function fetchTable(table){
 
 async function checkPMAndRedirect(){
     try{
-        const [groups, repairs] = await Promise.all([
+        const [groups, repairs, depts] = await Promise.all([
             fetchTable("MachineGroup"),
-            fetchTable("RepairTechnicians")
+            fetchTable("RepairTechnicians"),
+            fetchTable("Department")
         ]);
 
         const alerts=[];
@@ -183,8 +177,6 @@ async function checkPMAndRedirect(){
 
             const dueDate=new Date(lastDate);
             dueDate.setDate(dueDate.getDate()+pmDays);
-            dueDate.setHours(0,0,0,0);
-
             const alertDate=new Date(dueDate);
             alertDate.setDate(alertDate.getDate()-alertBefore);
 
@@ -192,17 +184,18 @@ async function checkPMAndRedirect(){
                 const diffDays=Math.ceil((dueDate-today)/(1000*60*60*24));
                 let status="warning";
                 let displayTxt = "เหลือ " + diffDays + " วัน";
-                
                 if(diffDays < 0){
                     status="overdue";
                     overdueCount++;
                     displayTxt = "เกินกำหนด PM " + Math.abs(diffDays) + " วัน";
-                }else{
-                    warningCount++;
-                }
+                }else{ warningCount++; }
+
+                const deptObj = depts.find(d => String(d.DeptCode) === String(g.DeptCode));
+                const deptFullName = deptObj ? deptObj.DeptName : g.DeptCode;
 
                 alerts.push({
                     name: g.GroupName,
+                    deptName: deptFullName,
                     last: formatThaiDate(lastDate),
                     due: formatThaiDate(dueDate),
                     pm: pmDays,
@@ -216,11 +209,11 @@ async function checkPMAndRedirect(){
         });
 
         if(alerts.length > 0){
-            // เรียงลำดับ: เกินกำหนด (มากไปน้อย) และ ใกล้ถึง (น้อยไปมาก)
-            alerts.sort((a,b)=> {
-                if(a.status === "overdue" && b.status === "warning") return -1;
-                if(a.status === "warning" && b.status === "overdue") return 1;
-                return a.diff - b.diff; 
+            // เรียงลำดับตามที่เคยบอก: เกินกำหนดขึ้นก่อน (เรียงจากค้างมากไปน้อย) ต่อด้วยใกล้ถึงกำหนด (เรียงจากเหลือน้อยไปมาก)
+            alerts.sort((a, b) => {
+                if (a.status === 'overdue' && b.status !== 'overdue') return -1;
+                if (a.status !== 'overdue' && b.status === 'overdue') return 1;
+                return a.diff - b.diff; // เรียงตามจำนวนวัน (ค่าติดลบมากจะขึ้นก่อน)
             });
 
             document.getElementById("stat-total").innerText = alerts.length;
@@ -229,8 +222,9 @@ async function checkPMAndRedirect(){
 
             document.getElementById("pmListContainer").innerHTML = alerts.map(i=>`
                 <div class="pm-card ${i.status === 'overdue' ? 'pm-overdue' : ''}" 
-                     onclick="window.location.href='RepairForm.html?dept=${i.deptCode}&group=${i.groupCode}&groupName=${encodeURIComponent(i.name)}'">
+                     onclick="window.location.href='form.html?dept=${i.deptCode}&group=${i.groupCode}&groupName=${encodeURIComponent(i.name)}'">
                     <div class="pm-name">${i.name}</div>
+                    <div class="pm-dept">หน่วยงาน: ${i.deptName}</div>
                     <div class="pm-line">📅 ล่าสุด: ${i.last}</div>
                     <div class="pm-line">⏰ กำหนด: ${i.due} (รอบ ${i.pm} วัน)</div>
                     <div class="pm-status ${i.status}">
@@ -240,42 +234,29 @@ async function checkPMAndRedirect(){
             `).join('');
 
             new bootstrap.Modal(document.getElementById("pmAlertModal")).show();
-        } else {
-            window.location.href="Menu.html";
-        }
-    } catch(e){
-        console.error(e);
-        window.location.href="Menu.html";
-    }
+        } else { window.location.href="Menu.html"; }
+    } catch(e){ window.location.href="Menu.html"; }
 }
 
 function filterPM(){
     const keyword=document.getElementById("searchPM").value.toLowerCase();
-    const cards=document.querySelectorAll(".pm-card");
-    cards.forEach(card=>{
-        const name=card.querySelector(".pm-name").innerText.toLowerCase();
-        card.style.display = name.includes(keyword) ? "block" : "none";
+    document.querySelectorAll(".pm-card").forEach(card=>{
+        card.style.display = card.innerText.toLowerCase().includes(keyword) ? "block" : "none";
     });
 }
 
 document.getElementById("loginForm").addEventListener("submit",async(e)=>{
     e.preventDefault();
     const btn = document.getElementById("loginBtn");
-    const code = document.getElementById("empCode").value.trim();
-    const pass = document.getElementById("password").value.trim();
-    
-    btn.disabled = true;
-    btn.textContent = "กำลังตรวจสอบ...";
-    
+    const code = document.getElementById("empCode").value.trim(), pass = document.getElementById("password").value.trim();
+    btn.disabled = true; btn.textContent = "กำลังตรวจสอบ...";
     const data = await fetchTable("Emp");
     const user = data.find(d=> String(d.EmpCode)===code && String(d.Password)===pass);
-    
     if(user){
         localStorage.setItem("user",JSON.stringify(user));
         checkPMAndRedirect();
     } else {
-        btn.disabled = false;
-        btn.textContent = "เข้าสู่ระบบ";
+        btn.disabled = false; btn.textContent = "เข้าสู่ระบบ";
         document.getElementById("msg").textContent="รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง";
     }
 });
