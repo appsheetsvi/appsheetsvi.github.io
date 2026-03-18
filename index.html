@@ -1,101 +1,130 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | ระบบแจ้งซ่อม</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Kanit', sans-serif;
-            background: linear-gradient(135deg, #1e88e5, #64b5f6);
-            min-height: 100vh;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login | ระบบแจ้งซ่อม</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
 
-        /* --- LOGIN CARD --- */
-        .login-container { width: 100%; display: flex; justify-content: center; align-items: center; padding: 20px; }
-        .login-card {
-            background: white; padding: 40px; border-radius: 22px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-            max-width: 420px; width: 100%;
-        }
-        .login-title { font-weight: 600; color: #0d6efd; }
-        .form-control { border-radius: 10px; padding: 12px; font-size: 15px; }
-        .btn-primary { border-radius: 10px; padding: 12px; font-weight: 500; }
+<style>
+body{ font-family:'Kanit',sans-serif; background:linear-gradient(135deg,#1e88e5,#64b5f6); min-height:100vh; margin:0; }
 
-        /* --- MODAL PM DESIGN --- */
-        .modal-content { border-radius: 20px; border: 0; overflow: hidden; max-height: 90vh; }
-        
-        .modal-body-custom {
-            max-height: 50vh; 
-            overflow-y: auto;
-            padding: 0 20px;
-        }
-        .modal-body-custom::-webkit-scrollbar { width: 5px; }
-        .modal-body-custom::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
+/* LOGIN CARD */
+.login-container{ min-height:100vh; display:flex; justify-content:center; align-items:center; padding:20px; }
+.login-card{ background:white; padding:40px; border-radius:24px; box-shadow:0 20px 40px rgba(0,0,0,0.2); max-width:400px; width:100%; }
+.login-title{ font-weight:600; color:#0d6efd; margin-bottom:25px; }
 
-        .modal-footer-sticky {
-            position: sticky;
-            bottom: 0;
-            background: white;
-            padding: 15px 20px;
-            border-top: 1px solid #eee;
-            z-index: 100;
-        }
+/* MODAL / POPUP */
+.modal-content { border-radius: 20px; border: none; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+.modal-header { background-color: #ffc107; color: #000; padding: 15px 20px; border: none; }
+.modal-body { background-color: #f1f5f9; padding: 20px; max-height: 70vh; overflow-y: auto; }
 
-        /* PM CARD STYLE */
-        .pm-card {
-            background: white; border-radius: 12px; padding: 15px;
-            margin-bottom: 12px; border-left: 6px solid #ff9800;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-        }
-        .pm-overdue { border-left-color: #e53935; background: #fff5f5; }
-        .pm-warning { border-left-color: #ff9800; background: #fffaf2; }
-        .pm-name { font-weight: 600; font-size: 15px; color: #0d6efd; margin-bottom: 4px; }
-        .pm-line { font-size: 13px; margin-bottom: 2px; color: #555; }
-        .pm-status { font-size: 13px; font-weight: 600; margin-top: 5px; }
-        .overdue { color: #e53935; }
-        .warning { color: #ff9800; }
+/* DASHBOARD TABLE (3 Columns) */
+.pm-dashboard {
+    display: flex;
+    border: 2px solid #adb5bd; /* เส้นขอบเข้ม */
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    background: #fff;
+}
+.stat-column {
+    flex: 1;
+    padding: 15px 5px;
+    text-align: center;
+    border-right: 2px solid #adb5bd; /* เส้นแบ่งกลางเข้ม */
+}
+.stat-column:last-child { border-right: none; }
+.stat-label { display: block; font-size: 13px; font-weight: 600; color: #495057; margin-bottom: 5px; border-bottom: 1px solid #dee2e6; padding-bottom: 5px; }
+.stat-value { display: block; font-size: 22px; font-weight: 700; line-height: 1; }
+.stat-unit { font-size: 12px; font-weight: 400; margin-left: 2px; color: #6c757d; }
+.stat-total { color: #0d6efd; background-color: #f0f7ff; }
+.stat-overdue { color: #dc3545; background-color: #fff5f5; }
+.stat-warning { color: #fd7e14; background-color: #fffaf0; }
 
-        @media(max-width:768px){
-            body { background: white; }
-            .login-card { box-shadow: none; border-radius: 0; height: 100vh; display: flex; flex-direction: column; justify-content: center; }
-        }
-    </style>
+/* PM CARD STYLE */
+.pm-card {
+    background: white; border-radius: 15px; padding: 18px; margin-bottom: 15px;
+    border-left: 8px solid #fd7e14; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    cursor: pointer; transition: 0.2s;
+}
+.pm-card:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.1); }
+.pm-overdue { border-left-color: #dc3545; }
+.pm-name { font-weight: 600; font-size: 17px; color: #1e293b; margin-bottom: 8px; }
+.pm-line { font-size: 14px; color: #475569; margin-bottom: 3px; }
+.pm-status { font-size: 15px; font-weight: 700; margin-top: 10px; }
+.overdue { color: #dc3545; }
+.warning { color: #fd7e14; }
+
+/* MODAL FOOTER */
+.modal-footer { border: none; padding: 15px 20px; background: #fff; }
+.btn-entry { background: #0d6efd; color: #fff; border-radius: 12px; padding: 12px; font-weight: 600; width: 100%; border: none; font-size: 16px; }
+.btn-entry:hover { background: #0b5ed7; }
+
+/* RESPONSIVE FOR DESKTOP (คอมพิวเตอร์) */
+@media (min-width: 992px) {
+    .modal-dialog { max-width: 800px; }
+    .pm-dashboard { margin-bottom: 30px; }
+    .stat-column { padding: 20px 10px; }
+}
+
+/* RESPONSIVE FOR MOBILE (มือถือ) */
+@media (max-width: 767px) {
+    .login-card { border-radius: 0; box-shadow: none; height: 100vh; display: flex; flex-direction: column; justify-content: center; }
+    .modal-dialog { margin: 10px; }
+    .stat-value { font-size: 18px; }
+    .stat-label { font-size: 11px; }
+}
+</style>
 </head>
-<body class="d-flex align-items-center justify-content-center">
+
+<body>
 
 <div class="login-container">
     <div class="login-card">
-        <h4 class="text-center mb-4 login-title">🔧 ระบบแจ้งซ่อม</h4>
+        <h4 class="text-center login-title">🔧 ระบบแจ้งซ่อม</h4>
         <form id="loginForm">
-            <input type="text" id="empCode" class="form-control mb-3" placeholder="รหัสพนักงาน" required>
-            <input type="password" id="password" class="form-control mb-3" placeholder="รหัสผ่าน" required>
-            <button type="submit" id="loginBtn" class="btn btn-primary w-100">เข้าสู่ระบบ</button>
+            <div class="mb-3">
+                <input type="text" id="empCode" class="form-control p-3" placeholder="รหัสพนักงาน" required>
+            </div>
+            <div class="mb-4">
+                <input type="password" id="password" class="form-control p-3" placeholder="รหัสผ่าน" required>
+            </div>
+            <button type="submit" id="loginBtn" class="btn btn-primary w-100 p-3">เข้าสู่ระบบ</button>
         </form>
-        <div id="msg" class="text-danger text-center mt-3" style="font-size: 14px;"></div>
+        <div id="msg" class="text-danger text-center mt-3"></div>
     </div>
 </div>
 
-<div class="modal fade" id="pmAlertModal" tabindex="-1" data-bs-backdrop="static">
+<div class="modal fade" id="pmAlertModal" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header bg-warning">
-                <h6 class="modal-title fw-bold m-0 text-dark">🔧 รายการแจ้งเตือน PM</h6>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">⚠️ รายการแจ้งเตือน PM</h5>
             </div>
-            <div class="modal-body p-0">
-                <div class="p-3">
-                    <input type="text" class="form-control mb-2" placeholder="🔍 ค้นหาเครื่อง..." id="searchPM" onkeyup="filterPM()">
-                    <div id="pmSummary" class="text-center p-2 bg-light rounded border fw-bold" style="font-size: 13px;"></div>
+            <div class="modal-body">
+                <input type="text" class="form-control mb-3" placeholder="🔍 ค้นหาชื่อเครื่อง..." id="searchPM" onkeyup="filterPM()">
+
+                <div class="pm-dashboard">
+                    <div class="stat-column stat-total">
+                        <span class="stat-label">M/C ทั้งหมด</span>
+                        <span class="stat-value"><span id="stat-total">0</span><span class="stat-unit">เครื่อง</span></span>
+                    </div>
+                    <div class="stat-column stat-overdue">
+                        <span class="stat-label">เกินกำหนด PM</span>
+                        <span class="stat-value"><span id="stat-overdue">0</span><span class="stat-unit">เครื่อง</span></span>
+                    </div>
+                    <div class="stat-column stat-warning">
+                        <span class="stat-label">ใกล้ถึงกำหนด PM</span>
+                        <span class="stat-value"><span id="stat-warning">0</span><span class="stat-unit">เครื่อง</span></span>
+                    </div>
                 </div>
-                <div id="pmListContainer" class="modal-body-custom"></div>
+
+                <div id="pmListContainer"></div>
             </div>
-            <div class="modal-footer-sticky">
-                <button class="btn btn-primary w-100 py-3 fw-bold shadow-sm" onclick="window.location.href='Menu.html'">
-                    ✅ รับทราบและเข้าสู่เมนู
-                </button>
+            <div class="modal-footer">
+                <button class="btn-entry shadow-sm" onclick="window.location.href='Menu.html'">รับทราบ เข้าสู่เมนูหลัก</button>
             </div>
         </div>
     </div>
@@ -104,162 +133,152 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-    const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
-    const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
-    const apiBase = `https://api.appsheet.com/api/v2/apps/${appId}/tables/`;
+const appId="ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
+const apiKey="V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
+const apiBase=`https://api.appsheet.com/api/v2/apps/${appId}/tables/`;
 
-    function formatThaiDate(date) {
-        const d = String(date.getDate()).padStart(2, '0');
-        const m = String(date.getMonth() + 1).padStart(2, '0');
-        const y = date.getFullYear() + 543;
-        return `${d}/${m}/${y}`;
-    }
+function formatThaiDate(date){
+    const d = String(date.getDate()).padStart(2,'0');
+    const m = String(date.getMonth()+1).padStart(2,'0');
+    const y = date.getFullYear()+543;
+    return `${d}/${m}/${y}`;
+}
 
-    // ฟังก์ชันดึงข้อมูลพร้อมระบบแจ้งเตือน Error
-    async function fetchTable(table) {
-        try {
-            const res = await fetch(`${apiBase}${table}/Action`, {
-                method: "POST",
-                headers: { "ApplicationAccessKey": apiKey, "Content-Type": "application/json" },
-                body: JSON.stringify({ Action: "Find", Properties: {}, Rows: [] })
-            });
-            if (!res.ok) throw new Error(`ไม่พบตาราง ${table} หรือ API Key ผิด`);
-            return await res.json();
-        } catch (err) {
-            console.error(err);
-            throw err;
-        }
-    }
-
-    async function checkPMAndRedirect() {
-        const loginBtn = document.getElementById("loginBtn");
-        try {
-            // ดึงข้อมูล 2 ตารางพร้อมกัน
-            const [groups, repairs] = await Promise.all([
-                fetchTable("MachineGroup"),
-                fetchTable("RepairTechnicians")
-            ]);
-
-            const alerts = [];
-            let overdueCount = 0;
-            let warningCount = 0;
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
-            groups.forEach(g => {
-                const history = repairs.filter(r => String(r.GroupCode) === String(g.GroupCode));
-                if (history.length === 0) return;
-
-                let lastDate = null;
-                history.forEach(r => {
-                    const d = new Date(r.DateModified);
-                    if (!d || isNaN(d)) return;
-                    d.setHours(0, 0, 0, 0);
-                    if (!lastDate || d > lastDate) lastDate = d;
-                });
-
-                if (!lastDate) return;
-                const pmDays = parseInt(g.PmTime1);
-                const alertBefore = parseInt(g.AlertBefore);
-                if (!pmDays) return;
-
-                const dueDate = new Date(lastDate);
-                dueDate.setDate(dueDate.getDate() + pmDays);
-                
-                const alertDate = new Date(dueDate);
-                alertDate.setDate(alertDate.getDate() - (alertBefore || 0));
-
-                if (today >= alertDate) {
-                    const diffDays = Math.ceil((dueDate - today) / (1000 * 60 * 60 * 24));
-                    let status = "warning";
-                    let text = `เหลืออีก ${diffDays} วัน`;
-
-                    if (diffDays < 0) {
-                        status = "overdue";
-                        text = `เกินกำหนด ${Math.abs(diffDays)} วัน`;
-                        overdueCount++;
-                    } else {
-                        warningCount++;
-                    }
-
-                    alerts.push({
-                        name: g.GroupName,
-                        last: formatThaiDate(lastDate),
-                        due: formatThaiDate(dueDate),
-                        pm: pmDays,
-                        status: status,
-                        text: text
-                    });
-                }
-            });
-
-            if (alerts.length > 0) {
-                alerts.sort((a, b) => (a.status === "overdue" ? -1 : 1));
-                document.getElementById("pmSummary").innerHTML = 
-                    `ทั้งหมด ${alerts.length} เครื่อง | <span class="warning">ใกล้ถึง ${warningCount}</span> | <span class="overdue">เกิน ${overdueCount}</span>`;
-                document.getElementById("pmListContainer").innerHTML = alerts.map(i => `
-                    <div class="pm-card pm-${i.status}">
-                        <div class="pm-name">${i.name}</div>
-                        <div class="pm-line">📅 ล่าสุด: ${i.last}</div>
-                        <div class="pm-line">⏰ กำหนด: ${i.due} (รอบ ${i.pm} วัน)</div>
-                        <div class="pm-status ${i.status}">
-                            ${i.status === "overdue" ? "🔴" : "🟠"} ${i.text}
-                        </div>
-                    </div>
-                `).join('');
-                new bootstrap.Modal(document.getElementById("pmAlertModal")).show();
-                loginBtn.textContent = "เข้าสู่ระบบ";
-                loginBtn.disabled = false;
-            } else {
-                window.location.href = "Menu.html";
-            }
-        } catch (e) {
-            alert("ค้างที่หน้าโหลดเพราะ: " + e.message + "\nกรุณาตรวจสอบชื่อตารางใน AppSheet");
-            loginBtn.textContent = "เข้าสู่ระบบ";
-            loginBtn.disabled = false;
-        }
-    }
-
-    function filterPM() {
-        const keyword = document.getElementById("searchPM").value.toLowerCase();
-        const cards = document.querySelectorAll(".pm-card");
-        cards.forEach(card => {
-            const name = card.querySelector(".pm-name").innerText.toLowerCase();
-            card.style.display = name.includes(keyword) ? "block" : "none";
-        });
-    }
-
-    document.getElementById("loginForm").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const code = document.getElementById("empCode").value.trim();
-        const pass = document.getElementById("password").value.trim();
-        const loginBtn = document.getElementById("loginBtn");
-        const msg = document.getElementById("msg");
-
-        msg.textContent = "";
-        loginBtn.disabled = true;
-        loginBtn.textContent = "กำลังตรวจสอบผู้ใช้...";
-
-        try {
-            const data = await fetchTable("Emp");
-            const user = data.find(d => String(d.EmpCode) === code && String(d.Password) === pass);
-
-            if (user) {
-                localStorage.setItem("user", JSON.stringify(user));
-                loginBtn.textContent = "กำลังโหลดข้อมูล PM...";
-                checkPMAndRedirect();
-            } else {
-                msg.textContent = "รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง";
-                loginBtn.disabled = false;
-                loginBtn.textContent = "เข้าสู่ระบบ";
-            }
-        } catch (err) {
-            msg.textContent = "เชื่อมต่อตาราง Emp ไม่สำเร็จ";
-            loginBtn.disabled = false;
-            loginBtn.textContent = "เข้าสู่ระบบ";
-        }
+async function fetchTable(table){
+    const res = await fetch(`${apiBase}${table}/Action`,{
+        method:"POST",
+        headers:{ "ApplicationAccessKey":apiKey, "Content-Type":"application/json" },
+        body:JSON.stringify({ Action:"Find", Properties:{}, Rows:[] })
     });
-</script>
+    return await res.json();
+}
 
+async function checkPMAndRedirect(){
+    try{
+        const [groups, repairs] = await Promise.all([
+            fetchTable("MachineGroup"),
+            fetchTable("RepairTechnicians")
+        ]);
+
+        const alerts=[];
+        let overdueCount=0;
+        let warningCount=0;
+        const today = new Date(); today.setHours(0,0,0,0);
+
+        groups.forEach(g=>{
+            const history = repairs.filter(r=> String(r.GroupCode) === String(g.GroupCode));
+            if(history.length===0) return;
+
+            let lastDate=null;
+            history.forEach(r=>{
+                const d=new Date(r.DateModified);
+                if(!d || isNaN(d)) return;
+                d.setHours(0,0,0,0);
+                if(!lastDate || d>lastDate) lastDate=d;
+            });
+
+            if(!lastDate) return;
+            const pmDays=parseInt(g.PmTime1);
+            const alertBefore=parseInt(g.AlertBefore);
+
+            const dueDate=new Date(lastDate);
+            dueDate.setDate(dueDate.getDate()+pmDays);
+            dueDate.setHours(0,0,0,0);
+
+            const alertDate=new Date(dueDate);
+            alertDate.setDate(alertDate.getDate()-alertBefore);
+
+            if(today >= alertDate){
+                const diffDays=Math.ceil((dueDate-today)/(1000*60*60*24));
+                let status="warning";
+                let displayTxt = "เหลือ " + diffDays + " วัน";
+                
+                if(diffDays < 0){
+                    status="overdue";
+                    overdueCount++;
+                    displayTxt = "เกินกำหนด PM " + Math.abs(diffDays) + " วัน";
+                }else{
+                    warningCount++;
+                }
+
+                alerts.push({
+                    name: g.GroupName,
+                    last: formatThaiDate(lastDate),
+                    due: formatThaiDate(dueDate),
+                    pm: pmDays,
+                    status: status,
+                    text: displayTxt,
+                    diff: diffDays,
+                    deptCode: g.DeptCode,
+                    groupCode: g.GroupCode
+                });
+            }
+        });
+
+        if(alerts.length > 0){
+            // เรียงลำดับ: เกินกำหนด (มากไปน้อย) และ ใกล้ถึง (น้อยไปมาก)
+            alerts.sort((a,b)=> {
+                if(a.status === "overdue" && b.status === "warning") return -1;
+                if(a.status === "warning" && b.status === "overdue") return 1;
+                return a.diff - b.diff; 
+            });
+
+            document.getElementById("stat-total").innerText = alerts.length;
+            document.getElementById("stat-overdue").innerText = overdueCount;
+            document.getElementById("stat-warning").innerText = warningCount;
+
+            document.getElementById("pmListContainer").innerHTML = alerts.map(i=>`
+                <div class="pm-card ${i.status === 'overdue' ? 'pm-overdue' : ''}" 
+                     onclick="window.location.href='RepairForm.html?dept=${i.deptCode}&group=${i.groupCode}&groupName=${encodeURIComponent(i.name)}'">
+                    <div class="pm-name">${i.name}</div>
+                    <div class="pm-line">📅 ล่าสุด: ${i.last}</div>
+                    <div class="pm-line">⏰ กำหนด: ${i.due} (รอบ ${i.pm} วัน)</div>
+                    <div class="pm-status ${i.status}">
+                        ${i.status==="overdue"?"🔴":"🟠"} ${i.text}
+                    </div>
+                </div>
+            `).join('');
+
+            new bootstrap.Modal(document.getElementById("pmAlertModal")).show();
+        } else {
+            window.location.href="Menu.html";
+        }
+    } catch(e){
+        console.error(e);
+        window.location.href="Menu.html";
+    }
+}
+
+function filterPM(){
+    const keyword=document.getElementById("searchPM").value.toLowerCase();
+    const cards=document.querySelectorAll(".pm-card");
+    cards.forEach(card=>{
+        const name=card.querySelector(".pm-name").innerText.toLowerCase();
+        card.style.display = name.includes(keyword) ? "block" : "none";
+    });
+}
+
+document.getElementById("loginForm").addEventListener("submit",async(e)=>{
+    e.preventDefault();
+    const btn = document.getElementById("loginBtn");
+    const code = document.getElementById("empCode").value.trim();
+    const pass = document.getElementById("password").value.trim();
+    
+    btn.disabled = true;
+    btn.textContent = "กำลังตรวจสอบ...";
+    
+    const data = await fetchTable("Emp");
+    const user = data.find(d=> String(d.EmpCode)===code && String(d.Password)===pass);
+    
+    if(user){
+        localStorage.setItem("user",JSON.stringify(user));
+        checkPMAndRedirect();
+    } else {
+        btn.disabled = false;
+        btn.textContent = "เข้าสู่ระบบ";
+        document.getElementById("msg").textContent="รหัสพนักงานหรือรหัสผ่านไม่ถูกต้อง";
+    }
+});
+</script>
 </body>
 </html>
