@@ -675,7 +675,89 @@ $("repairForm").addEventListener("submit", async e=>{
     submitBtn.textContent="✅ บันทึกข้อมูล";
   }
 });
+// รับค่า หน่วยงานและกลุ่ม PM อัตโนมัต 
+ window.addEventListener('load', async function() {
+    // 1. ดึงค่าจาก URL ?dept=A01&groupName=เครื่องจักร1
+    const params = new URLSearchParams(window.location.search);
+    const deptCodeParam = params.get('dept');         
+    const groupNameParam = params.get('groupName');  
 
+    // รอจนกว่า Master Data (deptList, groupList) จะโหลดเสร็จ
+    let retryCount = 0;
+    while ((deptList.length === 0 || groupList.length === 0) && retryCount < 20) {
+        await new Promise(r => setTimeout(r, 500));
+        retryCount++;
+    }
+
+    // 2. จัดการเรื่อง หน่วยงาน (Department)
+    if (deptCodeParam) {
+        const deptObj = deptList.find(d => String(d.DeptCode) === String(deptCodeParam));
+        if (deptObj) {
+            // กรอกชื่อแผนกในรูปแบบ IT : คอมพิวเตอร์ ลงในช่องค้นหา
+            $("deptSearch").value = `${deptObj.NickName} : ${deptObj.DeptName}`;
+            // เก็บค่า Code จริงไว้ใน Hidden Input
+            $("deptCodeHidden").value = deptObj.DeptCode;
+            // เปิดให้ช่องเลือกกลุ่ม PM ทำงานได้
+            $("pmGroupSearch").disabled = false;
+            // บันทึกเวลาเริ่ม
+            deptSelectStartTime = new Date();
+        }
+    }
+
+    // 3. จัดการเรื่อง กลุ่มเครื่องจักร (PM Group)
+    if (groupNameParam && $("deptCodeHidden").value) {
+        // หาข้อมูลกลุ่มจากชื่อที่ส่งมา และต้องเป็นแผนกเดียวกัน
+        const groupObj = groupList.find(g => 
+            String(g.GroupName) === String(groupNameParam) && 
+            String(g.DeptCode) === String($("deptCodeHidden").value)
+        );
+
+        if (groupObj) {
+            // กรอกชื่อกลุ่มลงในช่องค้นหา
+            $("pmGroupSearch").value = groupObj.GroupName;
+
+            // จำลองเหตุการณ์การเลือก (Trigger Logic เลือกเครื่องจักรในกลุ่ม)
+            // โดยการดึงเครื่องจักรทั้งหมดในกลุ่มนั้นมาสร้างรายการด้านล่าง
+            const machinesInGroup = machineList.filter(m =>
+                String(m.GroupCode) === String(groupObj.GroupCode) && 
+                String(m.DeptCode) === String($("deptCodeHidden").value)
+            );
+
+            $("machinesContainer").innerHTML = "";
+
+            function formatDateLocal(date) {
+                const tzOffset = 7 * 60; 
+                const local = new Date(date.getTime() + tzOffset * 60000);
+                return local.toISOString().slice(0, 16);
+            }
+
+            let prevEndTime = new Date();
+            machinesInGroup.forEach(m => {
+                const row = createMachineRow();
+                const pmMinutes = parseInt(m.PmTime) || 10;
+                const endTime = new Date(prevEndTime.getTime() + pmMinutes * 60000);
+                prevEndTime = endTime;
+
+                row.querySelector(".machineSearch").value = m["รายชื่อเครื่องจักร1"];
+                row.querySelector(".machineCodeHidden").value = m["รหัสเครื่อง"];
+                row.querySelector('textarea[name="รายละเอียดอาการเสีย"]').value = m["รายละเอียดอาการเสีย"] || "PM ทำความสะอาด";
+                row.querySelector('textarea[name="วิเคราะห์สาเหตุ"]').value = m["วิเคราะห์สาเหตุ"] || "ตามกำหนด PM";
+
+                row.querySelectorAll(".tech-checkbox").forEach(tc => {
+                    const empCode = tc.querySelector('input[name="ช่างผู้รับผิดชอบ"]').value;
+                    tc.querySelectorAll(`input[name="status_${empCode}"]`).forEach(cbx => {
+                        cbx.checked = (cbx.value === "จบงาน");
+                    });
+                    // ใส่ความคิดเห็นเริ่มต้นจากกลุ่ม (ถ้ามี)
+                    tc.querySelector(`textarea[name="comment_${empCode}"]`).value = groupObj["การแก้ไขความคิดเห็น"] || "";
+                });
+
+                $("machinesContainer").appendChild(row);
+            });
+        }
+    }
+}); 
+  
 // ------- Init -------
 (async function init(){
   await Promise.all([loadDepartments(), loadMachines(), loadTechnicians(), loadGroups()]);
