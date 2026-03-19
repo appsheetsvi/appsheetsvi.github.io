@@ -98,6 +98,9 @@ textarea { min-height:3rem; }
       <ul id="pmGroupList" class="absolute w-full bg-white max-h-40 overflow-y-auto border rounded z-10 hidden"></ul>
     </div>
   </div>
+<input type="hidden" id="deptCodeHidden" name="หน่วยงาน"/>
+
+<input type="hidden" id="groupCodeHidden" name="GroupCode"/>
 
   <!-- เครื่องจักร -->
   <div id="machinesContainer"></div>
@@ -453,6 +456,9 @@ $("pmGroupSearch").addEventListener("input", ()=>{
       li.className="px-3 py-1 hover:bg-blue-100 cursor-pointer";
       li.onclick=()=>{
         $("pmGroupSearch").value=li.textContent;
+            // --- เพิ่มบรรทัดนี้ลงไป ---
+    $("groupCodeHidden").value = li.dataset.code;
+   
         ul.classList.add("hidden");
 
         const machinesInGroup = machineList.filter(m=>
@@ -616,6 +622,9 @@ $("repairForm").addEventListener("submit", async e=>{
         techniciansRows.push({
           "เลขที่ใบแจ้งซ่อม": reqNum,
           "หน่วยงาน": dept,
+    // --- เพิ่มบรรทัดนี้ครับ ---
+    "GroupCode": $("groupCodeHidden").value,
+
           "รหัสเครื่อง": machineCode,
           "EmpCode": t.EmpCode,
           "รายละเอียดอาการเสีย": detail,
@@ -675,8 +684,8 @@ $("repairForm").addEventListener("submit", async e=>{
     submitBtn.textContent="✅ บันทึกข้อมูล";
   }
 });
-// รับค่า หน่วยงานและกลุ่ม PM อัตโนมัต 
- window.addEventListener('load', async function() {
+
+window.addEventListener('load', async function() {
     // 1. ดึงค่าจาก URL ?dept=A01&groupName=เครื่องจักร1
     const params = new URLSearchParams(window.location.search);
     const deptCodeParam = params.get('dept');         
@@ -715,7 +724,8 @@ $("repairForm").addEventListener("submit", async e=>{
         if (groupObj) {
             // กรอกชื่อกลุ่มลงในช่องค้นหา
             $("pmGroupSearch").value = groupObj.GroupName;
-
+        // --- เพิ่มบรรทัดนี้เพื่อเก็บ Code จริงไว้บันทึก ---
+    $("groupCodeHidden").value = groupObj.GroupCode;
             // จำลองเหตุการณ์การเลือก (Trigger Logic เลือกเครื่องจักรในกลุ่ม)
             // โดยการดึงเครื่องจักรทั้งหมดในกลุ่มนั้นมาสร้างรายการด้านล่าง
             const machinesInGroup = machineList.filter(m =>
@@ -756,8 +766,8 @@ $("repairForm").addEventListener("submit", async e=>{
             });
         }
     }
-}); 
-  
+});
+
 // ------- Init -------
 (async function init(){
   await Promise.all([loadDepartments(), loadMachines(), loadTechnicians(), loadGroups()]);
