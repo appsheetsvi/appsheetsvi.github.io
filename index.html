@@ -29,7 +29,7 @@ body {
 /* --- DASHBOARD STATS (กว้างเต็มจอใน PC / บางสวยในมือถือ) --- */
 .pm-dashboard {
     display: flex; 
-    width: 100%; /* ให้กว้างเต็มพื้นที่ Modal */
+    width: 100%; 
     border: 1px solid #cbd5e1; 
     border-radius: 12px; 
     overflow: hidden; 
@@ -65,7 +65,7 @@ body {
 
 .stat-value { 
     display: block; 
-    font-size: 28px; /* ขนาดใหญ่ชัดเจนใน PC */
+    font-size: 28px; 
     font-weight: 800; 
     padding: 12px 0;
     line-height: 1;
@@ -101,7 +101,7 @@ body {
 }
 
 @media (min-width: 992px) {
-    .modal-dialog { max-width: 850px; } /* ขยายความกว้าง Modal ในคอม */
+    .modal-dialog { max-width: 850px; } 
 }
 </style>
 </head>
@@ -178,15 +178,14 @@ async function fetchTable(table){
 
 async function checkPMAndRedirect(){
     try{
-        const [groups, repairs, depts, masters] = await Promise.all([
+        const [groups, repairs, depts] = await Promise.all([
             fetchTable("MachineGroup"), 
             fetchTable("RepairTechnicians"), 
-            fetchTable("Department"),
-            fetchTable("MachineMaster")
+            fetchTable("Department")
         ]);
 
-        const activeMachines = masters.filter(m => String(m.สถานะ).trim() === "Active");
-        const totalMachineCount = activeMachines.length;
+        // นับจำนวนจาก MachineGroup (GroupCode) ทั้งหมดตามเดิม
+        const totalMachineCount = groups.length;
 
         const alerts=[];
         let overdueCount=0, warningCount=0;
