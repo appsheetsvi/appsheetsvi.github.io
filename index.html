@@ -26,23 +26,59 @@ body {
 .modal-header { background-color: #ffc107; color: #000; padding: 12px 20px; border: none; }
 .modal-body { background-color: #f8fafc; padding: 15px; max-height: 75vh; overflow-y: auto; }
 
-/* --- DASHBOARD STATS --- */
+/* --- DASHBOARD STATS (กว้างเต็มจอใน PC / บางสวยในมือถือ) --- */
 .pm-dashboard {
-    display: flex; border: 1px solid #e2e8f0; border-radius: 12px; 
-    overflow: hidden; margin-bottom: 15px; background: #fff;
+    display: flex; 
+    width: 100%; /* ให้กว้างเต็มพื้นที่ Modal */
+    border: 1px solid #cbd5e1; 
+    border-radius: 12px; 
+    overflow: hidden; 
+    margin-bottom: 20px; 
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
-.stat-column { flex: 1; padding: 10px 5px; text-align: center; border-right: 1px solid #e2e8f0; }
+.stat-column { 
+    flex: 1; 
+    padding: 0; 
+    text-align: center; 
+    border-right: 1px solid #cbd5e1; 
+    display: flex;
+    flex-direction: column;
+}
 .stat-column:last-child { border-right: none; }
-.stat-label { display: block; font-size: 10px; font-weight: 500; color: #64748b; margin-bottom: 2px; }
-.stat-value { display: block; font-size: 18px; font-weight: 700; }
-.stat-total { color: #0d6efd; background-color: #f0f9ff; }
-.stat-overdue { color: #dc3545; background-color: #fff1f2; }
-.stat-warning { color: #f59e0b; background-color: #fffbeb; }
 
-/* --- PM LIST (Grid 2 col on PC) --- */
+/* แถบสีด้านบนแยกช่อง */
+.stat-total { border-top: 5px solid #3b82f6; }   
+.stat-overdue { border-top: 5px solid #ef4444; } 
+.stat-warning { border-top: 5px solid #f59e0b; } 
+
+.stat-label { 
+    display: block; 
+    font-size: 11px; 
+    font-weight: 600; 
+    color: #475569; 
+    padding: 10px 2px 5px 2px;
+    background-color: #f8fafc;
+    border-bottom: 1px solid #cbd5e1;
+    letter-spacing: 0.5px;
+}
+
+.stat-value { 
+    display: block; 
+    font-size: 28px; /* ขนาดใหญ่ชัดเจนใน PC */
+    font-weight: 800; 
+    padding: 12px 0;
+    line-height: 1;
+}
+
+/* สีตัวเลข */
+.stat-total .stat-value { color: #1e40af; }
+.stat-overdue .stat-value { color: #b91c1c; }
+.stat-warning .stat-value { color: #b45309; }
+
+/* --- PM LIST --- */
 #pmListContainer { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
 
-/* --- PM CARD STYLE --- */
 .pm-card {
     background: white; border-radius: 12px; padding: 12px; 
     border-left: 5px solid #f59e0b; box-shadow: 0 2px 4px rgba(0,0,0,0.04);
@@ -54,21 +90,18 @@ body {
 .pm-info { font-size: 11px; color: #64748b; margin-bottom: 1px; }
 .pm-status { font-size: 12px; font-weight: 600; margin-top: 8px; padding-top: 6px; border-top: 1px dashed #f1f5f9; }
 
-/* --- STICKY FOOTER --- */
 .modal-footer { position: sticky; bottom: 0; background: #fff; padding: 12px 20px; z-index: 10; border: none; }
 .btn-entry { background: #0d6efd; color: #fff; border-radius: 10px; padding: 10px; font-weight: 600; width: 100%; border: none; font-size: 14px; }
 
-/* --- MOBILE OPTIMIZATION --- */
+/* --- RESPONSIVE ADJUSTMENTS --- */
 @media (max-width: 991px) {
     #pmListContainer { grid-template-columns: 1fr; }
-    .pm-name { font-size: 13.5px; }
-    .pm-dept, .pm-info, .pm-status { font-size: 10.5px; }
-    .stat-value { font-size: 16px; }
-    .modal-dialog { margin: 10px; }
+    .stat-value { font-size: 22px; padding: 10px 0; }
+    .stat-label { font-size: 10px; }
 }
 
 @media (min-width: 992px) {
-    .modal-dialog { max-width: 800px; }
+    .modal-dialog { max-width: 850px; } /* ขยายความกว้าง Modal ในคอม */
 }
 </style>
 </head>
@@ -104,11 +137,11 @@ body {
                         <span class="stat-value" id="stat-total">0</span>
                     </div>
                     <div class="stat-column stat-overdue">
-                        <span class="stat-label">เกินกำหนด PM</span>
+                        <span class="stat-label">เกินกำหนด</span>
                         <span class="stat-value" id="stat-overdue">0</span>
                     </div>
                     <div class="stat-column stat-warning">
-                        <span class="stat-label">ใกล้ถึงกำหนด PM</span>
+                        <span class="stat-label">ใกล้ครบ</span>
                         <span class="stat-value" id="stat-warning">0</span>
                     </div>
                 </div>
@@ -145,11 +178,16 @@ async function fetchTable(table){
 
 async function checkPMAndRedirect(){
     try{
-        const [groups, repairs, depts] = await Promise.all([
-            fetchTable("MachineGroup"), fetchTable("RepairTechnicians"), fetchTable("Department")
+        const [groups, repairs, depts, masters] = await Promise.all([
+            fetchTable("MachineGroup"), 
+            fetchTable("RepairTechnicians"), 
+            fetchTable("Department"),
+            fetchTable("MachineMaster")
         ]);
 
-        const totalMachineCount = groups.length;
+        const activeMachines = masters.filter(m => String(m.สถานะ).trim() === "Active");
+        const totalMachineCount = activeMachines.length;
+
         const alerts=[];
         let overdueCount=0, warningCount=0;
         const today = new Date(); today.setHours(0,0,0,0);
@@ -187,6 +225,7 @@ async function checkPMAndRedirect(){
 
         if(alerts.length > 0){
             alerts.sort((a, b) => (a.status === 'overdue' && b.status !== 'overdue') ? -1 : (a.status !== 'overdue' && b.status === 'overdue') ? 1 : a.diff - b.diff);
+            
             document.getElementById("stat-total").innerText = totalMachineCount;
             document.getElementById("stat-overdue").innerText = overdueCount;
             document.getElementById("stat-warning").innerText = warningCount;
