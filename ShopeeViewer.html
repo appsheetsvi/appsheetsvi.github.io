@@ -1,0 +1,95 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบค้นหาสินค้า NAS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        #imgDisplay { width: 100%; height: 300px; object-fit: contain; }
+    </style>
+</head>
+<body class="bg-gray-50 p-4 md:p-8">
+    <div class="max-w-4xl mx-auto bg-white p-6 md:p-8 rounded-3xl shadow-lg border border-gray-100">
+        <h1 class="text-xl md:text-2xl font-bold mb-6 text-gray-800">📦 คลังสินค้า NAS</h1>
+        
+        <input type="text" id="keyword" oninput="filterData()" placeholder="🔍 พิมพ์ค้นหา..." 
+               class="w-full border border-gray-200 p-4 rounded-2xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-orange-200 outline-none mb-6 transition">
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div id="list" class="space-y-3 h-[400px] overflow-y-auto pr-2">
+                <p class="text-gray-400 text-center mt-10">เริ่มพิมพ์เพื่อค้นหา...</p>
+            </div>
+            
+            <div class="flex flex-col gap-4">
+                <div id="view" class="bg-gray-50 rounded-2xl flex items-center justify-center h-[300px] p-4 border border-gray-100">
+                    <img id="imgDisplay" class="hidden max-h-full" src="" alt="รูปสินค้า">
+                    <p id="placeholder" class="text-gray-400 text-sm">ยังไม่ได้เลือกสินค้า</p>
+                </div>
+                
+                <div class="bg-orange-50 border border-orange-100 p-4 rounded-xl">
+                    <div class="text-[10px] uppercase tracking-widest text-orange-600 font-bold mb-1">File Source Location</div>
+                    <div id="sourcePath" class="text-gray-600 text-[11px] md:text-xs font-mono break-all leading-relaxed">
+                        โปรดเลือกสินค้าเพื่อดูตำแหน่งไฟล์
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
+        const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
+        const NAS_BASE_URL = "http://192.168.0.15/web_images/";
+        let allProducts = [];
+
+        async function init() {
+            try {
+                const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/ProductShopee/Find`, {
+                    method: "POST",
+                    headers: { "ApplicationAccessKey": apiKey, "Content-Type": "application/json" },
+                    body: JSON.stringify({ Action: "Find", Properties: {}, Rows: [] })
+                });
+                const data = await res.json();
+                allProducts = Array.isArray(data) ? data : (data.Rows || []);
+            } catch (err) { console.error(err); }
+        }
+
+        function filterData() {
+            const kw = document.getElementById('keyword').value.toLowerCase();
+            const list = document.getElementById('list');
+            list.innerHTML = "";
+            if (!kw) return list.innerHTML = "<p class='text-gray-400 text-center mt-10'>เริ่มพิมพ์เพื่อค้นหา...</p>";
+
+            const seen = new Set();
+            allProducts.filter(i => (i.Fonumber || '').toLowerCase().includes(kw) || (i.ProductCode || '').toLowerCase().includes(kw))
+            .forEach(i => {
+                const uniqueKey = `${i.Fonumber}-${i.ProductCode}`;
+                if (!seen.has(uniqueKey)) {
+                    seen.add(uniqueKey);
+                    const div = document.createElement('div');
+                    div.className = "p-4 bg-white border border-gray-100 rounded-2xl hover:shadow-md cursor-pointer transition";
+                    div.innerHTML = `<div class="font-bold text-gray-700">${i.Fonumber}</div><div class="text-xs text-gray-400">Code: ${i.ProductCode}</div>`;
+                    div.onclick = () => showImage(i.Fonumber, i.ProductCode);
+                    list.appendChild(div);
+                }
+            });
+        }
+
+        function showImage(fonumber, productCode) {
+            const img = document.getElementById('imgDisplay');
+            const place = document.getElementById('placeholder');
+            const pathDisplay = document.getElementById('sourcePath');
+            const fullPath = `${NAS_BASE_URL}${fonumber}/${productCode}.jpg`;
+            
+            img.src = fullPath;
+            pathDisplay.innerText = fullPath;
+            
+            img.onload = () => { img.classList.remove('hidden'); place.classList.add('hidden'); };
+            img.onerror = () => { img.classList.add('hidden'); place.classList.remove('hidden'); pathDisplay.innerText = "ไม่พบไฟล์ในตำแหน่งที่ระบุ"; };
+        }
+
+        init();
+    </script>
+</body>
+</html>
