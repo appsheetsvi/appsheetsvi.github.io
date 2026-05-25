@@ -2,33 +2,38 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Assembly Manager Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .scroll-area { height: 150px; overflow-y: auto; border: 1px solid #e2e8f0; padding: 10px; border-radius: 8px; margin-top: 10px; background: #fafafa; }
-        .item-card { padding: 8px 12px; background: white; border: 1px solid #dbeafe; border-radius: 6px; display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 14px; }
+        body { background-color: #f3f4f6; display: flex; justify-content: center; padding: 20px; min-height: 100vh; }
+        .main-container { width: 100%; max-width: 500px; background: white; padding: 24px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .scroll-area { height: 180px; overflow-y: auto; border: 1px solid #e5e7eb; padding: 12px; border-radius: 12px; margin-top: 12px; background: #f9fafb; }
+        .item-card { padding: 12px; background: white; border: 1px solid #dbeafe; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 14px; }
+        button { transition: all 0.2s ease; }
+        button:active { transform: scale(0.98); }
     </style>
 </head>
-<body class="bg-gray-100 p-6">
+<body>
 
-    <div class="max-w-lg mx-auto bg-white p-6 rounded-2xl shadow-xl border border-gray-100">
-        <h2 class="text-sm font-bold text-gray-700 mb-4 uppercase">🔍 ค้นหาจาก PoductCode และบันทึกลง AssemblyMaster</h2>
+    <div class="main-container">
+        <h2 class="text-lg font-bold text-gray-800 mb-5 text-center">🔍 Assembly Manager</h2>
         
-        <div id="statusMsg" class="text-xs text-blue-500 mb-4">กำลังโหลดข้อมูล...</div>
+        <div id="statusMsg" class="text-xs text-blue-500 mb-4 text-center">กำลังเชื่อมต่อ...</div>
 
         <input type="text" id="assemblySearch" list="assemblyList" placeholder="ค้นหา Id_AssemblyMaster..." 
-               autocomplete="off" class="w-full border p-3 rounded-lg text-sm mb-2 outline-none focus:ring-2 focus:ring-blue-400">
+               class="w-full border p-3.5 rounded-xl text-sm mb-3 outline-none focus:ring-2 focus:ring-blue-500">
         <datalist id="assemblyList"></datalist>
         
         <input type="text" id="locationInput" placeholder="ระบุ Location..." 
-               class="w-full border p-3 rounded-lg text-sm mb-4 outline-none focus:ring-2 focus:ring-blue-400">
+               class="w-full border p-3.5 rounded-xl text-sm mb-4 outline-none focus:ring-2 focus:ring-blue-500">
         
-        <button onclick="addItem()" class="w-full bg-blue-600 text-white p-3 rounded-lg font-bold text-sm hover:bg-blue-700 transition">เพิ่มลงรายการ</button>
+        <button onclick="addItem()" class="w-full bg-blue-600 text-white p-3.5 rounded-xl font-bold hover:bg-blue-700 shadow-md">เพิ่มลงรายการ</button>
 
-        <h2 class="text-sm font-bold text-gray-700 mt-6 mb-2 uppercase">📋 รายการที่เตรียมบันทึก</h2>
+        <h2 class="text-sm font-bold text-gray-700 mt-8 mb-2 uppercase">📋 รายการเตรียมบันทึก</h2>
         <div id="selectedList" class="scroll-area"></div>
         
-        <button onclick="saveList()" class="w-full mt-4 bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-700 shadow-lg transition">💾 บันทึกลงตาราง AssemblyMaster</button>
+        <button onclick="saveList()" class="w-full mt-6 bg-green-600 text-white p-4 rounded-xl font-bold hover:bg-green-700 shadow-lg text-lg">💾 บันทึกข้อมูล</button>
     </div>
 
     <script>
@@ -38,9 +43,7 @@
         let assemblyData = []; 
         let selectedItems = [];   
 
-        // 1. ดึงข้อมูลจาก PoductCode เพื่อทำระบบแนะนำ (ค้นหาเท่านั้น ห้ามแก้ไข)
         async function init() {
-            const status = document.getElementById('statusMsg');
             try {
                 const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/PoductCode/Find`, {
                     method: "POST",
@@ -49,11 +52,9 @@
                 });
                 const data = await res.json();
                 const rows = Array.isArray(data) ? data : (data.Rows || []);
-                
                 assemblyData = [...new Set(rows.map(r => r.Id_AssemblyMaster).filter(v => v))];
-                status.innerText = `พร้อมใช้งาน (ค้นหาจาก PoductCode: ${assemblyData.length} รายการ)`;
-                status.className = "text-xs text-green-600 mb-4";
-            } catch (e) { status.innerText = "เชื่อมต่อฐานข้อมูลไม่ได้"; }
+                document.getElementById('statusMsg').innerText = `พร้อมใช้งาน (${assemblyData.length} รายการ)`;
+            } catch (e) { document.getElementById('statusMsg').innerText = "เชื่อมต่อไม่ได้"; }
         }
 
         document.getElementById('assemblySearch').addEventListener('input', function(e) {
@@ -84,16 +85,14 @@
             selectedItems.forEach((item, index) => {
                 const div = document.createElement('div');
                 div.className = "item-card";
-                div.innerHTML = `<span><b>${item.name}</b> ➡️ @${item.loc}</span>
-                                 <button onclick="selectedItems.splice(${index},1); renderSelected()" class="text-red-500 font-bold">✕</button>`;
+                div.innerHTML = `<span><b>${item.name}</b> <br><small class="text-gray-500">Loc: ${item.loc}</small></span>
+                                 <button onclick="selectedItems.splice(${index},1); renderSelected()" class="text-red-500 px-2 py-1 font-bold">✕</button>`;
                 container.appendChild(div);
             });
         }
 
-        // 2. บันทึกข้อมูลลงตาราง AssemblyMaster
         async function saveList() {
             if (selectedItems.length === 0) return alert("ไม่มีรายการ!");
-            
             for (const item of selectedItems) {
                 await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/AssemblyMaster/Action`, {
                     method: "POST",
@@ -101,10 +100,7 @@
                     body: JSON.stringify({
                         "Action": "Add",
                         "Properties": { "Locale": "en-US" },
-                        "Rows": [{ 
-                            "AssemblyMasterNew": item.name, 
-                            "Location": item.loc 
-                        }]
+                        "Rows": [{ "AssemblyMasterNew": item.name, "Location": item.loc }]
                     })
                 });
             }
