@@ -6,34 +6,32 @@
     <title>Assembly Manager Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #f3f4f6; display: flex; justify-content: center; padding: 20px; min-height: 100vh; }
-        .main-container { width: 100%; max-width: 500px; background: white; padding: 24px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        .scroll-area { height: 180px; overflow-y: auto; border: 1px solid #e5e7eb; padding: 12px; border-radius: 12px; margin-top: 12px; background: #f9fafb; }
-        .item-card { padding: 12px; background: white; border: 1px solid #dbeafe; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 14px; }
-        button { transition: all 0.2s ease; }
-        button:active { transform: scale(0.98); }
+        body { background-color: #f3f4f6; min-height: 100vh; display: flex; justify-content: center; align-items: flex-start; padding: 20px; }
+        .main-card { width: 100%; max-width: 500px; background: white; padding: 24px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); }
+        .scroll-area { height: 200px; overflow-y: auto; border: 1px solid #e5e7eb; padding: 12px; border-radius: 12px; background: #f9fafb; margin-top: 10px; }
+        .item-card { padding: 12px; background: white; border: 1px solid #e5e7eb; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        input:focus { border-color: #2563eb; ring: 2px solid #bfdbfe; }
     </style>
 </head>
 <body>
 
-    <div class="main-container">
-        <h2 class="text-lg font-bold text-gray-800 mb-5 text-center">🔍 Assembly Manager</h2>
-        
-        <div id="statusMsg" class="text-xs text-blue-500 mb-4 text-center">กำลังเชื่อมต่อ...</div>
+    <div class="main-card">
+        <h2 class="text-xl font-bold text-gray-800 mb-2 text-center">Assembly Manager</h2>
+        <div id="statusMsg" class="text-center text-xs text-gray-500 mb-6">กำลังเชื่อมต่อฐานข้อมูล...</div>
 
-        <input type="text" id="assemblySearch" list="assemblyList" placeholder="ค้นหา Id_AssemblyMaster..." 
-               class="w-full border p-3.5 rounded-xl text-sm mb-3 outline-none focus:ring-2 focus:ring-blue-500">
+        <input type="text" id="assemblySearch" list="assemblyList" placeholder="🔍 ค้นหา Id_AssemblyMaster..." 
+               class="w-full border p-4 rounded-xl text-sm mb-3 outline-none transition">
         <datalist id="assemblyList"></datalist>
         
-        <input type="text" id="locationInput" placeholder="ระบุ Location..." 
-               class="w-full border p-3.5 rounded-xl text-sm mb-4 outline-none focus:ring-2 focus:ring-blue-500">
+        <input type="text" id="locationInput" placeholder="📍 ระบุ Location..." 
+               class="w-full border p-4 rounded-xl text-sm mb-4 outline-none transition">
         
-        <button onclick="addItem()" class="w-full bg-blue-600 text-white p-3.5 rounded-xl font-bold hover:bg-blue-700 shadow-md">เพิ่มลงรายการ</button>
+        <button onclick="addItem()" class="w-full bg-blue-600 text-white p-4 rounded-xl font-bold hover:bg-blue-700 shadow-md transition">เพิ่มลงรายการ</button>
 
-        <h2 class="text-sm font-bold text-gray-700 mt-8 mb-2 uppercase">📋 รายการเตรียมบันทึก</h2>
+        <h2 class="text-sm font-bold text-gray-600 mt-8 mb-2 uppercase">📋 รายการที่เตรียมบันทึก</h2>
         <div id="selectedList" class="scroll-area"></div>
         
-        <button onclick="saveList()" class="w-full mt-6 bg-green-600 text-white p-4 rounded-xl font-bold hover:bg-green-700 shadow-lg text-lg">💾 บันทึกข้อมูล</button>
+        <button onclick="saveList()" class="w-full mt-6 bg-green-600 text-white p-4 rounded-xl font-bold hover:bg-green-700 shadow-lg transition text-lg">💾 บันทึกข้อมูลลงตาราง</button>
     </div>
 
     <script>
@@ -43,6 +41,7 @@
         let assemblyData = []; 
         let selectedItems = [];   
 
+        // โหลดข้อมูล PoductCode มาทำ Auto-complete
         async function init() {
             try {
                 const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/PoductCode/Find`, {
@@ -53,8 +52,8 @@
                 const data = await res.json();
                 const rows = Array.isArray(data) ? data : (data.Rows || []);
                 assemblyData = [...new Set(rows.map(r => r.Id_AssemblyMaster).filter(v => v))];
-                document.getElementById('statusMsg').innerText = `พร้อมใช้งาน (${assemblyData.length} รายการ)`;
-            } catch (e) { document.getElementById('statusMsg').innerText = "เชื่อมต่อไม่ได้"; }
+                document.getElementById('statusMsg').innerText = `พร้อมใช้งาน (พบข้อมูลค้นหา ${assemblyData.length} รายการ)`;
+            } catch (e) { document.getElementById('statusMsg').innerText = "เชื่อมต่อฐานข้อมูลล้มเหลว"; }
         }
 
         document.getElementById('assemblySearch').addEventListener('input', function(e) {
@@ -73,6 +72,8 @@
             const name = document.getElementById('assemblySearch').value;
             const loc = document.getElementById('locationInput').value;
             if (!name || !loc) return alert("กรุณากรอกข้อมูลให้ครบ");
+            if (!assemblyData.includes(name)) return alert("❌ ไม่พบ ItemCode รายการนี้ในระบบ ");
+            
             selectedItems.push({ name, loc });
             renderSelected();
             document.getElementById('assemblySearch').value = "";
@@ -85,15 +86,31 @@
             selectedItems.forEach((item, index) => {
                 const div = document.createElement('div');
                 div.className = "item-card";
-                div.innerHTML = `<span><b>${item.name}</b> <br><small class="text-gray-500">Loc: ${item.loc}</small></span>
-                                 <button onclick="selectedItems.splice(${index},1); renderSelected()" class="text-red-500 px-2 py-1 font-bold">✕</button>`;
+                div.innerHTML = `<div><b class="text-sm">${item.name}</b><div class="text-xs text-gray-500">Loc: ${item.loc}</div></div>
+                                 <button onclick="selectedItems.splice(${index},1); renderSelected()" class="text-red-400 font-bold px-2">✕</button>`;
                 container.appendChild(div);
             });
         }
 
         async function saveList() {
             if (selectedItems.length === 0) return alert("ไม่มีรายการ!");
+            
+            // ดึงข้อมูลเก่าจาก AssemblyMaster มาเช็คซ้ำ
+            const resMaster = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/AssemblyMaster/Find`, {
+                method: "POST",
+                headers: { "ApplicationAccessKey": apiKey, "Content-Type": "application/json" },
+                body: JSON.stringify({ Action: "Find", Properties: { "Locale": "en-US" }, Rows: [] })
+            });
+            const masterData = await resMaster.json();
+            const existingRecords = Array.isArray(masterData) ? masterData : (masterData.Rows || []);
+            const savedItems = existingRecords.map(r => r.AssemblyMasterNew);
+
             for (const item of selectedItems) {
+                if (savedItems.includes(item.name)) {
+                    alert(`⚠️ รายการ "${item.name}" ถูกบันทึกไว้แล้ว`);
+                    continue;
+                }
+
                 await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/AssemblyMaster/Action`, {
                     method: "POST",
                     headers: { "ApplicationAccessKey": apiKey, "Content-Type": "application/json" },
@@ -103,6 +120,7 @@
                         "Rows": [{ "AssemblyMasterNew": item.name, "Location": item.loc }]
                     })
                 });
+                savedItems.push(item.name);
             }
             alert("บันทึกสำเร็จ!");
             selectedItems = []; 
