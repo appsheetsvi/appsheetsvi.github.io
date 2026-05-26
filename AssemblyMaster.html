@@ -2,7 +2,6 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Assembly Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -10,37 +9,40 @@
         .main-card { width: 100%; max-width: 500px; background: white; padding: 24px; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
         .active-add { background: #2563eb; color: white; }
         .active-edit { background: #eab308; color: white; }
-        #toast { position: fixed; top: 20px; right: 20px; padding: 16px 24px; background: #16a34a; color: white; border-radius: 12px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); display: none; z-index: 9999; font-weight: bold; }
-        #dropdownContainer { position: absolute; width: calc(100% - 48px); max-height: 200px; overflow-y: auto; background: white; border: 1px solid #e5e7eb; border-radius: 12px; display: none; z-index: 50; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        #toast { position: fixed; top: 20px; right: 20px; padding: 16px 24px; background: #16a34a; color: white; border-radius: 12px; z-index: 9999; display: none; font-weight: bold; }
+        #dropdownContainer { position: absolute; width: calc(100% - 48px); max-height: 200px; overflow-y: auto; background: white; border: 1px solid #e5e7eb; border-radius: 12px; display: none; z-index: 50; }
         .dropdown-item { padding: 12px; cursor: pointer; border-bottom: 1px solid #f9fafb; font-size: 14px; }
-        .dropdown-item:hover { background-color: #f3f4f6; }
-        @media (min-width: 768px) { .mobile-save-btn { display: none; } }
+        .dropdown-item:hover { background-color: #eff6ff; }
     </style>
 </head>
 <body>
 
     <div id="toast">✅ บันทึกข้อมูลสำเร็จ!</div>
+    <input type="hidden" id="hiddenId">
 
     <div class="main-card">
         <h2 class="text-xl font-bold text-center mb-6">Assembly Manager</h2>
+        
+        <div class="mb-6 text-center bg-blue-50 py-2 rounded-xl border border-blue-100">
+            <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">รายการที่บันทึกแล้ว</span>
+            <div id="counter" class="text-xl font-black text-blue-600">0</div>
+        </div>
+
         <div class="flex bg-gray-100 p-1 rounded-xl mb-6">
             <button id="btnModeAdd" onclick="setMode('add')" class="flex-1 py-2 rounded-lg font-bold text-sm active-add">➕ เพิ่มใหม่</button>
             <button id="btnModeEdit" onclick="setMode('edit')" class="flex-1 py-2 rounded-lg font-bold text-sm">✎ แก้ไข</button>
         </div>
 
         <div class="relative space-y-4">
-            <input type="text" id="assemblySearch" placeholder="🔍 ค้นหา ItemCode..." 
-                   class="w-full border-2 p-4 rounded-xl text-sm outline-none" 
-                   oninput="handleSearch(this.value)" 
-                   onfocus="toggleDropdown(true)"
-                   onkeydown="if(event.key==='Enter'){ event.preventDefault(); toggleDropdown(false); document.getElementById('locationInput').focus(); }">
-            <div id="dropdownContainer"></div>
+            <div class="relative">
+                <input type="text" id="assemblySearch" placeholder="🔍 เลือกหรือพิมพ์ ItemCode..." 
+                       class="w-full border-2 p-4 rounded-xl text-sm outline-none" 
+                       oninput="handleSearch(this.value)" onfocus="toggleDropdown(true)">
+                <div id="dropdownContainer"></div>
+            </div>
             
             <input type="text" id="locationInput" placeholder="📍 ระบุ Location..." 
-                   class="w-full border-2 p-4 rounded-xl text-sm outline-none"
-                   onkeydown="if(event.key==='Enter'){ event.preventDefault(); toggleDropdown(false); processAndSave(); }">
-            
-            <button onclick="processAndSave()" class="mobile-save-btn w-full bg-green-600 text-white p-4 rounded-xl font-bold shadow-lg">💾 บันทึกข้อมูล</button>
+                   class="w-full border-2 p-4 rounded-xl text-sm outline-none">
         </div>
     </div>
 
@@ -48,64 +50,42 @@
         const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
         const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
         let mode = 'add';
-        let productCodes = []; 
-        let masterRecords = []; 
+        let masterRecords = [];
 
         async function init() {
-            const [resProduct, resMaster] = await Promise.all([
-                fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/PoductCode/Find`, { method: "POST", headers: { "ApplicationAccessKey": apiKey, "Content-Type": "application/json" }, body: JSON.stringify({ Action: "Find", Properties: { "Locale": "en-US" }, Rows: [] }) }),
-                fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/AssemblyMaster/Find`, { method: "POST", headers: { "ApplicationAccessKey": apiKey, "Content-Type": "application/json" }, body: JSON.stringify({ Action: "Find", Properties: { "Locale": "en-US" }, Rows: [] }) })
-            ]);
-            productCodes = (await resProduct.json()).map(r => r.Id_AssemblyMaster);
-            masterRecords = await resMaster.json();
+            const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/AssemblyMaster/Find`, {
+                method: "POST", headers: { "ApplicationAccessKey": apiKey, "Content-Type": "application/json" },
+                body: JSON.stringify({ Action: "Find", Properties: { "Locale": "en-US" }, Rows: [] })
+            });
+            masterRecords = await res.json();
+            document.getElementById('counter').innerText = masterRecords.length;
         }
 
         function handleSearch(val) {
             filterDropdown(val);
-            const found = masterRecords.find(r => r.AssemblyMasterNew === val);
-            if (found) document.getElementById('locationInput').value = found.Location;
-        }
-
-        function setMode(m) {
-            mode = m;
-            document.getElementById('btnModeAdd').className = (m === 'add') ? 'flex-1 py-2 rounded-lg font-bold text-sm active-add' : 'flex-1 py-2 rounded-lg font-bold text-sm';
-            document.getElementById('btnModeEdit').className = (m === 'edit') ? 'flex-1 py-2 rounded-lg font-bold text-sm active-edit' : 'flex-1 py-2 rounded-lg font-bold text-sm';
-            document.getElementById('assemblySearch').value = "";
-            document.getElementById('locationInput').value = "";
-        }
-
-        function toggleDropdown(show) { document.getElementById('dropdownContainer').style.display = show ? 'block' : 'none'; }
-
-        function filterDropdown(keyword) {
-            const container = document.getElementById('dropdownContainer');
-            container.innerHTML = "";
-            const options = (mode === 'add') ? productCodes : masterRecords.map(r => r.AssemblyMasterNew);
-            const filtered = [...new Set(options)].filter(i => i && i.toLowerCase().includes(keyword.toLowerCase()));
-            filtered.forEach(i => {
-                const div = document.createElement('div');
-                div.className = 'dropdown-item';
-                div.innerText = i;
-                div.onclick = () => {
-                    document.getElementById('assemblySearch').value = i;
-                    handleSearch(i);
-                    toggleDropdown(false);
-                };
-                container.appendChild(div);
-            });
-            container.style.display = filtered.length > 0 ? 'block' : 'none';
+            const found = masterRecords.find(r => r.AssemblyMasterNew.trim().toLowerCase() === val.trim().toLowerCase());
+            if (found) {
+                document.getElementById('locationInput').value = found.Location;
+                document.getElementById('hiddenId').value = found.id;
+            } else {
+                document.getElementById('hiddenId').value = "";
+            }
         }
 
         async function processAndSave() {
-            const name = document.getElementById('assemblySearch').value;
-            const loc = document.getElementById('locationInput').value;
-            if(!name || !loc) return;
+            const name = document.getElementById('assemblySearch').value.trim();
+            const loc = document.getElementById('locationInput').value.trim();
+            const id = document.getElementById('hiddenId').value;
+            
+            const action = (id !== "") ? "Edit" : "Add";
+            const finalId = (id !== "") ? id : Date.now().toString().slice(-6);
 
-            const resMaster = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/AssemblyMaster/Find`, { method: "POST", headers: { "ApplicationAccessKey": apiKey, "Content-Type": "application/json" }, body: JSON.stringify({ Action: "Find", Properties: { "Locale": "en-US" }, Rows: [] }) });
-            const latestMaster = await resMaster.json();
-            const foundRow = latestMaster.find(r => r.AssemblyMasterNew === name);
-
-            const action = (mode === 'edit' && foundRow) ? "Edit" : "Add";
-            const row = (action === "Edit") ? { "_ComputedKey": foundRow._ComputedKey, "AssemblyMasterNew": name, "Location": loc } : { "AssemblyMasterNew": name, "Location": loc };
+            const row = {
+                "id": finalId,
+                "AssemblyMasterNew": name,
+                "Location": loc,
+                "Datemodified": new Date().toLocaleString("sv-SE")
+            };
 
             await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/AssemblyMaster/Action`, {
                 method: "POST", headers: { "ApplicationAccessKey": apiKey, "Content-Type": "application/json" },
@@ -113,11 +93,38 @@
             });
 
             document.getElementById('toast').style.display = 'block';
-            setTimeout(() => document.getElementById('toast').style.display = 'none', 2000);
-            
-            document.getElementById('assemblySearch').value = "";
-            document.getElementById('locationInput').value = "";
-            document.getElementById('assemblySearch').focus();
+            setTimeout(() => { 
+                document.getElementById('toast').style.display = 'none';
+                location.reload(); 
+            }, 1500);
+        }
+
+        document.getElementById('locationInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') processAndSave(); });
+
+        function setMode(m) {
+            mode = m;
+            document.getElementById('btnModeAdd').className = (m === 'add') ? 'flex-1 py-2 rounded-lg font-bold text-sm active-add' : 'flex-1 py-2 rounded-lg font-bold text-sm';
+            document.getElementById('btnModeEdit').className = (m === 'edit') ? 'flex-1 py-2 rounded-lg font-bold text-sm active-edit' : 'flex-1 py-2 rounded-lg font-bold text-sm';
+        }
+
+        function toggleDropdown(show) { document.getElementById('dropdownContainer').style.display = show ? 'block' : 'none'; }
+
+        function filterDropdown(keyword) {
+            const container = document.getElementById('dropdownContainer');
+            container.innerHTML = "";
+            const filtered = masterRecords.filter(r => r.AssemblyMasterNew.toLowerCase().includes(keyword.toLowerCase()));
+            filtered.forEach(r => {
+                const div = document.createElement('div');
+                div.className = 'dropdown-item';
+                div.innerText = r.AssemblyMasterNew;
+                div.onclick = () => {
+                    document.getElementById('assemblySearch').value = r.AssemblyMasterNew;
+                    handleSearch(r.AssemblyMasterNew);
+                    toggleDropdown(false);
+                };
+                container.appendChild(div);
+            });
+            container.style.display = filtered.length > 0 ? 'block' : 'none';
         }
 
         init();
