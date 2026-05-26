@@ -3,48 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Assembly Manager Pro</title>
+    <title>Assembly Manager</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #f3f4f6; min-height: 100vh; display: flex; justify-content: center; align-items: flex-start; padding: 20px; }
-        .main-card { width: 100%; max-width: 500px; background: white; padding: 24px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); }
-        #dropdownContainer { position: absolute; width: 100%; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #e5e7eb; border-radius: 12px; display: none; z-index: 50; box-shadow: 0 4px 6px rgba(0,0,0,0.1); left: 0; }
+        body { background-color: #f3f4f6; padding: 20px; display: flex; justify-content: center; font-family: sans-serif; }
+        .main-card { width: 100%; max-width: 500px; background: white; padding: 24px; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        .active-add { background: #2563eb; color: white; }
+        .active-edit { background: #eab308; color: white; }
+        #toast { position: fixed; top: 20px; right: 20px; padding: 16px 24px; background: #16a34a; color: white; border-radius: 12px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); display: none; z-index: 9999; font-weight: bold; }
+        #dropdownContainer { position: absolute; width: calc(100% - 48px); max-height: 200px; overflow-y: auto; background: white; border: 1px solid #e5e7eb; border-radius: 12px; display: none; z-index: 50; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .dropdown-item { padding: 12px; cursor: pointer; border-bottom: 1px solid #f9fafb; font-size: 14px; }
         .dropdown-item:hover { background-color: #f3f4f6; }
+        @media (min-width: 768px) { .mobile-save-btn { display: none; } }
     </style>
 </head>
 <body>
 
+    <div id="toast">✅ บันทึกข้อมูลสำเร็จ!</div>
+
     <div class="main-card">
         <h2 class="text-xl font-bold text-center mb-6">Assembly Manager</h2>
-
         <div class="flex bg-gray-100 p-1 rounded-xl mb-6">
-            <button id="btnModeAdd" onclick="setMode('add')" class="flex-1 py-2 rounded-lg font-bold text-sm bg-blue-600 text-white transition">➕ เพิ่มใหม่</button>
-            <button id="btnModeEdit" onclick="setMode('edit')" class="flex-1 py-2 rounded-lg font-bold text-sm transition">✎ แก้ไข</button>
+            <button id="btnModeAdd" onclick="setMode('add')" class="flex-1 py-2 rounded-lg font-bold text-sm active-add">➕ เพิ่มใหม่</button>
+            <button id="btnModeEdit" onclick="setMode('edit')" class="flex-1 py-2 rounded-lg font-bold text-sm">✎ แก้ไข</button>
         </div>
 
         <div class="relative space-y-4">
-            <div class="relative">
-                <input type="text" id="assemblySearch" placeholder="🔍 ค้นหา ItemCode..." 
-                       class="w-full border-2 p-4 rounded-xl text-sm outline-none focus:border-blue-500" 
-                       oninput="filterDropdown(this.value)" onfocus="toggleDropdown(true)">
-                <div id="dropdownContainer"></div>
-            </div>
+            <input type="text" id="assemblySearch" placeholder="🔍 ค้นหา ItemCode..." 
+                   class="w-full border-2 p-4 rounded-xl text-sm outline-none" 
+                   oninput="handleSearch(this.value)" 
+                   onfocus="toggleDropdown(true)"
+                   onkeydown="if(event.key==='Enter'){ event.preventDefault(); toggleDropdown(false); document.getElementById('locationInput').focus(); }">
+            <div id="dropdownContainer"></div>
             
             <input type="text" id="locationInput" placeholder="📍 ระบุ Location..." 
-                   class="w-full border-2 p-4 rounded-xl text-sm outline-none focus:border-blue-500">
+                   class="w-full border-2 p-4 rounded-xl text-sm outline-none"
+                   onkeydown="if(event.key==='Enter'){ event.preventDefault(); toggleDropdown(false); processAndSave(); }">
             
-            <button onclick="processAndSave()" class="w-full bg-green-600 text-white p-4 rounded-xl font-bold text-lg shadow-lg hover:bg-green-700 transition">💾 บันทึกข้อมูล</button>
+            <button onclick="processAndSave()" class="mobile-save-btn w-full bg-green-600 text-white p-4 rounded-xl font-bold shadow-lg">💾 บันทึกข้อมูล</button>
         </div>
-
-        <h3 class="text-xs font-bold text-gray-400 mt-8 mb-3 uppercase tracking-widest">📋 ประวัติล่าสุด</h3>
-        <div id="historyList" class="space-y-2"></div>
     </div>
 
     <script>
         const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
         const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
-        
         let mode = 'add';
         let productCodes = []; 
         let masterRecords = []; 
@@ -58,24 +60,34 @@
             masterRecords = await resMaster.json();
         }
 
-        function toggleDropdown(show) { setTimeout(() => document.getElementById('dropdownContainer').style.display = show ? 'block' : 'none', 200); }
+        function handleSearch(val) {
+            filterDropdown(val);
+            const found = masterRecords.find(r => r.AssemblyMasterNew === val);
+            if (found) document.getElementById('locationInput').value = found.Location;
+        }
+
+        function setMode(m) {
+            mode = m;
+            document.getElementById('btnModeAdd').className = (m === 'add') ? 'flex-1 py-2 rounded-lg font-bold text-sm active-add' : 'flex-1 py-2 rounded-lg font-bold text-sm';
+            document.getElementById('btnModeEdit').className = (m === 'edit') ? 'flex-1 py-2 rounded-lg font-bold text-sm active-edit' : 'flex-1 py-2 rounded-lg font-bold text-sm';
+            document.getElementById('assemblySearch').value = "";
+            document.getElementById('locationInput').value = "";
+        }
+
+        function toggleDropdown(show) { document.getElementById('dropdownContainer').style.display = show ? 'block' : 'none'; }
 
         function filterDropdown(keyword) {
             const container = document.getElementById('dropdownContainer');
             container.innerHTML = "";
             const options = (mode === 'add') ? productCodes : masterRecords.map(r => r.AssemblyMasterNew);
             const filtered = [...new Set(options)].filter(i => i && i.toLowerCase().includes(keyword.toLowerCase()));
-            
             filtered.forEach(i => {
                 const div = document.createElement('div');
                 div.className = 'dropdown-item';
                 div.innerText = i;
                 div.onclick = () => {
                     document.getElementById('assemblySearch').value = i;
-                    if(mode === 'edit') {
-                        const found = masterRecords.find(r => r.AssemblyMasterNew === i);
-                        if(found) document.getElementById('locationInput').value = found.Location;
-                    }
+                    handleSearch(i);
                     toggleDropdown(false);
                 };
                 container.appendChild(div);
@@ -83,40 +95,29 @@
             container.style.display = filtered.length > 0 ? 'block' : 'none';
         }
 
-        function setMode(m) {
-            mode = m;
-            document.getElementById('btnModeAdd').className = (m === 'add') ? 'flex-1 py-2 rounded-lg font-bold text-sm bg-blue-600 text-white' : 'flex-1 py-2 rounded-lg font-bold text-sm';
-            document.getElementById('btnModeEdit').className = (m === 'edit') ? 'flex-1 py-2 rounded-lg font-bold text-sm bg-yellow-500 text-white' : 'flex-1 py-2 rounded-lg font-bold text-sm';
-            document.getElementById('assemblySearch').value = "";
-            document.getElementById('locationInput').value = "";
-        }
-
         async function processAndSave() {
             const name = document.getElementById('assemblySearch').value;
             const loc = document.getElementById('locationInput').value;
-            if (!name || !loc) return alert("กรุณากรอกข้อมูล");
+            if(!name || !loc) return;
 
-            // ดึงข้อมูลล่าสุดก่อนบันทึกเสมอ เพื่อความชัวร์ของ Key
             const resMaster = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/AssemblyMaster/Find`, { method: "POST", headers: { "ApplicationAccessKey": apiKey, "Content-Type": "application/json" }, body: JSON.stringify({ Action: "Find", Properties: { "Locale": "en-US" }, Rows: [] }) });
-            masterRecords = await resMaster.json();
+            const latestMaster = await resMaster.json();
+            const foundRow = latestMaster.find(r => r.AssemblyMasterNew === name);
 
-            const foundRow = masterRecords.find(r => r.AssemblyMasterNew === name);
             const action = (mode === 'edit' && foundRow) ? "Edit" : "Add";
-            
-            // เตรียม Row (ถ้า Edit ต้องมี Key)
-            const row = (action === "Edit") 
-                ? { "_ComputedKey": foundRow._ComputedKey, "AssemblyMasterNew": name, "Location": loc }
-                : { "AssemblyMasterNew": name, "Location": loc };
+            const row = (action === "Edit") ? { "_ComputedKey": foundRow._ComputedKey, "AssemblyMasterNew": name, "Location": loc } : { "AssemblyMasterNew": name, "Location": loc };
 
             await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/AssemblyMaster/Action`, {
                 method: "POST", headers: { "ApplicationAccessKey": apiKey, "Content-Type": "application/json" },
                 body: JSON.stringify({ "Action": action, "Properties": { "Locale": "en-US" }, "Rows": [row] })
             });
 
-            document.getElementById('historyList').insertAdjacentHTML('afterbegin', `<div class="bg-white p-3 rounded-lg border text-sm text-gray-700 shadow-sm">✅ ${action}: ${name} 📍 ${loc}</div>`);
+            document.getElementById('toast').style.display = 'block';
+            setTimeout(() => document.getElementById('toast').style.display = 'none', 2000);
+            
             document.getElementById('assemblySearch').value = "";
             document.getElementById('locationInput').value = "";
-            alert("บันทึกสำเร็จ!");
+            document.getElementById('assemblySearch').focus();
         }
 
         init();
