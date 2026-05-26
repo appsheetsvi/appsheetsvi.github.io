@@ -9,8 +9,8 @@
         .main-card { width: 100%; max-width: 500px; background: white; padding: 24px; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
         .active-add { background: #2563eb; color: white; }
         .active-edit { background: #eab308; color: white; }
-        #toast { position: fixed; top: 20px; right: 20px; padding: 16px 24px; background: #16a34a; color: white; border-radius: 12px; z-index: 9999; display: none; font-weight: bold; }
-        #dropdownContainer { position: absolute; width: calc(100% - 48px); max-height: 200px; overflow-y: auto; background: white; border: 1px solid #e5e7eb; border-radius: 12px; display: none; z-index: 50; }
+        #toast { position: fixed; top: 20px; right: 20px; padding: 16px 24px; background: #16a34a; color: white; border-radius: 12px; z-index: 9999; display: none; font-weight: bold; box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
+        #dropdownContainer { position: absolute; width: calc(100% - 48px); max-height: 200px; overflow-y: auto; background: white; border: 1px solid #e5e7eb; border-radius: 12px; display: none; z-index: 50; box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
         .dropdown-item { padding: 12px; cursor: pointer; border-bottom: 1px solid #f9fafb; font-size: 14px; }
         .dropdown-item:hover { background-color: #eff6ff; }
     </style>
@@ -18,7 +18,6 @@
 <body>
 
     <div id="toast">✅ บันทึกข้อมูลสำเร็จ!</div>
-    <input type="hidden" id="hiddenId">
 
     <div class="main-card">
         <h2 class="text-xl font-bold text-center mb-6">Assembly Manager</h2>
@@ -36,13 +35,16 @@
         <div class="relative space-y-4">
             <div class="relative">
                 <input type="text" id="assemblySearch" placeholder="🔍 เลือกหรือพิมพ์ ItemCode..." 
-                       class="w-full border-2 p-4 rounded-xl text-sm outline-none" 
-                       oninput="handleSearch(this.value)" onfocus="toggleDropdown(true)">
+                       class="w-full border-2 p-4 rounded-xl text-sm outline-none pr-10" 
+                       oninput="handleSearch(this.value)" onfocus="toggleDropdown(true)"
+                       onkeydown="if(event.key==='Enter'){ event.preventDefault(); toggleDropdown(false); document.getElementById('locationInput').focus(); }">
+                <span class="absolute right-4 top-4 text-gray-400 pointer-events-none">▼</span>
                 <div id="dropdownContainer"></div>
             </div>
             
-            <input type="text" id="locationInput" placeholder="📍 ระบุ Location..." 
-                   class="w-full border-2 p-4 rounded-xl text-sm outline-none">
+            <input type="text" id="locationInput" placeholder="📍 ระบุ Location แล้วกด Enter เพื่อบันทึก..." 
+                   class="w-full border-2 p-4 rounded-xl text-sm outline-none"
+                   onkeydown="if(event.key==='Enter'){ event.preventDefault(); toggleDropdown(false); processAndSave(); }">
         </div>
     </div>
 
@@ -50,56 +52,67 @@
         const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
         const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
         let mode = 'add';
-        let masterRecords = [];
+        let productCodes = []; 
+        let masterRecords = []; 
+        let recordCount = 0;
 
         async function init() {
-            const res = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/AssemblyMaster/Find`, {
-                method: "POST", headers: { "ApplicationAccessKey": apiKey, "Content-Type": "application/json" },
-                body: JSON.stringify({ Action: "Find", Properties: { "Locale": "en-US" }, Rows: [] })
-            });
-            masterRecords = await res.json();
-            document.getElementById('counter').innerText = masterRecords.length;
-        }
-
-        function handleSearch(val) {
-            filterDropdown(val);
-            const found = masterRecords.find(r => r.AssemblyMasterNew.trim().toLowerCase() === val.trim().toLowerCase());
-            if (found) {
-                document.getElementById('locationInput').value = found.Location;
-                document.getElementById('hiddenId').value = found.id;
-            } else {
-                document.getElementById('hiddenId').value = "";
-            }
+            const [resProduct, resMaster] = await Promise.all([
+                fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/PoductCode/Find`, { method: "POST", headers: { "ApplicationAccessKey": apiKey, "Content-Type": "application/json" }, body: JSON.stringify({ Action: "Find", Properties: { "Locale": "en-US" }, Rows: [] }) }),
+                fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/AssemblyMaster/Find`, { method: "POST", headers: { "ApplicationAccessKey": apiKey, "Content-Type": "application/json" }, body: JSON.stringify({ Action: "Find", Properties: { "Locale": "en-US" }, Rows: [] }) })
+            ]);
+            productCodes = (await resProduct.json()).map(r => r.Id_AssemblyMaster);
+            masterRecords = await resMaster.json();
+            recordCount = masterRecords.length;
+            document.getElementById('counter').innerText = recordCount;
         }
 
         async function processAndSave() {
             const name = document.getElementById('assemblySearch').value.trim();
             const loc = document.getElementById('locationInput').value.trim();
-            const id = document.getElementById('hiddenId').value;
-            
-            const action = (id !== "") ? "Edit" : "Add";
-            const finalId = (id !== "") ? id : Date.now().toString().slice(-6);
+            if(!name || !loc) return;
 
-            const row = {
-                "id": finalId,
-                "AssemblyMasterNew": name,
-                "Location": loc,
-                "Datemodified": new Date().toLocaleString("sv-SE")
-            };
+            // เตรียมค่าสำหรับส่งไปบันทึก
+            const now = new Date().toLocaleString("sv-SE"); // ได้รูปแบบ YYYY-MM-DD HH:MM:SS
+            const newId = Date.now().toString().slice(-6); // สร้าง ID สั้นๆ จากเวลา
+
+            const resMaster = await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/AssemblyMaster/Find`, { method: "POST", headers: { "ApplicationAccessKey": apiKey, "Content-Type": "application/json" }, body: JSON.stringify({ Action: "Find", Properties: { "Locale": "en-US" }, Rows: [] }) });
+            const latestMaster = await resMaster.json();
+            const foundRow = latestMaster.find(r => r.AssemblyMasterNew.trim().toLowerCase() === name.toLowerCase());
+
+            const isUpdate = (mode === 'edit' && foundRow);
+            const action = isUpdate ? "Edit" : "Add";
+            
+            // ส่งค่า id และ Datemodified ไปด้วยทุกครั้ง
+            const row = isUpdate 
+                ? { "_ComputedKey": foundRow._ComputedKey, "AssemblyMasterNew": name, "Location": loc, "Datemodified": now } 
+                : { "id": newId, "AssemblyMasterNew": name, "Location": loc, "Datemodified": now };
 
             await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/AssemblyMaster/Action`, {
                 method: "POST", headers: { "ApplicationAccessKey": apiKey, "Content-Type": "application/json" },
                 body: JSON.stringify({ "Action": action, "Properties": { "Locale": "en-US" }, "Rows": [row] })
             });
 
+            if (!isUpdate) {
+                recordCount++;
+                document.getElementById('counter').innerText = recordCount;
+                masterRecords.push({ AssemblyMasterNew: name, Location: loc });
+            }
+
             document.getElementById('toast').style.display = 'block';
-            setTimeout(() => { 
-                document.getElementById('toast').style.display = 'none';
-                location.reload(); 
-            }, 1500);
+            document.getElementById('assemblySearch').value = "";
+            document.getElementById('locationInput').value = "";
+            toggleDropdown(false);
+
+            setTimeout(() => document.getElementById('toast').style.display = 'none', 2000);
+            document.getElementById('assemblySearch').focus();
         }
 
-        document.getElementById('locationInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') processAndSave(); });
+        function handleSearch(val) {
+            filterDropdown(val);
+            const found = masterRecords.find(r => r.AssemblyMasterNew.trim().toLowerCase() === val.trim().toLowerCase());
+            if (found) document.getElementById('locationInput').value = found.Location;
+        }
 
         function setMode(m) {
             mode = m;
@@ -112,14 +125,15 @@
         function filterDropdown(keyword) {
             const container = document.getElementById('dropdownContainer');
             container.innerHTML = "";
-            const filtered = masterRecords.filter(r => r.AssemblyMasterNew.toLowerCase().includes(keyword.toLowerCase()));
-            filtered.forEach(r => {
+            const options = (mode === 'add') ? productCodes : masterRecords.map(r => r.AssemblyMasterNew);
+            const filtered = [...new Set(options)].filter(i => i && i.toLowerCase().includes(keyword.toLowerCase()));
+            filtered.forEach(i => {
                 const div = document.createElement('div');
                 div.className = 'dropdown-item';
-                div.innerText = r.AssemblyMasterNew;
+                div.innerText = i;
                 div.onclick = () => {
-                    document.getElementById('assemblySearch').value = r.AssemblyMasterNew;
-                    handleSearch(r.AssemblyMasterNew);
+                    document.getElementById('assemblySearch').value = i;
+                    handleSearch(i);
                     toggleDropdown(false);
                 };
                 container.appendChild(div);
