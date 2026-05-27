@@ -8,14 +8,12 @@
         body { background-color: #f1f5f9; padding: 20px; display: flex; justify-content: center; font-family: 'Inter', sans-serif; }
         .wrapper { display: flex; gap: 20px; align-items: flex-start; }
         .sidebar { width: 150px; background: white; padding: 20px; border-radius: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        .main-card { width: 450px; background: white; padding: 24px; border-radius: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
+        .main-card { width: 600px; background: white; padding: 24px; border-radius: 24px; box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
         .active-add { background: #2563eb !important; color: white !important; }
         .active-edit { background: #eab308 !important; color: white !important; }
-        
         #dropdownContainer { position: absolute; width: 100%; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #e2e8f0; border-radius: 16px; display: none; z-index: 50; margin-top: 4px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
         .dropdown-item { padding: 10px 16px; cursor: pointer; font-size: 14px; color: #475569; border-bottom: 1px solid #f8fafc; }
         .dropdown-item:hover { background-color: #f1f5f9; }
-        
         .report-section { margin-top: 40px; }
         .report-table { width: 100%; margin-top: 15px; font-size: 11px; }
         .report-table th { color: #94a3b8; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0; text-align: left; }
@@ -24,6 +22,14 @@
 </head>
 <body>
 
+<div id="loginOverlay" class="fixed inset-0 bg-slate-900 z-[100] flex items-center justify-center">
+    <div class="bg-white p-8 rounded-2xl shadow-xl w-80 text-center">
+        <h2 class="text-xl font-bold mb-4 text-slate-800">เข้าสู่ระบบ</h2>
+        <input type="text" id="usernameInput" placeholder="กรอกชื่อผู้ใช้งาน..." class="w-full border-2 border-slate-200 p-3 rounded-xl mb-4 outline-none focus:border-blue-500 text-center">
+        <button onclick="checkLogin()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700">เข้าใช้งาน</button>
+    </div>
+</div>
+
 <div class="wrapper">
     <div class="sidebar">
         <h3 class="text-[10px] font-bold text-slate-400 uppercase mb-4">เมนูจัดการ</h3>
@@ -31,7 +37,12 @@
     </div>
 
     <div class="main-card">
-        <h1 class="text-xl font-bold text-center mb-6 text-slate-800">Assembly Master</h1>
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-xl font-bold text-slate-800">Assembly Master</h1>
+            <div id="userBadge" class="text-lg font-bold text-blue-600 bg-blue-50 px-4 py-1 rounded-full border border-blue-100 hidden">
+                👤 <span id="displayUser"></span>
+            </div>
+        </div>
         
         <div class="flex bg-slate-100 p-1 rounded-xl mb-6">
             <button id="btnModeAdd" onclick="setMode('add')" class="flex-1 py-2 rounded-lg font-bold text-[11px] text-slate-600 transition active-add">➕ เพิ่มใหม่</button>
@@ -41,27 +52,24 @@
         <div class="relative space-y-3">
             <input type="text" id="assemblySearch" placeholder="🔍 ค้นหา ItemCode..." class="w-full border-2 border-slate-100 p-3 rounded-xl outline-none focus:border-blue-400" oninput="handleSearch(this.value)" onfocus="toggleDropdown(true)">
             <div id="dropdownContainer"></div>
-            
             <input type="text" id="locationInput" placeholder="📍 ระบุ Location..." class="w-full border-2 border-slate-100 p-3 rounded-xl outline-none focus:border-blue-400" onkeydown="if(event.key==='Enter') processAndSave()">
-            
             <div id="message" class="hidden w-full py-3 rounded-xl font-bold text-center text-[12px]"></div>
         </div>
 
         <div class="report-section">
             <h2 class="text-[10px] font-bold text-slate-400 uppercase mb-2">รายการล่าสุด</h2>
-            
             <div id="summaryDashboard" class="grid grid-cols-3 gap-2 mb-4">
                 <div class="bg-slate-50 p-2 rounded-lg text-center"><div class="text-[9px] text-slate-400">ทั้งหมด</div><div id="totalCount" class="font-bold text-slate-700 text-sm">0</div></div>
                 <div class="bg-emerald-50 p-2 rounded-lg text-center"><div class="text-[9px] text-emerald-600">เสร็จ</div><div id="doneCount" class="font-bold text-emerald-700 text-sm">0</div></div>
                 <div class="bg-red-50 p-2 rounded-lg text-center"><div class="text-[9px] text-red-600">ยังไม่เสร็จ</div><div id="pendingCount" class="font-bold text-red-700 text-sm">0</div></div>
             </div>
-
             <input type="text" placeholder="🔍 กรองตาราง..." class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 outline-none focus:border-blue-300 mb-2" oninput="renderReport(this.value)">
             <table class="report-table">
                 <thead><tr><th>Code</th><th>Location</th><th class="text-right">Time</th></tr></thead>
                 <tbody id="reportBody"></tbody>
             </table>
         </div>
+        <button onclick="logout()" class="w-full text-left p-2 text-sm text-red-500 hover:bg-red-50 rounded-lg mt-10">🚪 ออกจากระบบ</button>
     </div>
 </div>
 
@@ -81,26 +89,18 @@
         renderReport();
     }
 
-function renderReport(filter = "") {
-        // กรองรายการที่จะแสดงในตาราง (ตามฟิลเตอร์)
+    function renderReport(filter = "") {
         const filtered = masterRecords.filter(r => r.AssemblyMasterNew?.toLowerCase().includes(filter.toLowerCase()));
-
-        // --- ตรรกะใหม่สำหรับการคำนวณ Dashboard ---
-        // 1. ทั้งหมด = จำนวนรายการใน PoductCode
         const total = productCodes.length;
-        
-        // 2. เสร็จ = รายการที่อยู่ใน AssemblyMaster (มี Location)
         const done = masterRecords.filter(r => r.Location && r.Location.trim() !== "").length;
-        
-        // 3. ยังไม่เสร็จ = (ทั้งหมดใน PoductCode) - (รายการใน AssemblyMaster)
         const pending = total - done;
-        // ------------------------------------------
 
         document.getElementById('totalCount').innerText = total;
         document.getElementById('doneCount').innerText = done;
         document.getElementById('pendingCount').innerText = pending;
 
-        document.getElementById('reportBody').innerHTML = filtered.slice(-10).reverse().map(r => 
+        // เรียง 10 รายการล่าสุด
+        document.getElementById('reportBody').innerHTML = filtered.sort((a,b) => new Date(b.Datemodified) - new Date(a.Datemodified)).slice(0, 10).map(r => 
             `<tr>
                 <td class="font-bold">${r.AssemblyMasterNew}</td>
                 <td class="text-blue-600">${r.Location || '-'}</td>
@@ -109,15 +109,9 @@ function renderReport(filter = "") {
         ).join('');
     }
 
-    function showMsg(text, isError = false) {
-        const msg = document.getElementById('message');
-        msg.innerText = text;
-        msg.className = `w-full py-3 rounded-xl font-bold text-center text-[12px] ${isError ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`;
-        msg.classList.remove('hidden');
-    }
-
     async function processAndSave() {
         if (isProcessing) return;
+        const user = localStorage.getItem('userLoggedIn');
         const name = document.getElementById('assemblySearch').value.trim();
         const loc = document.getElementById('locationInput').value.trim();
         
@@ -146,41 +140,58 @@ function renderReport(filter = "") {
                         "id": newId, 
                         "AssemblyMasterNew": name, 
                         "Location": loc,
+                        "User": user,
                         "Datemodified": new Date().toLocaleString("sv-SE") 
                     }]
                 })
             });
+
+            // อัปเดตข้อมูลในหน่วยความจำทันที
+            if (foundRow) {
+                foundRow.Location = loc;
+                foundRow.Datemodified = new Date().toLocaleString("sv-SE");
+            } else {
+                masterRecords.push({ id: newId, AssemblyMasterNew: name, Location: loc, Datemodified: new Date().toLocaleString("sv-SE") });
+            }
+
+            renderReport();
             showMsg("✅ บันทึกสำเร็จ!");
-            setTimeout(() => location.reload(), 1000);
-        } catch (e) { showMsg("❌ บันทึกไม่ได้ กรุณาตรวจสอบการเชื่อมต่อ!", true); isProcessing = false; }
+            document.getElementById('assemblySearch').value = '';
+            document.getElementById('locationInput').value = '';
+        } catch (e) { 
+            showMsg("❌ บันทึกไม่ได้ กรุณาตรวจสอบการเชื่อมต่อ!", true); 
+        } finally {
+            isProcessing = false;
+        }
+    }
+    function checkLogin() {
+        const name = document.getElementById('usernameInput').value.trim();
+        if (name) {
+            localStorage.setItem('userLoggedIn', name);
+            document.getElementById('displayUser').innerText = name;
+            document.getElementById('userBadge').classList.remove('hidden');
+            document.getElementById('loginOverlay').style.display = 'none';
+        } else { alert("กรุณากรอกชื่อก่อนเข้าใช้งาน!"); }
     }
 
-    function setMode(m) {
-        mode = m;
-        document.getElementById('btnModeAdd').classList.toggle('active-add', m === 'add');
-        document.getElementById('btnModeEdit').classList.toggle('active-edit', m === 'edit');
-        document.getElementById('assemblySearch').value = '';
-        document.getElementById('locationInput').value = '';
-    }
+    window.onload = function() {
+        const user = localStorage.getItem('userLoggedIn');
+        if (!user) {
+            document.getElementById('loginOverlay').style.display = 'flex';
+        } else {
+            document.getElementById('displayUser').innerText = user;
+            document.getElementById('userBadge').classList.remove('hidden');
+            document.getElementById('loginOverlay').style.display = 'none';
+        }
+        init();
+    };
 
-    function handleSearch(val) {
-        const container = document.getElementById('dropdownContainer');
-        const source = (mode === 'add') ? productCodes : masterRecords.map(r => r.AssemblyMasterNew);
-        const filtered = source.filter(i => i && i.toLowerCase().includes(val.toLowerCase()));
-        container.innerHTML = filtered.map(i => `<div class="dropdown-item" onclick="selectItem('${i}')">${i}</div>`).join('');
-        container.style.display = filtered.length > 0 ? 'block' : 'none';
-    }
-
-    function selectItem(name) {
-        const found = masterRecords.find(r => r.AssemblyMasterNew === name);
-        document.getElementById('assemblySearch').value = name;
-        if (found) document.getElementById('locationInput').value = found.Location || "";
-        toggleDropdown(false);
-    }
-    
+    function logout() { localStorage.removeItem('userLoggedIn'); location.reload(); }
+    function setMode(m) { mode = m; document.getElementById('btnModeAdd').classList.toggle('active-add', m === 'add'); document.getElementById('btnModeEdit').classList.toggle('active-edit', m === 'edit'); document.getElementById('assemblySearch').value = ''; document.getElementById('locationInput').value = ''; }
+    function handleSearch(val) { const container = document.getElementById('dropdownContainer'); const source = (mode === 'add') ? productCodes : masterRecords.map(r => r.AssemblyMasterNew); const filtered = source.filter(i => i && i.toLowerCase().includes(val.toLowerCase())); container.innerHTML = filtered.map(i => `<div class="dropdown-item" onclick="selectItem('${i}')">${i}</div>`).join(''); container.style.display = filtered.length > 0 ? 'block' : 'none'; }
+    function selectItem(name) { const found = masterRecords.find(r => r.AssemblyMasterNew === name); document.getElementById('assemblySearch').value = name; if (found) document.getElementById('locationInput').value = found.Location || ""; toggleDropdown(false); }
     function toggleDropdown(show) { document.getElementById('dropdownContainer').style.display = show ? 'block' : 'none'; }
-
-    init();
+    function showMsg(text, isError = false) { const msg = document.getElementById('message'); msg.innerText = text; msg.className = `w-full py-3 rounded-xl font-bold text-center text-[12px] ${isError ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`; msg.classList.remove('hidden'); }
 </script>
 </body>
 </html>
