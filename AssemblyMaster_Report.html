@@ -35,8 +35,15 @@
 
         <div class="table-wrapper">
             <table>
-                <thead><tr><th>รหัสสินค้า</th><th>Location</th><th>อัปเดตล่าสุด</th></tr></thead>
-                <tbody id="tableBody"><tr><td colspan="3" class="text-center py-10">กำลังโหลดข้อมูล...</td></tr></tbody>
+                <thead>
+                    <tr>
+                        <th>รหัสสินค้า</th>
+                        <th>Location</th>
+                        <th>User</th>
+                        <th>อัปเดตล่าสุด</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"><tr><td colspan="4" class="text-center py-10">กำลังโหลดข้อมูล...</td></tr></tbody>
             </table>
         </div>
 
@@ -63,29 +70,38 @@
             render(masterRecords);
         }
 
-        function render(data) {
+     function render(data) {
             const done = masterRecords.filter(r => r.Location && r.Location.trim() !== "").length;
             document.getElementById('countTotal').innerText = totalProductCount;
             document.getElementById('countDone').innerText = done;
             document.getElementById('countPending').innerText = totalProductCount - done;
 
-            document.getElementById('tableBody').innerHTML = data.map(r => `
+            // เรียงลำดับข้อมูล: ล่าสุดอยู่บน (จาก Datemodified)
+            const sortedData = [...data].sort((a, b) => new Date(b.Datemodified || 0) - new Date(a.Datemodified || 0));
+
+            document.getElementById('tableBody').innerHTML = sortedData.map(r => `
                 <tr>
                     <td class="font-bold text-white">${r.AssemblyMasterNew}</td>
                     <td class="text-blue-400">${r.Location || '-'}</td>
+                    <td class="text-purple-400">${r.User || '-'}</td>
                     <td class="text-slate-400 text-xs">${r.Datemodified || '-'}</td>
                 </tr>
             `).join('');
         }
 
         function filterData(q) {
-            render(masterRecords.filter(r => r.AssemblyMasterNew?.toLowerCase().includes(q.toLowerCase()) || r.Location?.toLowerCase().includes(q.toLowerCase())));
+            render(masterRecords.filter(r => 
+                r.AssemblyMasterNew?.toLowerCase().includes(q.toLowerCase()) || 
+                r.Location?.toLowerCase().includes(q.toLowerCase()) ||
+                r.User?.toLowerCase().includes(q.toLowerCase())
+            ));
         }
 
         function exportToExcel() {
             const exportData = masterRecords.map(r => ({
                 "Item Code": r.AssemblyMasterNew,
                 "Location": r.Location || '-',
+                "User": r.User || '-',
                 "Last Modified": r.Datemodified || '-'
             }));
             const ws = XLSX.utils.json_to_sheet(exportData);
