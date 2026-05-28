@@ -14,10 +14,13 @@
         #dropdownContainer { position: absolute; width: 100%; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #e2e8f0; border-radius: 16px; display: none; z-index: 50; margin-top: 4px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
         .dropdown-item { padding: 10px 16px; cursor: pointer; font-size: 14px; color: #475569; border-bottom: 1px solid #f8fafc; }
         .dropdown-item:hover { background-color: #f1f5f9; }
-        .report-section { margin-top: 40px; }
-        .report-table { width: 100%; margin-top: 15px; font-size: 11px; }
-        .report-table th { color: #94a3b8; padding-bottom: 8px; border-bottom: 1px solid #e2e8f0; text-align: left; }
-        .report-table td { padding: 8px 0; color: #334155; border-bottom: 1px solid #f8fafc; }
+        
+        /* สไตล์ตารางใหม่ */
+        .report-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; margin-top: 15px; }
+        .report-table th { color: #64748b; padding: 12px; border-bottom: 2px solid #e2e8f0; text-align: left; }
+        .report-table td { padding: 12px; color: #334155; border-bottom: 1px solid #f1f5f9; }
+        .report-table tr:nth-child(even) { background-color: #f8fafc; }
+        .report-table tr:hover { background-color: #eff6ff; transition: 0.2s; }
     </style>
 </head>
 <body>
@@ -50,14 +53,15 @@
         </div>
 
         <div class="relative space-y-3">
-            <input type="text" id="assemblySearch" placeholder="🔍 ค้นหา ItemCode..." class="w-full border-2 border-slate-100 p-3 rounded-xl outline-none focus:border-blue-400" oninput="handleSearch(this.value)" onfocus="toggleDropdown(true)">
+            <input type="text" id="assemblySearch" placeholder="🔍 ค้นหา ItemCode..." class="w-full border-2 border-slate-100 p-3 rounded-xl outline-none focus:border-blue-400" oninput="handleSearch(this.value)" onfocus="toggleDropdown(true)" onkeydown="handleNavigation(event)">
             <div id="dropdownContainer"></div>
             <input type="text" id="locationInput" placeholder="📍 ระบุ Location..." class="w-full border-2 border-slate-100 p-3 rounded-xl outline-none focus:border-blue-400" onkeydown="if(event.key==='Enter') processAndSave()">
             <div id="message" class="hidden w-full py-3 rounded-xl font-bold text-center text-[12px]"></div>
         </div>
 
         <div class="report-section">
-            <h2 class="text-[10px] font-bold text-slate-400 uppercase mb-2">รายการล่าสุด</h2>
+            <h2 class="text-[10px] font-bold text-slate-400 uppercase mb-2">รายการที่ทำเสร็จทั้งหมด
+</h2>
             <div id="summaryDashboard" class="grid grid-cols-3 gap-2 mb-4">
                 <div class="bg-slate-50 p-2 rounded-lg text-center"><div class="text-[9px] text-slate-400">ทั้งหมด</div><div id="totalCount" class="font-bold text-slate-700 text-sm">0</div></div>
                 <div class="bg-emerald-50 p-2 rounded-lg text-center"><div class="text-[9px] text-emerald-600">เสร็จ</div><div id="doneCount" class="font-bold text-emerald-700 text-sm">0</div></div>
@@ -76,7 +80,7 @@
 <script>
     const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
     const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
-    let mode = 'add', isProcessing = false;
+    let mode = 'add', isProcessing = false, activeIndex = -1;
     let masterRecords = [], productCodes = [];
 
     async function init() {
@@ -90,51 +94,66 @@
     }
 
     function renderReport(filter = "") {
-        const filtered = masterRecords.filter(r => r.AssemblyMasterNew?.toLowerCase().includes(filter.toLowerCase()));
-        const total = productCodes.length;
-        const done = masterRecords.filter(r => r.Location && r.Location.trim() !== "").length;
-        const pending = total - done;
-        document.getElementById('totalCount').innerText = total;
-        document.getElementById('doneCount').innerText = done;
-        document.getElementById('pendingCount').innerText = pending;
+        const loggedInUser = localStorage.getItem('userLoggedIn');
+        const userRecords = masterRecords.filter(r => r.User === loggedInUser);
+        const filtered = userRecords.filter(r => r.AssemblyMasterNew?.toLowerCase().includes(filter.toLowerCase()));
+        
+        document.getElementById('totalCount').innerText = userRecords.length;
+        document.getElementById('doneCount').innerText = userRecords.filter(r => r.Location && r.Location.trim() !== "").length;
+        document.getElementById('pendingCount').innerText = userRecords.length - document.getElementById('doneCount').innerText;
+
         document.getElementById('reportBody').innerHTML = filtered.sort((a,b) => new Date(b.Datemodified) - new Date(a.Datemodified)).slice(0, 10).map(r => 
-            `<tr><td class="font-bold">${r.AssemblyMasterNew}</td><td class="text-blue-600">${r.Location || '-'}</td><td class="text-right text-slate-400">${r.Datemodified ? r.Datemodified.split(' ')[1] : '-'}</td></tr>`
+            `<tr><td class="font-bold text-slate-700">${r.AssemblyMasterNew}</td><td class="text-blue-600 font-medium">${r.Location || '-'}</td><td class="text-right text-slate-400">${r.Datemodified ? r.Datemodified.split(' ')[1] : '-'}</td></tr>`
         ).join('');
     }
 
+    function handleNavigation(e) {
+        const container = document.getElementById('dropdownContainer');
+        const items = container.querySelectorAll('.dropdown-item');
+        if (container.style.display !== 'block') return;
+        if (e.key === 'ArrowDown') { activeIndex = (activeIndex + 1) % items.length; updateHighlight(items); }
+        else if (e.key === 'ArrowUp') { activeIndex = (activeIndex - 1 + items.length) % items.length; updateHighlight(items); }
+        else if (e.key === 'Enter') { e.preventDefault(); if (activeIndex >= 0 && items[activeIndex]) items[activeIndex].click(); }
+    }
+
+    function updateHighlight(items) { items.forEach((item, index) => item.style.backgroundColor = (index === activeIndex) ? '#f1f5f9' : ''); }
+
     async function processAndSave() {
         if (isProcessing) return;
-        const user = localStorage.getItem('userLoggedIn');
-        const name = document.getElementById('assemblySearch').value.trim();
-        const loc = document.getElementById('locationInput').value.trim();
+        const searchInput = document.getElementById('assemblySearch');
+        const locInput = document.getElementById('locationInput');
+        const msgDiv = document.getElementById('message');
+        
+        const name = searchInput.value.trim();
+        const loc = locInput.value.trim();
         if (!name || !loc) { showMsg("❌ กรุณากรอกข้อมูลให้ครบทุกช่อง!", true); return; }
         
         const foundRow = masterRecords.find(r => r.AssemblyMasterNew?.toLowerCase() === name.toLowerCase());
-        
         if (mode === 'add') {
             if (!productCodes.includes(name)) { showMsg("❌ ไม่พบรหัสนี้ในฐานข้อมูลสินค้า!", true); return; }
-            if (foundRow && foundRow.Location && foundRow.Location.trim() !== "") {
-                showMsg("⚠️ รายการนี้มี Location แล้ว! กรุณาใช้โหมด [✎ แก้ไข]", true); return;
-            }
-        } else {
-            if (!foundRow) { showMsg("❌ ไม่พบรหัสนี้เพื่อแก้ไข!", true); return; }
-        }
+            if (foundRow && foundRow.Location && foundRow.Location.trim() !== "") { showMsg("⚠️ รายการนี้มี Location แล้ว! กรุณาใช้โหมด [✎ แก้ไข]", true); return; }
+        } else if (!foundRow) { showMsg("❌ ไม่พบรหัสนี้เพื่อแก้ไข!", true); return; }
         
-        let newId = foundRow ? foundRow.id : (Math.max(...masterRecords.map(r => parseInt(r.id) || 0), 0) + 1).toString();
         isProcessing = true;
         showMsg("⏳ กำลังบันทึก...");
         try {
             await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/AssemblyMaster/Action`, {
                 method: "POST", headers: { "ApplicationAccessKey": apiKey, "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    "Action": (foundRow) ? "Edit" : "Add",
-                    "Rows": [{ "id": newId, "AssemblyMasterNew": name, "Location": loc, "User": user, "Datemodified": new Date().toLocaleString("sv-SE") }]
-                })
+                body: JSON.stringify({ "Action": (foundRow) ? "Edit" : "Add", "Rows": [{ "id": foundRow ? foundRow.id : (Math.max(...masterRecords.map(r => parseInt(r.id) || 0), 0) + 1).toString(), "AssemblyMasterNew": name, "Location": loc, "User": localStorage.getItem('userLoggedIn'), "Datemodified": new Date().toLocaleString("sv-SE") }] })
             });
             await init();
             showMsg("✅ บันทึกสำเร็จ!");
-            document.getElementById('assemblySearch').value = '';
-            document.getElementById('locationInput').value = '';
+
+            // --- ส่วนที่ปรับปรุงใหม่ ---
+            searchInput.value = '';
+            locInput.value = '';
+            
+            // ล้างข้อความแจ้งเตือนหลัง 2 วินาที
+            setTimeout(() => { msgDiv.classList.add('hidden'); }, 2000);
+            
+            // ย้าย Cursor กลับไปช่องแรก
+            searchInput.focus();
+            // ------------------------
         } catch (e) { showMsg("❌ บันทึกไม่ได้!", true); }
         finally { isProcessing = false; }
     }
@@ -143,31 +162,41 @@
         const found = masterRecords.find(r => r.AssemblyMasterNew && r.AssemblyMasterNew.toLowerCase() === name.toLowerCase());
         document.getElementById('assemblySearch').value = name;
         document.getElementById('locationInput').value = found ? (found.Location || "") : "";
-        toggleDropdown(false);
+        toggleDropdown(false); 
+        activeIndex = -1;
+        
+        // เพิ่มบรรทัดนี้: ย้าย cursor ไปช่อง Location
+        document.getElementById('locationInput').focus();
     }
 
     function checkLogin() {
         const name = document.getElementById('usernameInput').value.trim();
-        if (name) {
-            localStorage.setItem('userLoggedIn', name);
-            document.getElementById('displayUser').innerText = name;
-            document.getElementById('userBadge').classList.remove('hidden');
-            document.getElementById('loginOverlay').style.display = 'none';
-        } else { alert("กรุณากรอกชื่อก่อนเข้าใช้งาน!"); }
+        if (name) { localStorage.setItem('userLoggedIn', name); document.getElementById('displayUser').innerText = name; document.getElementById('userBadge').classList.remove('hidden'); document.getElementById('loginOverlay').style.display = 'none'; } else { alert("กรุณากรอกชื่อก่อนเข้าใช้งาน!"); }
     }
 
     window.onload = function() {
         const user = localStorage.getItem('userLoggedIn');
-        if (!user) { document.getElementById('loginOverlay').style.display = 'flex'; }
-        else { document.getElementById('displayUser').innerText = user; document.getElementById('userBadge').classList.remove('hidden'); document.getElementById('loginOverlay').style.display = 'none'; }
+        if (!user) { document.getElementById('loginOverlay').style.display = 'flex'; } else { document.getElementById('displayUser').innerText = user; document.getElementById('userBadge').classList.remove('hidden'); document.getElementById('loginOverlay').style.display = 'none'; }
         init();
     };
 
     function logout() { localStorage.removeItem('userLoggedIn'); location.reload(); }
     function setMode(m) { mode = m; document.getElementById('btnModeAdd').classList.toggle('active-add', m === 'add'); document.getElementById('btnModeEdit').classList.toggle('active-edit', m === 'edit'); document.getElementById('assemblySearch').value = ''; document.getElementById('locationInput').value = ''; }
-    function handleSearch(val) { const container = document.getElementById('dropdownContainer'); const source = (mode === 'add') ? productCodes : masterRecords.map(r => r.AssemblyMasterNew); const filtered = source.filter(i => i && i.toLowerCase().includes(val.toLowerCase())); container.innerHTML = filtered.map(i => `<div class="dropdown-item" onclick="selectItem('${i}')">${i}</div>`).join(''); container.style.display = filtered.length > 0 ? 'block' : 'none'; }
+    function handleSearch(val) { const container = document.getElementById('dropdownContainer'); const source = (mode === 'add') ? productCodes : masterRecords.map(r => r.AssemblyMasterNew); const filtered = source.filter(i => i && i.toLowerCase().includes(val.toLowerCase())); container.innerHTML = filtered.map(i => `<div class="dropdown-item" onclick="selectItem('${i}')">${i}</div>`).join(''); container.style.display = filtered.length > 0 ? 'block' : 'none'; activeIndex = -1; }
     function toggleDropdown(show) { document.getElementById('dropdownContainer').style.display = show ? 'block' : 'none'; }
-    function showMsg(text, isError = false) { const msg = document.getElementById('message'); msg.innerText = text; msg.className = `w-full py-3 rounded-xl font-bold text-center text-[12px] ${isError ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`; msg.classList.remove('hidden'); }
+    function showMsg(text, isError = false) {
+        const msg = document.getElementById('message');
+        msg.innerText = text;
+        msg.className = `w-full py-3 rounded-xl font-bold text-center text-[12px] ${isError ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`;
+        msg.classList.remove('hidden');
+
+        // เคลียร์ข้อความออกหลังจากผ่านไป 2 วินาที (2000 มิลลิวินาที)
+        // ไม่ว่าจะ Error หรือ สำเร็จ ข้อความจะหายไปเองเสมอครับ
+        setTimeout(() => {
+            msg.classList.add('hidden');
+            msg.innerText = '';
+        }, 2000);
+    }
 </script>
 </body>
 </html>
