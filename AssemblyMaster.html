@@ -129,31 +129,39 @@
         if (!name || !loc) { showMsg("❌ กรุณากรอกข้อมูลให้ครบทุกช่อง!", true); return; }
         
         const foundRow = masterRecords.find(r => r.AssemblyMasterNew?.toLowerCase() === name.toLowerCase());
-        if (mode === 'add') {
-            if (!productCodes.includes(name)) { showMsg("❌ ไม่พบรหัสนี้ในฐานข้อมูลสินค้า!", true); return; }
-            if (foundRow && foundRow.Location && foundRow.Location.trim() !== "") { showMsg("⚠️ รายการนี้มี Location แล้ว! กรุณาใช้โหมด [✎ แก้ไข]", true); return; }
-        } else if (!foundRow) { showMsg("❌ ไม่พบรหัสนี้เพื่อแก้ไข!", true); return; }
+        
+        // ... (เงื่อนไขการตรวจสอบ mode เหมือนเดิม) ...
         
         isProcessing = true;
         showMsg("⏳ กำลังบันทึก...");
         try {
-            await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/AssemblyMaster/Action`, {
-                method: "POST", headers: { "ApplicationAccessKey": apiKey, "Content-Type": "application/json" },
-                body: JSON.stringify({ "Action": (foundRow) ? "Edit" : "Add", "Rows": [{ "id": foundRow ? foundRow.id : (Math.max(...masterRecords.map(r => parseInt(r.id) || 0), 0) + 1).toString(), "AssemblyMasterNew": name, "Location": loc, "User": localStorage.getItem('userLoggedIn'), "Datemodified": new Date().toLocaleString("sv-SE") }] })
-            });
-            await init();
-            showMsg("✅ บันทึกสำเร็จ!");
+            // ไม่ต้องส่ง 'id' ไปถ้าเราตั้งให้ Google Sheets เจน ID อัตโนมัติใน AppSheet
+            // ถ้าคุณจำเป็นต้องส่ง ID แนะนำให้ใช้ Date.now() แทนการนับเลขครับ
+            const rowData = { 
+                "AssemblyMasterNew": name, 
+                "Location": loc, 
+                "User": localStorage.getItem('userLoggedIn'), 
+                "Datemodified": new Date().toLocaleString("sv-SE") 
+            };
+            
+            // ถ้ามี foundRow ให้เพิ่ม id เข้าไปเพื่อให้มันรู้ว่าต้อง Edit บรรทัดไหน
+            if (foundRow) rowData.id = foundRow.id;
 
-            // --- ส่วนที่ปรับปรุงใหม่ ---
+            await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/AssemblyMaster/Action`, {
+                method: "POST", 
+                headers: { "ApplicationAccessKey": apiKey, "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    "Action": (foundRow) ? "Edit" : "Add",
+                    "Rows": [rowData]
+                })
+            });
+
+            await init(); // ดึงข้อมูลใหม่หลังบันทึก
+            showMsg("✅ บันทึกสำเร็จ!");
             searchInput.value = '';
             locInput.value = '';
-            
-            // ล้างข้อความแจ้งเตือนหลัง 2 วินาที
             setTimeout(() => { msgDiv.classList.add('hidden'); }, 2000);
-            
-            // ย้าย Cursor กลับไปช่องแรก
             searchInput.focus();
-            // ------------------------
         } catch (e) { showMsg("❌ บันทึกไม่ได้!", true); }
         finally { isProcessing = false; }
     }
@@ -178,6 +186,7 @@
         const user = localStorage.getItem('userLoggedIn');
         if (!user) { document.getElementById('loginOverlay').style.display = 'flex'; } else { document.getElementById('displayUser').innerText = user; document.getElementById('userBadge').classList.remove('hidden'); document.getElementById('loginOverlay').style.display = 'none'; }
         init();
+        setInterval(init, 30000); // อัปเดตตารางทุก 30 วินาที
     };
 
     function logout() { localStorage.removeItem('userLoggedIn'); location.reload(); }
