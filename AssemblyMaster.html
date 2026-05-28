@@ -14,8 +14,6 @@
         #dropdownContainer { position: absolute; width: 100%; max-height: 200px; overflow-y: auto; background: white; border: 1px solid #e2e8f0; border-radius: 16px; display: none; z-index: 50; margin-top: 4px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
         .dropdown-item { padding: 10px 16px; cursor: pointer; font-size: 14px; color: #475569; border-bottom: 1px solid #f8fafc; }
         .dropdown-item:hover { background-color: #f1f5f9; }
-        
-        /* สไตล์ตารางใหม่ */
         .report-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; margin-top: 15px; }
         .report-table th { color: #64748b; padding: 12px; border-bottom: 2px solid #e2e8f0; text-align: left; }
         .report-table td { padding: 12px; color: #334155; border-bottom: 1px solid #f1f5f9; }
@@ -60,8 +58,7 @@
         </div>
 
         <div class="report-section">
-            <h2 class="text-[10px] font-bold text-slate-400 uppercase mb-2">รายการที่ทำเสร็จทั้งหมด
-</h2>
+            <h2 class="text-[10px] font-bold text-slate-400 uppercase mb-2">รายการที่ทำเสร็จทั้งหมด</h2>
             <div id="summaryDashboard" class="grid grid-cols-3 gap-2 mb-4">
                 <div class="bg-slate-50 p-2 rounded-lg text-center"><div class="text-[9px] text-slate-400">ทั้งหมด</div><div id="totalCount" class="font-bold text-slate-700 text-sm">0</div></div>
                 <div class="bg-emerald-50 p-2 rounded-lg text-center"><div class="text-[9px] text-emerald-600">เสร็จ</div><div id="doneCount" class="font-bold text-emerald-700 text-sm">0</div></div>
@@ -84,24 +81,29 @@
     let masterRecords = [], productCodes = [];
 
     async function init() {
-        const [resMaster, resProduct] = await Promise.all([
-            fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/AssemblyMaster/Find`, { method: "POST", headers: { "ApplicationAccessKey": apiKey, "Content-Type": "application/json" }, body: JSON.stringify({ Action: "Find", Rows: [] }) }),
-            fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/PoductCode/Find`, { method: "POST", headers: { "ApplicationAccessKey": apiKey, "Content-Type": "application/json" }, body: JSON.stringify({ Action: "Find", Rows: [] }) })
-        ]);
-        masterRecords = await resMaster.json();
-        productCodes = (await resProduct.json()).map(r => r.Id_AssemblyMaster?.toString());
-        renderReport();
+        try {
+            const [resMaster, resProduct] = await Promise.all([
+                fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/AssemblyMaster/Find`, { method: "POST", headers: { "ApplicationAccessKey": apiKey, "Content-Type": "application/json" }, body: JSON.stringify({ Action: "Find", Rows: [] }) }),
+                fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/PoductCode/Find`, { method: "POST", headers: { "ApplicationAccessKey": apiKey, "Content-Type": "application/json" }, body: JSON.stringify({ Action: "Find", Rows: [] }) })
+            ]);
+            const newMasterData = await resMaster.json();
+            const newProductData = await resProduct.json();
+            
+            if (JSON.stringify(newMasterData) !== JSON.stringify(masterRecords)) {
+                masterRecords = newMasterData;
+                productCodes = newProductData.map(r => r.Id_AssemblyMaster?.toString());
+                renderReport();
+            }
+        } catch (e) { console.error("Error init:", e); }
     }
 
     function renderReport(filter = "") {
         const loggedInUser = localStorage.getItem('userLoggedIn');
         const userRecords = masterRecords.filter(r => r.User === loggedInUser);
         const filtered = userRecords.filter(r => r.AssemblyMasterNew?.toLowerCase().includes(filter.toLowerCase()));
-        
         document.getElementById('totalCount').innerText = userRecords.length;
         document.getElementById('doneCount').innerText = userRecords.filter(r => r.Location && r.Location.trim() !== "").length;
         document.getElementById('pendingCount').innerText = userRecords.length - document.getElementById('doneCount').innerText;
-
         document.getElementById('reportBody').innerHTML = filtered.sort((a,b) => new Date(b.Datemodified) - new Date(a.Datemodified)).slice(0, 10).map(r => 
             `<tr><td class="font-bold text-slate-700">${r.AssemblyMasterNew}</td><td class="text-blue-600 font-medium">${r.Location || '-'}</td><td class="text-right text-slate-400">${r.Datemodified ? r.Datemodified.split(' ')[1] : '-'}</td></tr>`
         ).join('');
@@ -122,46 +124,28 @@
         if (isProcessing) return;
         const searchInput = document.getElementById('assemblySearch');
         const locInput = document.getElementById('locationInput');
-        const msgDiv = document.getElementById('message');
-        
         const name = searchInput.value.trim();
         const loc = locInput.value.trim();
         if (!name || !loc) { showMsg("❌ กรุณากรอกข้อมูลให้ครบทุกช่อง!", true); return; }
         
         const foundRow = masterRecords.find(r => r.AssemblyMasterNew?.toLowerCase() === name.toLowerCase());
-        
-        // ... (เงื่อนไขการตรวจสอบ mode เหมือนเดิม) ...
+        if (mode === 'add') {
+            if (!productCodes.includes(name)) { showMsg("❌ ไม่พบรหัสนี้ในฐานข้อมูล!", true); return; }
+            if (foundRow && foundRow.Location && foundRow.Location.trim() !== "") { showMsg("⚠️ รายการนี้มีข้อมูลแล้ว!", true); return; }
+        } else if (!foundRow) { showMsg("❌ ไม่พบรายการนี้เพื่อแก้ไข!", true); return; }
         
         isProcessing = true;
         showMsg("⏳ กำลังบันทึก...");
         try {
-            // ไม่ต้องส่ง 'id' ไปถ้าเราตั้งให้ Google Sheets เจน ID อัตโนมัติใน AppSheet
-            // ถ้าคุณจำเป็นต้องส่ง ID แนะนำให้ใช้ Date.now() แทนการนับเลขครับ
-            const rowData = { 
-                "AssemblyMasterNew": name, 
-                "Location": loc, 
-                "User": localStorage.getItem('userLoggedIn'), 
-                "Datemodified": new Date().toLocaleString("sv-SE") 
-            };
-            
-            // ถ้ามี foundRow ให้เพิ่ม id เข้าไปเพื่อให้มันรู้ว่าต้อง Edit บรรทัดไหน
+            const rowData = { "AssemblyMasterNew": name, "Location": loc, "User": localStorage.getItem('userLoggedIn'), "Datemodified": new Date().toLocaleString("sv-SE") };
             if (foundRow) rowData.id = foundRow.id;
-
             await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/AssemblyMaster/Action`, {
-                method: "POST", 
-                headers: { "ApplicationAccessKey": apiKey, "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    "Action": (foundRow) ? "Edit" : "Add",
-                    "Rows": [rowData]
-                })
+                method: "POST", headers: { "ApplicationAccessKey": apiKey, "Content-Type": "application/json" },
+                body: JSON.stringify({ "Action": (foundRow) ? "Edit" : "Add", "Rows": [rowData] })
             });
-
-            await init(); // ดึงข้อมูลใหม่หลังบันทึก
+            await init();
             showMsg("✅ บันทึกสำเร็จ!");
-            searchInput.value = '';
-            locInput.value = '';
-            setTimeout(() => { msgDiv.classList.add('hidden'); }, 2000);
-            searchInput.focus();
+            searchInput.value = ''; locInput.value = ''; searchInput.focus();
         } catch (e) { showMsg("❌ บันทึกไม่ได้!", true); }
         finally { isProcessing = false; }
     }
@@ -170,10 +154,7 @@
         const found = masterRecords.find(r => r.AssemblyMasterNew && r.AssemblyMasterNew.toLowerCase() === name.toLowerCase());
         document.getElementById('assemblySearch').value = name;
         document.getElementById('locationInput').value = found ? (found.Location || "") : "";
-        toggleDropdown(false); 
-        activeIndex = -1;
-        
-        // เพิ่มบรรทัดนี้: ย้าย cursor ไปช่อง Location
+        toggleDropdown(false); activeIndex = -1;
         document.getElementById('locationInput').focus();
     }
 
@@ -184,9 +165,9 @@
 
     window.onload = function() {
         const user = localStorage.getItem('userLoggedIn');
-        if (!user) { document.getElementById('loginOverlay').style.display = 'flex'; } else { document.getElementById('displayUser').innerText = user; document.getElementById('userBadge').classList.remove('hidden'); document.getElementById('loginOverlay').style.display = 'none'; }
+        if (!user) { document.getElementById('loginOverlay').style.display = 'flex'; } else { document.getElementById('displayUser').innerText = user; document.getElementById('userBadge').classList.remove('hidden'); }
         init();
-        setInterval(init, 30000); // อัปเดตตารางทุก 30 วินาที
+        setInterval(init, 30000);
     };
 
     function logout() { localStorage.removeItem('userLoggedIn'); location.reload(); }
@@ -198,13 +179,7 @@
         msg.innerText = text;
         msg.className = `w-full py-3 rounded-xl font-bold text-center text-[12px] ${isError ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`;
         msg.classList.remove('hidden');
-
-        // เคลียร์ข้อความออกหลังจากผ่านไป 2 วินาที (2000 มิลลิวินาที)
-        // ไม่ว่าจะ Error หรือ สำเร็จ ข้อความจะหายไปเองเสมอครับ
-        setTimeout(() => {
-            msg.classList.add('hidden');
-            msg.innerText = '';
-        }, 2000);
+        setTimeout(() => { msg.classList.add('hidden'); msg.innerText = ''; }, 2000);
     }
 </script>
 </body>
