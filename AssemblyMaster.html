@@ -94,18 +94,11 @@
         const total = productCodes.length;
         const done = masterRecords.filter(r => r.Location && r.Location.trim() !== "").length;
         const pending = total - done;
-
         document.getElementById('totalCount').innerText = total;
         document.getElementById('doneCount').innerText = done;
         document.getElementById('pendingCount').innerText = pending;
-
-        // เรียง 10 รายการล่าสุด
         document.getElementById('reportBody').innerHTML = filtered.sort((a,b) => new Date(b.Datemodified) - new Date(a.Datemodified)).slice(0, 10).map(r => 
-            `<tr>
-                <td class="font-bold">${r.AssemblyMasterNew}</td>
-                <td class="text-blue-600">${r.Location || '-'}</td>
-                <td class="text-right text-slate-400">${r.Datemodified ? r.Datemodified.split(' ')[1] : '-'}</td>
-            </tr>`
+            `<tr><td class="font-bold">${r.AssemblyMasterNew}</td><td class="text-blue-600">${r.Location || '-'}</td><td class="text-right text-slate-400">${r.Datemodified ? r.Datemodified.split(' ')[1] : '-'}</td></tr>`
         ).join('');
     }
 
@@ -114,56 +107,45 @@
         const user = localStorage.getItem('userLoggedIn');
         const name = document.getElementById('assemblySearch').value.trim();
         const loc = document.getElementById('locationInput').value.trim();
-        
         if (!name || !loc) { showMsg("❌ กรุณากรอกข้อมูลให้ครบทุกช่อง!", true); return; }
         
         const foundRow = masterRecords.find(r => r.AssemblyMasterNew?.toLowerCase() === name.toLowerCase());
         
         if (mode === 'add') {
-            if (!productCodes.includes(name)) { showMsg("❌ ไม่พบรหัสนี้ในฐานข้อมูลสินค้า (PoductCode)!", true); return; }
-            if (foundRow) { showMsg("❌ รายการนี้มีอยู่แล้ว!", true); return; }
+            if (!productCodes.includes(name)) { showMsg("❌ ไม่พบรหัสนี้ในฐานข้อมูลสินค้า!", true); return; }
+            if (foundRow && foundRow.Location && foundRow.Location.trim() !== "") {
+                showMsg("⚠️ รายการนี้มี Location แล้ว! กรุณาใช้โหมด [✎ แก้ไข]", true); return;
+            }
         } else {
-            if (!foundRow) { showMsg("❌ ไม่พบรหัสนี้ในฐานข้อมูลสินค้า (AssemblyMaster)!", true); return; }
+            if (!foundRow) { showMsg("❌ ไม่พบรหัสนี้เพื่อแก้ไข!", true); return; }
         }
         
         let newId = foundRow ? foundRow.id : (Math.max(...masterRecords.map(r => parseInt(r.id) || 0), 0) + 1).toString();
-
         isProcessing = true;
         showMsg("⏳ กำลังบันทึก...");
-
         try {
             await fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/AssemblyMaster/Action`, {
                 method: "POST", headers: { "ApplicationAccessKey": apiKey, "Content-Type": "application/json" },
                 body: JSON.stringify({
                     "Action": (foundRow) ? "Edit" : "Add",
-                    "Rows": [{ 
-                        "id": newId, 
-                        "AssemblyMasterNew": name, 
-                        "Location": loc,
-                        "User": user,
-                        "Datemodified": new Date().toLocaleString("sv-SE") 
-                    }]
+                    "Rows": [{ "id": newId, "AssemblyMasterNew": name, "Location": loc, "User": user, "Datemodified": new Date().toLocaleString("sv-SE") }]
                 })
             });
-
-            // อัปเดตข้อมูลในหน่วยความจำทันที
-            if (foundRow) {
-                foundRow.Location = loc;
-                foundRow.Datemodified = new Date().toLocaleString("sv-SE");
-            } else {
-                masterRecords.push({ id: newId, AssemblyMasterNew: name, Location: loc, Datemodified: new Date().toLocaleString("sv-SE") });
-            }
-
-            renderReport();
+            await init();
             showMsg("✅ บันทึกสำเร็จ!");
             document.getElementById('assemblySearch').value = '';
             document.getElementById('locationInput').value = '';
-        } catch (e) { 
-            showMsg("❌ บันทึกไม่ได้ กรุณาตรวจสอบการเชื่อมต่อ!", true); 
-        } finally {
-            isProcessing = false;
-        }
+        } catch (e) { showMsg("❌ บันทึกไม่ได้!", true); }
+        finally { isProcessing = false; }
     }
+
+    function selectItem(name) { 
+        const found = masterRecords.find(r => r.AssemblyMasterNew && r.AssemblyMasterNew.toLowerCase() === name.toLowerCase());
+        document.getElementById('assemblySearch').value = name;
+        document.getElementById('locationInput').value = found ? (found.Location || "") : "";
+        toggleDropdown(false);
+    }
+
     function checkLogin() {
         const name = document.getElementById('usernameInput').value.trim();
         if (name) {
@@ -176,20 +158,14 @@
 
     window.onload = function() {
         const user = localStorage.getItem('userLoggedIn');
-        if (!user) {
-            document.getElementById('loginOverlay').style.display = 'flex';
-        } else {
-            document.getElementById('displayUser').innerText = user;
-            document.getElementById('userBadge').classList.remove('hidden');
-            document.getElementById('loginOverlay').style.display = 'none';
-        }
+        if (!user) { document.getElementById('loginOverlay').style.display = 'flex'; }
+        else { document.getElementById('displayUser').innerText = user; document.getElementById('userBadge').classList.remove('hidden'); document.getElementById('loginOverlay').style.display = 'none'; }
         init();
     };
 
     function logout() { localStorage.removeItem('userLoggedIn'); location.reload(); }
     function setMode(m) { mode = m; document.getElementById('btnModeAdd').classList.toggle('active-add', m === 'add'); document.getElementById('btnModeEdit').classList.toggle('active-edit', m === 'edit'); document.getElementById('assemblySearch').value = ''; document.getElementById('locationInput').value = ''; }
     function handleSearch(val) { const container = document.getElementById('dropdownContainer'); const source = (mode === 'add') ? productCodes : masterRecords.map(r => r.AssemblyMasterNew); const filtered = source.filter(i => i && i.toLowerCase().includes(val.toLowerCase())); container.innerHTML = filtered.map(i => `<div class="dropdown-item" onclick="selectItem('${i}')">${i}</div>`).join(''); container.style.display = filtered.length > 0 ? 'block' : 'none'; }
-    function selectItem(name) { const found = masterRecords.find(r => r.AssemblyMasterNew === name); document.getElementById('assemblySearch').value = name; if (found) document.getElementById('locationInput').value = found.Location || ""; toggleDropdown(false); }
     function toggleDropdown(show) { document.getElementById('dropdownContainer').style.display = show ? 'block' : 'none'; }
     function showMsg(text, isError = false) { const msg = document.getElementById('message'); msg.innerText = text; msg.className = `w-full py-3 rounded-xl font-bold text-center text-[12px] ${isError ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`; msg.classList.remove('hidden'); }
 </script>
