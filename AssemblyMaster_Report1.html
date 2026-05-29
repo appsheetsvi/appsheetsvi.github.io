@@ -2,6 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Assembly Master Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -10,53 +11,57 @@
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <style>
         body { background-color: #f8fafc; font-family: 'Inter', sans-serif; }
-        .card { background: white; border-radius: 16px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); border: 1px solid #e2e8f0; padding: 24px; }
+        .card { background: white; border-radius: 16px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); border: 1px solid #e2e8f0; padding: 20px; }
     </style>
 </head>
-<body class="p-8">
+<body class="p-4 md:p-8">
 
     <div class="max-w-6xl mx-auto">
-        <h1 class="text-2xl font-bold mb-6 text-slate-800">รายงานสรุปการคีย์ข้อมูล</h1>
+        <h1 class="text-xl md:text-2xl font-bold mb-6 text-slate-800">รายงานสรุปการคีย์ข้อมูล</h1>
 
-        <div class="card mb-6 flex flex-wrap gap-4 items-end">
+        <div class="card mb-6 flex flex-col md:flex-row gap-4 items-end">
             <div class="w-full md:w-64">
-                <label class="block text-xs font-bold text-slate-400 uppercase mb-2">ผู้ใช้งาน</label>
-                <select id="userFilter" onchange="applyFilters()" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg outline-none">
+                <label class="block text-[10px] md:text-xs font-bold text-slate-400 uppercase mb-2">ผู้ใช้งาน</label>
+                <select id="userFilter" onchange="applyFilters()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg outline-none text-sm">
                     <option value="ทั้งหมด">ทั้งหมด</option>
                 </select>
             </div>
             <div class="w-full md:w-64">
-                <label class="block text-xs font-bold text-slate-400 uppercase mb-2">ช่วงวันที่ (จาก - ถึง)</label>
-                <input type="text" id="dateRange" onchange="applyFilters()" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg" placeholder="เลือกช่วงวันที่...">
+                <label class="block text-[10px] md:text-xs font-bold text-slate-400 uppercase mb-2">ช่วงวันที่</label>
+                <input type="text" id="dateRange" onchange="applyFilters()" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm" placeholder="เลือกช่วงวันที่...">
             </div>
-            <button onclick="resetFilters()" class="px-5 py-2.5 bg-slate-100 rounded-lg font-bold text-sm hover:bg-slate-200">ล้างตัวกรอง</button>
+            <button onclick="resetFilters()" class="w-full md:w-auto px-5 py-2 bg-slate-100 rounded-lg font-bold text-sm hover:bg-slate-200">ล้างตัวกรอง</button>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             <div class="card border-l-8 border-blue-500">
-                <div class="text-slate-500 font-bold text-sm uppercase">จำนวนรายการในช่วงที่เลือก</div>
-                <div id="countFiltered" class="text-5xl font-black text-blue-600 mt-2">0</div>
+                <div class="text-slate-500 font-bold text-[10px] uppercase">รายการในช่วงที่เลือก</div>
+                <div id="countFiltered" class="text-4xl md:text-5xl font-black text-blue-600 mt-1">0</div>
             </div>
             <div class="card border-l-8 border-emerald-500">
-                <div class="text-slate-500 font-bold text-sm uppercase">รายการสะสมทั้งหมด</div>
-                <div id="countTotal" class="text-5xl font-black text-emerald-600 mt-2">0</div>
+                <div class="text-slate-500 font-bold text-[10px] uppercase">รายการสะสมทั้งหมด</div>
+                <div id="countTotal" class="text-4xl md:text-5xl font-black text-emerald-600 mt-1">0</div>
             </div>
         </div>
 
         <div class="card mb-8">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="font-bold text-slate-700">กราฟแนวโน้มการคีย์ข้อมูล</h3>
-                <div class="flex gap-2">
-                    <button onclick="updateChartRange(1)" class="px-3 py-1 bg-slate-100 hover:bg-blue-100 rounded-lg text-xs font-bold transition">1 วัน</button>
-                    <button onclick="updateChartRange(7)" class="px-3 py-1 bg-slate-100 hover:bg-blue-100 rounded-lg text-xs font-bold transition">7 วัน</button>
-                    <button onclick="updateChartRange(30)" class="px-3 py-1 bg-slate-100 hover:bg-blue-100 rounded-lg text-xs font-bold transition">30 วัน</button>
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
+                <h3 class="font-bold text-slate-700 text-sm md:text-base">กราฟแนวโน้มการคีย์ข้อมูล</h3>
+                <div class="flex gap-1 w-full sm:w-auto">
+                    <button onclick="updateChartRange(1)" class="flex-1 sm:flex-none px-3 py-1 bg-slate-100 hover:bg-blue-100 rounded-lg text-[10px] md:text-xs font-bold">1 วัน</button>
+                    <button onclick="updateChartRange(7)" class="flex-1 sm:flex-none px-3 py-1 bg-slate-100 hover:bg-blue-100 rounded-lg text-[10px] md:text-xs font-bold">7 วัน</button>
+                    <button onclick="updateChartRange(30)" class="flex-1 sm:flex-none px-3 py-1 bg-slate-100 hover:bg-blue-100 rounded-lg text-[10px] md:text-xs font-bold">30 วัน</button>
                 </div>
             </div>
-            <canvas id="trendChart" height="80"></canvas>
+            <div class="relative w-full h-[300px] md:h-[400px]">
+                <canvas id="trendChart"></canvas>
+            </div>
         </div>
     </div>
 
     <script>
+        // ... (โค้ด JavaScript ส่วนลอจิกเดิมของคุณ)
+        // เพียงเพิ่มในตัวเลือก Chart.js ให้รองรับ responsive
         const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
         const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
         let masterRecords = [], myChart;
@@ -67,11 +72,9 @@
                 body: JSON.stringify({ Action: "Find", Rows: [] }) 
             });
             masterRecords = await res.json();
-            
             flatpickr("#dateRange", { mode: "range", dateFormat: "Y-m-d" });
             const users = [...new Set(masterRecords.map(r => r.User).filter(u => u))];
             users.forEach(u => document.getElementById('userFilter').innerHTML += `<option value="${u}">${u}</option>`);
-            
             document.getElementById('countTotal').innerText = masterRecords.length;
             applyFilters();
         }
@@ -80,14 +83,10 @@
             const user = document.getElementById('userFilter').value;
             const dateRange = document.getElementById('dateRange').value;
             let filtered = masterRecords;
-
             if (user !== "ทั้งหมด") filtered = filtered.filter(r => r.User === user);
             if (dateRange.includes('to')) {
                 const [start, end] = dateRange.split(' to ');
-                filtered = filtered.filter(r => {
-                    const d = r.Datemodified?.split(' ')[0];
-                    return d >= start && d <= end;
-                });
+                filtered = filtered.filter(r => { const d = r.Datemodified?.split(' ')[0]; return d >= start && d <= end; });
             } else if (dateRange) {
                 filtered = filtered.filter(r => r.Datemodified?.startsWith(dateRange));
             }
@@ -103,10 +102,8 @@
         function updateChartRange(days) {
             const cutoff = new Date();
             cutoff.setDate(cutoff.getDate() - days);
-            
             const baseData = getFilteredData();
             const rangeFiltered = baseData.filter(r => new Date(r.Datemodified) >= cutoff);
-            
             document.getElementById('countFiltered').innerText = rangeFiltered.length;
             renderChart(rangeFiltered);
         }
@@ -114,45 +111,27 @@
         function renderChart(data) {
             const ctx = document.getElementById('trendChart').getContext('2d');
             if (myChart) myChart.destroy();
-
             const uniqueDates = [...new Set(data.map(r => r.Datemodified?.split(' ')[0]))];
             const isSingleDay = uniqueDates.length === 1;
-
             const timeGroups = data.reduce((acc, curr) => {
                 if (!curr.Datemodified) return acc;
-                const timeKey = isSingleDay 
-                    ? curr.Datemodified.substring(11, 13) + ":00" 
-                    : curr.Datemodified.split(' ')[0];
+                const timeKey = isSingleDay ? curr.Datemodified.substring(11, 13) + ":00" : curr.Datemodified.split(' ')[0];
                 acc[timeKey] = (acc[timeKey] || 0) + 1;
                 return acc;
             }, {});
-
-            const sortedKeys = isSingleDay 
-                ? Array.from({length: 24}, (_, i) => `${i.toString().padStart(2, '0')}:00`)
-                : Object.keys(timeGroups).sort();
-
+            const sortedKeys = isSingleDay ? Array.from({length: 24}, (_, i) => `${i.toString().padStart(2, '0')}:00`) : Object.keys(timeGroups).sort();
             const chartData = sortedKeys.map(k => timeGroups[k] || 0);
 
             myChart = new Chart(ctx, {
                 type: 'line',
                 plugins: [ChartDataLabels],
-                data: {
-                    labels: sortedKeys,
-                    datasets: [{
-                        label: 'จำนวนรายการ',
-                        data: chartData,
-                        borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        fill: true,
-                        tension: 0.3,
-                        pointRadius: 6,
-                        pointBackgroundColor: '#22c55e'
-                    }]
-                },
+                data: { labels: sortedKeys, datasets: [{ label: 'จำนวนรายการ', data: chartData, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', fill: true, tension: 0.3, pointRadius: 4, pointBackgroundColor: '#22c55e' }] },
                 options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
                     plugins: {
                         legend: { display: false },
-                        datalabels: { anchor: 'end', align: 'top', color: '#1e293b', font: { weight: 'bold' }, formatter: (v) => v > 0 ? v : null }
+                        datalabels: { anchor: 'end', align: 'top', color: '#1e293b', font: { size: 10, weight: 'bold' }, formatter: (v) => v > 0 ? v : null }
                     }
                 }
             });
