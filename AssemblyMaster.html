@@ -15,7 +15,7 @@
         .dropdown-item { padding: 10px 16px; cursor: pointer; font-size: 14px; color: #475569; border-bottom: 1px solid #f8fafc; }
         .dropdown-item:hover { background-color: #f1f5f9; }
         .report-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; margin-top: 15px; }
-        .report-table th { color: #64748b; padding: 12px; border-bottom: 2px solid #e2e8f0; text-align: left; }
+        .report-table th { color: #64748b; padding: 12px; border-bottom: 2px solid #e2e8f0; }
         .report-table td { padding: 12px; color: #334155; border-bottom: 1px solid #f1f5f9; }
         .report-table tr:nth-child(even) { background-color: #f8fafc; }
         .report-table tr:hover { background-color: #eff6ff; transition: 0.2s; }
@@ -26,7 +26,11 @@
 <div id="loginOverlay" class="fixed inset-0 bg-slate-900 z-[100] flex items-center justify-center">
     <div class="bg-white p-8 rounded-2xl shadow-xl w-80 text-center">
         <h2 class="text-xl font-bold mb-4 text-slate-800">เข้าสู่ระบบ</h2>
-        <input type="text" id="usernameInput" placeholder="กรอกชื่อผู้ใช้งาน..." class="w-full border-2 border-slate-200 p-3 rounded-xl mb-4 outline-none focus:border-blue-500 text-center">
+        <input type="text" id="usernameInput" placeholder="กรอกชื่อผู้ใช้งาน..." 
+    class="w-full border-2 border-slate-200 p-3 rounded-xl mb-4 outline-none focus:border-blue-500 text-center"
+    style="text-transform: uppercase;"
+    onkeydown="if(event.key==='Enter') checkLogin()">
+
         <button onclick="checkLogin()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700">เข้าใช้งาน</button>
     </div>
 </div>
@@ -59,14 +63,19 @@
 
         <div class="report-section">
             <h2 class="text-[10px] font-bold text-slate-400 uppercase mb-2">รายการที่ทำเสร็จทั้งหมด</h2>
-            <div id="summaryDashboard" class="grid grid-cols-3 gap-2 mb-4">
-                <div class="bg-slate-50 p-2 rounded-lg text-center"><div class="text-[9px] text-slate-400">คีย์ไปทั้งหมด</div><div id="totalCount" class="font-bold text-slate-700 text-sm">0</div></div>
-                <div class="bg-emerald-50 p-2 rounded-lg text-center"><div class="text-[9px] text-emerald-600">ทั้งหมดที่ทำได้</div><div id="doneCount" class="font-bold text-emerald-700 text-sm">0</div></div>
-                <div class="bg-red-50 p-2 rounded-lg text-center"><div class="text-[9px] text-red-600">ยังไม่เสร็จ</div><div id="pendingCount" class="font-bold text-red-700 text-sm">0</div></div>
+            <div id="summaryDashboard" class="grid grid-cols-2 gap-2 mb-4">
+                <div class="bg-blue-50 p-2 rounded-lg text-center"><div class="text-[9px] text-blue-400">วันนี้คีย์แล้ว</div><div id="totalCount" class="font-bold text-blue-700 text-sm">0</div></div>
+                <div class="bg-emerald-50 p-2 rounded-lg text-center"><div class="text-[9px] text-emerald-600">คีย์แล้วทั้งหมด</div><div id="doneCount" class="font-bold text-emerald-700 text-sm">0</div></div>
             </div>
             <input type="text" placeholder="🔍 กรองตาราง..." class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 outline-none focus:border-blue-300 mb-2" oninput="renderReport(this.value)">
             <table class="report-table">
-                <thead><tr><th>Code</th><th>Location</th><th class="text-right">Time</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th class="text-left">Code</th>
+                        <th class="text-left">Location</th>
+                        <th class="text-right">Time</th>
+                    </tr>
+                </thead>
                 <tbody id="reportBody"></tbody>
             </table>
         </div>
@@ -81,16 +90,33 @@
     let masterRecords = [], productCodes = [];
 
     async function init() {
+        // ดึงข้อมูลเก่าจาก Cache มาแสดงรอก่อนเพื่อไม่ให้หน้ารีเฟรชช้า
+        const cachedMaster = localStorage.getItem('cache_masterRecords');
+        if (cachedMaster && masterRecords.length === 0) {
+            masterRecords = JSON.parse(cachedMaster);
+            renderReport();
+        }
+
         try {
             const [resMaster, resProduct] = await Promise.all([
-                fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/AssemblyMaster/Find`, { method: "POST", headers: { "ApplicationAccessKey": apiKey, "Content-Type": "application/json" }, body: JSON.stringify({ Action: "Find", Rows: [] }) }),
-                fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/PoductCode/Find`, { method: "POST", headers: { "ApplicationAccessKey": apiKey, "Content-Type": "application/json" }, body: JSON.stringify({ Action: "Find", Rows: [] }) })
+                fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/AssemblyMaster/Find`, { 
+                    method: "POST", 
+                    headers: { "ApplicationAccessKey": apiKey, "Content-Type": "application/json" }, 
+                    body: JSON.stringify({ Action: "Find", Rows: [] }) 
+                }),
+                fetch(`https://api.appsheet.com/api/v2/apps/${appId}/tables/PoductCode/Find`, { 
+                    method: "POST", 
+                    headers: { "ApplicationAccessKey": apiKey, "Content-Type": "application/json" }, 
+                    body: JSON.stringify({ Action: "Find", Rows: [] }) 
+                })
             ]);
             const newMasterData = await resMaster.json();
             const newProductData = await resProduct.json();
-            
-            if (JSON.stringify(newMasterData) !== JSON.stringify(masterRecords)) {
+
+            const newMasterStr = JSON.stringify(newMasterData);
+            if (newMasterStr !== JSON.stringify(masterRecords)) {
                 masterRecords = newMasterData;
+                localStorage.setItem('cache_masterRecords', newMasterStr);
                 productCodes = newProductData.map(r => r.Id_AssemblyMaster?.toString());
                 renderReport();
             }
@@ -99,14 +125,50 @@
 
     function renderReport(filter = "") {
         const loggedInUser = localStorage.getItem('userLoggedIn');
-        const userRecords = masterRecords.filter(r => r.User === loggedInUser);
+        if (!loggedInUser) return;
+
+        // 1. กรองข้อมูลเฉพาะของ User ที่ล็อกอินปัจจุบัน
+        const userRecords = masterRecords.filter(r => r.User && r.User.trim().toUpperCase() === loggedInUser.toUpperCase());
+
+        // 2. นับจำนวนเฉพาะคีย์ของวันนี้
+        const todayStr = new Date().toLocaleDateString("sv-SE"); 
+        const todayCount = userRecords.filter(r => {
+            if (!r.Datemodified) return false;
+            return r.Datemodified.trim().startsWith(todayStr);
+        }).length;
+
+        // 3. นับจำนวนคีย์ทั้งหมดของ User นี้ (ที่มี Location)
+        const doneAll = userRecords.filter(r => r.Location && r.Location.trim() !== "").length;
+
+        // แสดงผลบน Dashboard การ์ดสรุปผล
+        document.getElementById('totalCount').innerText = todayCount;
+        document.getElementById('doneCount').innerText = doneAll;
+
+        // 4. กรองตามคำค้นหาของตารางตาราง
         const filtered = userRecords.filter(r => r.AssemblyMasterNew?.toLowerCase().includes(filter.toLowerCase()));
-        document.getElementById('totalCount').innerText = userRecords.length;
-        document.getElementById('doneCount').innerText = userRecords.filter(r => r.Location && r.Location.trim() !== "").length;
-        document.getElementById('pendingCount').innerText = userRecords.length - document.getElementById('doneCount').innerText;
-        document.getElementById('reportBody').innerHTML = filtered.sort((a,b) => new Date(b.Datemodified) - new Date(a.Datemodified)).slice(0, 10).map(r => 
-            `<tr><td class="font-bold text-slate-700">${r.AssemblyMasterNew}</td><td class="text-blue-600 font-medium">${r.Location || '-'}</td><td class="text-right text-slate-400">${r.Datemodified ? r.Datemodified.split(' ')[1] : '-'}</td></tr>`
-        ).join('');
+        
+        // 5. จัดเรียงลำดับจากวันเวลาล่าสุดลงไปด้านล่าง (ใหม่สุดอยู่บน เก่าสุดอยู่ล่าง)
+        filtered.sort((a, b) => {
+            const dateA = a.Datemodified ? new Date(a.Datemodified.replace(/\//g, '-')) : new Date(0);
+            const dateB = b.Datemodified ? new Date(b.Datemodified.replace(/\//g, '-')) : new Date(0);
+            return dateB - dateA; 
+        });
+
+        // 6. แสดงผลเนื้อหาลงตาราง (ปรับดีไซน์คอลัมน์เวลาชิดขวาให้ตรงหัวข้อ)
+        document.getElementById('reportBody').innerHTML = filtered
+            .slice(0, 10)
+            .map(r => {
+                let displayTime = '-';
+                if (r.Datemodified) {
+                    const parts = r.Datemodified.trim().split(' ');
+                    displayTime = parts[1] ? parts[1] : parts[0];
+                }
+                return `<tr>
+                    <td class="font-bold text-slate-700 p-3 text-left">${r.AssemblyMasterNew}</td>
+                    <td class="text-blue-600 font-medium p-3 text-left">${r.Location || '-'}</td>
+                    <td class="text-right text-slate-400 p-3 font-mono">${displayTime}</td>
+                </tr>`;
+            }).join('');
     }
 
     function handleNavigation(e) {
@@ -159,18 +221,36 @@
     }
 
     function checkLogin() {
-        const name = document.getElementById('usernameInput').value.trim();
-        if (name) { localStorage.setItem('userLoggedIn', name); document.getElementById('displayUser').innerText = name; document.getElementById('userBadge').classList.remove('hidden'); document.getElementById('loginOverlay').style.display = 'none'; } else { alert("กรุณากรอกชื่อก่อนเข้าใช้งาน!"); }
+        const name = document.getElementById('usernameInput').value.trim().toUpperCase();
+        if (name) { 
+            localStorage.setItem('userLoggedIn', name); 
+            document.getElementById('displayUser').innerText = name; 
+            document.getElementById('userBadge').classList.remove('hidden'); 
+            document.getElementById('loginOverlay').style.display = 'none'; 
+            renderReport();
+        } else { 
+            alert("กรุณากรอกชื่อก่อนเข้าใช้งาน!"); 
+        }
     }
 
     window.onload = function() {
         const user = localStorage.getItem('userLoggedIn');
-        if (!user) { document.getElementById('loginOverlay').style.display = 'flex'; } else { document.getElementById('displayUser').innerText = user; document.getElementById('userBadge').classList.remove('hidden'); }
+        if (!user) { 
+            document.getElementById('loginOverlay').style.display = 'flex'; 
+        } else { 
+            document.getElementById('displayUser').innerText = user; 
+            document.getElementById('userBadge').classList.remove('hidden'); 
+            document.getElementById('loginOverlay').style.display = 'none';
+        }
         init();
         setInterval(init, 30000);
     };
 
-    function logout() { localStorage.removeItem('userLoggedIn'); location.reload(); }
+    function logout() { 
+        localStorage.removeItem('userLoggedIn'); 
+        localStorage.removeItem('cache_masterRecords');
+        location.reload(); 
+    }
     function setMode(m) { mode = m; document.getElementById('btnModeAdd').classList.toggle('active-add', m === 'add'); document.getElementById('btnModeEdit').classList.toggle('active-edit', m === 'edit'); document.getElementById('assemblySearch').value = ''; document.getElementById('locationInput').value = ''; }
     function handleSearch(val) { const container = document.getElementById('dropdownContainer'); const source = (mode === 'add') ? productCodes : masterRecords.map(r => r.AssemblyMasterNew); const filtered = source.filter(i => i && i.toLowerCase().includes(val.toLowerCase())); container.innerHTML = filtered.map(i => `<div class="dropdown-item" onclick="selectItem('${i}')">${i}</div>`).join(''); container.style.display = filtered.length > 0 ? 'block' : 'none'; activeIndex = -1; }
     function toggleDropdown(show) { document.getElementById('dropdownContainer').style.display = show ? 'block' : 'none'; }
