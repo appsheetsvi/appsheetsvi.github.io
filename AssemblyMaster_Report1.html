@@ -17,7 +17,7 @@
 <body class="p-4 md:p-8">
 
     <div class="max-w-6xl mx-auto">
-        <h1 class="text-xl md:text-2xl font-bold mb-6 text-slate-800">รายงานสรุปการคีย์ข้อมูล</h1>
+        <h1 class="text-xl md:text-2xl font-bold mb-6 text-slate-800">รายงานสรุปการคีย์ข้อมูล (Day by Day)</h1>
 
         <div class="card mb-6 flex flex-col md:flex-row gap-4 items-end">
             <div class="w-full md:w-64">
@@ -39,7 +39,7 @@
                 <div id="countFiltered" class="text-4xl md:text-5xl font-black text-blue-600 mt-1">0</div>
             </div>
             <div class="card border-l-8 border-emerald-500">
-                <div class="text-slate-500 font-bold text-[10px] uppercase">รายการสะสมทั้งหมด</div>
+                <div class="text-slate-500 font-bold text-[10px] uppercase">รายการสะสมทั้งหมดในระบบ</div>
                 <div id="countTotal" class="text-4xl md:text-5xl font-black text-emerald-600 mt-1">0</div>
             </div>
         </div>
@@ -50,9 +50,9 @@
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
                     <h3 class="font-bold text-slate-700 text-sm md:text-base">กราฟแนวโน้มการคีย์ข้อมูล</h3>
                     <div class="flex gap-1 w-full sm:w-auto">
-                        <button onclick="updateChartRange(1)" class="flex-1 sm:flex-none px-3 py-1 bg-slate-100 hover:bg-blue-100 rounded-lg text-[10px] md:text-xs font-bold">1 วัน</button>
-                        <button onclick="updateChartRange(7)" class="flex-1 sm:flex-none px-3 py-1 bg-slate-100 hover:bg-blue-100 rounded-lg text-[10px] md:text-xs font-bold">7 วัน</button>
-                        <button onclick="updateChartRange(30)" class="flex-1 sm:flex-none px-3 py-1 bg-slate-100 hover:bg-blue-100 rounded-lg text-[10px] md:text-xs font-bold">30 วัน</button>
+                        <button onclick="updateChartRange(1)" class="flex-1 sm:flex-none px-3 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-[10px] md:text-xs font-bold border border-blue-200">วันนี้ (1 วัน)</button>
+                        <button onclick="updateChartRange(7)" class="flex-1 sm:flex-none px-3 py-1 bg-slate-100 hover:bg-blue-100 rounded-lg text-[10px] md:text-xs font-bold">7 วันย้อนหลัง</button>
+                        <button onclick="updateChartRange(30)" class="flex-1 sm:flex-none px-3 py-1 bg-slate-100 hover:bg-blue-100 rounded-lg text-[10px] md:text-xs font-bold">30 วันย้อนหลัง</button>
                     </div>
                 </div>
                 <div class="relative w-full h-[300px] md:h-[350px]">
@@ -84,7 +84,14 @@
                     body: JSON.stringify({ Action: "Find", Rows: [] }) 
                 });
                 masterRecords = await res.json();
-                flatpickr("#dateRange", { mode: "range", dateFormat: "Y-m-d" });
+                
+                // ตั้งค่าปฏิทินเริ่มต้นให้เลือกเป็น "วันปัจจุบัน" ทันทีเมื่อเปิดเว็บหน้าจอ (Day by Day)
+                const todayStr = new Date().toLocaleDateString("sv-SE"); 
+                flatpickr("#dateRange", { 
+                    mode: "range", 
+                    dateFormat: "Y-m-d",
+                    defaultDate: [todayStr, todayStr]
+                });
                 
                 const users = [...new Set(masterRecords.map(r => r.User).filter(u => u))];
                 const userFilterOpt = document.getElementById('userFilter');
@@ -92,6 +99,8 @@
                 users.forEach(u => userFilterOpt.innerHTML += `<option value="${u}">${u}</option>`);
                 
                 document.getElementById('countTotal').innerText = masterRecords.length;
+                
+                // สั่งประมวลผลตัวกรองครั้งแรกเพื่อแสดงผลเฉพาะของวันนี้ทันที
                 applyFilters();
             } catch (e) {
                 console.error("Error loading data:", e);
@@ -102,7 +111,9 @@
             const user = document.getElementById('userFilter').value;
             const dateRange = document.getElementById('dateRange').value;
             let filtered = masterRecords;
+            
             if (user !== "ทั้งหมด") filtered = filtered.filter(r => r.User === user);
+            
             if (dateRange.includes('to')) {
                 const [start, end] = dateRange.split(' to ');
                 filtered = filtered.filter(r => { const d = r.Datemodified?.split(' ')[0]; return d >= start && d <= end; });
@@ -119,11 +130,30 @@
             renderPieChart(filtered); 
         }
 
+        // ปรับปรุงลอจิกช่วงกราฟปุ่มกดด่วนให้รองรับลอจิกเฉพาะวันปัจจุบัน (00:00 - 23:59 น.)
         function updateChartRange(days) {
-            const cutoff = new Date();
-            cutoff.setDate(cutoff.getDate() - days);
             const baseData = getFilteredData();
-            const rangeFiltered = baseData.filter(r => new Date(r.Datemodified) >= cutoff);
+            let rangeFiltered = [];
+            const todayStr = new Date().toLocaleDateString("sv-SE");
+
+            if (days === 1) {
+                // บังคับเปลี่ยนตัวอักษรในอินพุตปฏิทินแสดงเป็นวันปัจจุบันวันเดียว
+                document.getElementById('dateRange').value = todayStr;
+                
+                rangeFiltered = baseData.filter(r => {
+                    return r.Datemodified && r.Datemodified.trim().startsWith(todayStr);
+                });
+            } else {
+                // ลอจิกย้อนหลังปกติสำหรับกลุ่มปุ่ม 7 วัน และ 30 วัน
+                const cutoff = new Date();
+                cutoff.setDate(cutoff.getDate() - days);
+                rangeFiltered = baseData.filter(r => new Date(r.Datemodified) >= cutoff);
+                
+                // จัดการปรับข้อความในช่องปฏิทินให้สอดคล้องกับปุ่มกดด่วนย้อนหลัง
+                const cutoffStr = cutoff.toLocaleDateString("sv-SE");
+                document.getElementById('dateRange').value = `${cutoffStr} to ${todayStr}`;
+            }
+
             document.getElementById('countFiltered').innerText = rangeFiltered.length;
             renderChart(rangeFiltered);
             renderPieChart(rangeFiltered); 
@@ -158,7 +188,6 @@
             });
         }
 
-        // ฟังก์ชันจัดการ "กราฟวงกลม" + ย้ายรายชื่อไปขวาเรียงดิ่งลงมา
         function renderPieChart(data) {
             const ctx = document.getElementById('pieChart').getContext('2d');
             if (myPieChart) myPieChart.destroy();
@@ -195,15 +224,13 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        // ปรับแต่งส่วนคำอธิบายรายชื่อ (Legend)
                         legend: {
-                            position: 'right', // ย้ายมาอยู่ฝั่งขวาของกราฟวงกลม
-                            align: 'center',    // จัดตำแหน่งกึ่งกลางแนวตั้ง
+                            position: 'right', 
+                            align: 'center',    
                             labels: {
-                                boxWidth: 12,   // ขนาดสี่เหลี่ยมสีบล็อกนำทาง
-                                padding: 12,    // เว้นระยะห่างระหว่างบรรทัดแต่ละชื่อ
+                                boxWidth: 12,   
+                                padding: 12,    
                                 font: { size: 11 },
-                                // ปรับให้แสดงทิศทางของ List ไหลลงเป็นแถวดิ่งแนวตั้งอัตโนมัติ
                                 usePointStyle: false 
                             }
                         },
@@ -223,7 +250,8 @@
 
         function resetFilters() {
             document.getElementById('userFilter').value = "ทั้งหมด";
-            document.getElementById('dateRange').value = "";
+            const todayStr = new Date().toLocaleDateString("sv-SE");
+            document.getElementById('dateRange').value = todayStr; // รีเซ็ตหน้ากระดานกลับมาล็อกวันปัจจุบัน
             applyFilters();
         }
 
