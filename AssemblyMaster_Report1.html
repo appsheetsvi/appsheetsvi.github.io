@@ -158,12 +158,11 @@
             });
         }
 
-        // ฟังก์ชันสร้างและจัดการ "กราฟวงกลม (Pie Chart)" + คำนวณเป็นเปอร์เซ็นต์
+        // ฟังก์ชันจัดการ "กราฟวงกลม" + ย้ายรายชื่อไปขวาเรียงดิ่งลงมา
         function renderPieChart(data) {
             const ctx = document.getElementById('pieChart').getContext('2d');
             if (myPieChart) myPieChart.destroy();
 
-            // คำนวณนับจำนวนคีย์แยกตาม User
             const userGroups = data.reduce((acc, curr) => {
                 if (curr.User) {
                     acc[curr.User] = (acc[curr.User] || 0) + 1;
@@ -173,8 +172,6 @@
 
             const labels = Object.keys(userGroups);
             const chartData = Object.values(userGroups);
-
-            // หาผลรวมทั้งหมดเพื่อนำไปคำนวณสัดส่วนเปอร์เซ็นต์
             const totalSum = chartData.reduce((sum, val) => sum + val, 0);
 
             const colorPalette = [
@@ -183,7 +180,7 @@
             ];
 
             myPieChart = new Chart(ctx, {
-                type: 'pie', // เปลี่ยนประเภทตัวแปลงกราฟเป็นวงกลม (Pie)
+                type: 'pie',
                 plugins: [ChartDataLabels],
                 data: {
                     labels: labels,
@@ -198,18 +195,25 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
+                        // ปรับแต่งส่วนคำอธิบายรายชื่อ (Legend)
                         legend: {
-                            position: 'bottom',
-                            labels: { boxWidth: 12, padding: 10, font: { size: 11 } }
+                            position: 'right', // ย้ายมาอยู่ฝั่งขวาของกราฟวงกลม
+                            align: 'center',    // จัดตำแหน่งกึ่งกลางแนวตั้ง
+                            labels: {
+                                boxWidth: 12,   // ขนาดสี่เหลี่ยมสีบล็อกนำทาง
+                                padding: 12,    // เว้นระยะห่างระหว่างบรรทัดแต่ละชื่อ
+                                font: { size: 11 },
+                                // ปรับให้แสดงทิศทางของ List ไหลลงเป็นแถวดิ่งแนวตั้งอัตโนมัติ
+                                usePointStyle: false 
+                            }
                         },
                         datalabels: {
                             color: '#ffffff',
-                            font: { weight: 'bold', size: 12 },
-                            // ลอจิกคำนวณจำนวนนับให้ออกมาเป็น เปอร์เซ็นต์ (%) ทันที
+                            font: { weight: 'bold', size: 11 },
                             formatter: (value) => {
                                 if (totalSum === 0) return null;
-                                const percentage = ((value / totalSum) * 100).toFixed(1); // แสดงทศนิยม 1 ตำแหน่ง
-                                return `${percentage}%`; // คืนค่าตัวเลขตามด้วยเครื่องหมายเปอร์เซ็นต์ (เช่น 35.5%)
+                                const percentage = ((value / totalSum) * 100).toFixed(1);
+                                return `${percentage}%`;
                             }
                         }
                     }
