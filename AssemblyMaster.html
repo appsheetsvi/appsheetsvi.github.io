@@ -63,17 +63,48 @@
 
         <div class="report-section">
             <h2 class="text-[10px] font-bold text-slate-400 uppercase mb-2">รายการที่ทำเสร็จทั้งหมด</h2>
-            <div id="summaryDashboard" class="grid grid-cols-2 gap-2 mb-4">
-                <div class="bg-blue-50 p-2 rounded-lg text-center"><div class="text-[9px] text-blue-400">วันนี้คีย์แล้ว</div><div id="totalCount" class="font-bold text-blue-700 text-sm">0</div></div>
-                <div class="bg-emerald-50 p-2 rounded-lg text-center"><div class="text-[9px] text-emerald-600">คีย์แล้วทั้งหมด</div><div id="doneCount" class="font-bold text-emerald-700 text-sm">0</div></div>
+            
+            <div id="summaryDashboard" class="grid grid-cols-2 gap-4 mb-4">
+                
+                <div class="bg-gradient-to-br from-blue-50 to-white border border-blue-100/50 p-4 rounded-3xl shadow-sm flex flex-col items-center justify-center min-h-[120px] relative overflow-hidden text-center">
+                    <div class="flex items-center gap-2">
+                        <div class="bg-blue-600 text-white p-1.5 rounded-xl text-xs flex items-center justify-center shadow-md shadow-blue-200">📦</div>
+                        <div class="text-[11px] text-slate-600 font-bold">วันนี้คีย์แล้ว</div>
+                    </div>
+                    <div id="totalCount" class="font-black text-slate-800 text-2xl my-1">0</div>
+                    
+                    <div id="growthBadge" class="text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center justify-center gap-0.5 transition-all duration-300">
+                        <span id="growthArrow"></span> <span id="growthText">0% จากเมื่อวาน</span>
+                    </div>
+                    
+                    <div class="absolute bottom-0 right-0 opacity-10 pointer-events-none">
+                        <svg width="100" height="40" viewBox="0 0 100 40"><path d="M0,40 Q25,20 50,30 T100,10 L100,40 Z" fill="#2563eb"/></svg>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-br from-emerald-50 to-white border border-emerald-100/50 p-4 rounded-3xl shadow-sm flex flex-col items-center justify-center min-h-[120px] relative overflow-hidden text-center">
+                    <div class="flex items-center gap-2">
+                        <div class="bg-emerald-500 text-white p-1.5 rounded-xl text-xs flex items-center justify-center shadow-md shadow-emerald-200">✨</div>
+                        <div class="text-[11px] text-slate-600 font-bold">คีย์แล้วทั้งหมด</div>
+                    </div>
+                    <div id="doneCount" class="font-black text-slate-800 text-2xl my-1">0</div>
+                    <div class="text-[9px] font-bold text-emerald-700 bg-emerald-100/70 px-2.5 py-0.5 rounded-full flex items-center justify-center gap-0.5">
+                        
+                    </div>
+                    <div class="absolute bottom-0 right-0 opacity-10 pointer-events-none">
+                        <svg width="100" height="40" viewBox="0 0 100 40"><path d="M0,35 Q30,10 60,25 T100,5 L100,40 Z" fill="#10b981"/></svg>
+                    </div>
+                </div>
+
             </div>
+
             <input type="text" placeholder="🔍 กรองตาราง..." class="w-full border border-slate-200 p-2 rounded-lg text-sm bg-slate-50 outline-none focus:border-blue-300 mb-2" oninput="renderReport(this.value)">
             <table class="report-table">
                 <thead>
                     <tr>
                         <th class="text-left">Code</th>
                         <th class="text-left">Location</th>
-                        <th class="text-right">Time</th>
+                        <th class="text-right">Date/Time</th>
                     </tr>
                 </thead>
                 <tbody id="reportBody"></tbody>
@@ -90,7 +121,6 @@
     let masterRecords = [], productCodes = [];
 
     async function init() {
-        // ดึงข้อมูลเก่าจาก Cache มาแสดงรอก่อนเพื่อไม่ให้หน้ารีเฟรชช้า
         const cachedMaster = localStorage.getItem('cache_masterRecords');
         if (cachedMaster && masterRecords.length === 0) {
             masterRecords = JSON.parse(cachedMaster);
@@ -127,46 +157,78 @@
         const loggedInUser = localStorage.getItem('userLoggedIn');
         if (!loggedInUser) return;
 
-        // 1. กรองข้อมูลเฉพาะของ User ที่ล็อกอินปัจจุบัน
         const userRecords = masterRecords.filter(r => r.User && r.User.trim().toUpperCase() === loggedInUser.toUpperCase());
 
-        // 2. นับจำนวนเฉพาะคีย์ของวันนี้
-        const todayStr = new Date().toLocaleDateString("sv-SE"); 
+        const today = new Date();
+        const todayStr = today.toLocaleDateString("sv-SE"); 
+        
+        const yesterday = new Date();
+        yesterday.setDate(today.getDate() - 1);
+        const yesterdayStr = yesterday.toLocaleDateString("sv-SE");
+
         const todayCount = userRecords.filter(r => {
             if (!r.Datemodified) return false;
             return r.Datemodified.trim().startsWith(todayStr);
         }).length;
 
-        // 3. นับจำนวนคีย์ทั้งหมดของ User นี้ (ที่มี Location)
+        const yesterdayCount = userRecords.filter(r => {
+            if (!r.Datemodified) return false;
+            return r.Datemodified.trim().startsWith(yesterdayStr);
+        }).length;
+
         const doneAll = userRecords.filter(r => r.Location && r.Location.trim() !== "").length;
 
-        // แสดงผลบน Dashboard การ์ดสรุปผล
         document.getElementById('totalCount').innerText = todayCount;
         document.getElementById('doneCount').innerText = doneAll;
 
-        // 4. กรองตามคำค้นหาของตารางตาราง
+        const growthBadge = document.getElementById('growthBadge');
+        const growthArrow = document.getElementById('growthArrow');
+        const growthText = document.getElementById('growthText');
+
+        if (yesterdayCount === 0) {
+            if (todayCount > 0) {
+                growthText.innerText = `+${todayCount} จากเมื่อวาน`;
+                growthArrow.innerText = `↑`;
+                growthBadge.className = "text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center justify-center gap-0.5 bg-emerald-100 text-emerald-600";
+            } else {
+                growthText.innerText = `0% จากเมื่อวาน`;
+                growthArrow.innerText = `•`;
+                growthBadge.className = "text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center justify-center gap-0.5 bg-slate-100 text-slate-500";
+            }
+        } else {
+            const changePercent = ((todayCount - yesterdayCount) / yesterdayCount) * 100;
+            
+            if (changePercent > 0) {
+                growthText.innerText = `+${changePercent.toFixed(1)}% จากเมื่อวาน`;
+                growthArrow.innerText = `↑`;
+                growthBadge.className = "text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center justify-center gap-0.5 bg-emerald-100 text-emerald-600";
+            } else if (changePercent < 0) {
+                growthText.innerText = `${changePercent.toFixed(1)}% จากเมื่อวาน`;
+                growthArrow.innerText = `↓`;
+                growthBadge.className = "text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center justify-center gap-0.5 bg-red-100 text-red-500";
+            } else {
+                growthText.innerText = `0% จากเมื่อวาน`;
+                growthArrow.innerText = `•`;
+                growthBadge.className = "text-[10px] font-bold px-2.5 py-0.5 rounded-full flex items-center justify-center gap-0.5 bg-slate-100 text-slate-500";
+            }
+        }
+
         const filtered = userRecords.filter(r => r.AssemblyMasterNew?.toLowerCase().includes(filter.toLowerCase()));
         
-        // 5. จัดเรียงลำดับจากวันเวลาล่าสุดลงไปด้านล่าง (ใหม่สุดอยู่บน เก่าสุดอยู่ล่าง)
         filtered.sort((a, b) => {
             const dateA = a.Datemodified ? new Date(a.Datemodified.replace(/\//g, '-')) : new Date(0);
             const dateB = b.Datemodified ? new Date(b.Datemodified.replace(/\//g, '-')) : new Date(0);
             return dateB - dateA; 
         });
 
-        // 6. แสดงผลเนื้อหาลงตาราง (ปรับดีไซน์คอลัมน์เวลาชิดขวาให้ตรงหัวข้อ)
         document.getElementById('reportBody').innerHTML = filtered
             .slice(0, 10)
             .map(r => {
-                let displayTime = '-';
-                if (r.Datemodified) {
-                    const parts = r.Datemodified.trim().split(' ');
-                    displayTime = parts[1] ? parts[1] : parts[0];
-                }
+                const displayDateTime = r.Datemodified ? r.Datemodified.trim() : '-';
                 return `<tr>
                     <td class="font-bold text-slate-700 p-3 text-left">${r.AssemblyMasterNew}</td>
                     <td class="text-blue-600 font-medium p-3 text-left">${r.Location || '-'}</td>
-                    <td class="text-right text-slate-400 p-3 font-mono">${displayTime}</td>
+                    <td class="text-right text-slate-500 p-3 font-mono text-[11px]">${displayDateTime}</td>
                 </tr>`;
             }).join('');
     }
