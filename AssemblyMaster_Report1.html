@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         body { background-color: #f8fafc; font-family: 'Inter', sans-serif; }
         .card { background: white; border-radius: 16px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); border: 1px solid #e2e8f0; padding: 20px; }
@@ -17,7 +18,9 @@
 <body class="p-4 md:p-8">
 
     <div class="max-w-6xl mx-auto">
-        <h1 class="text-xl md:text-2xl font-bold mb-6 text-slate-800">รายงานสรุปการคีย์ข้อมูล (Day by Day)</h1>
+        <h1 class="text-xl md:text-2xl font-bold mb-6 text-slate-800">
+            <i class="fa-solid fa-gauge-high text-blue-600 mr-2"></i>รายงานสรุปการคีย์ข้อมูลและเวลาเนื้อ ๆ (Day by Day)
+        </h1>
 
         <div class="card mb-6 flex flex-col md:flex-row gap-4 items-end">
             <div class="w-full md:w-64">
@@ -30,21 +33,25 @@
                 <label class="block text-[10px] md:text-xs font-bold text-slate-400 uppercase mb-2">ช่วงวันที่</label>
                 <input type="text" id="dateRange" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-sm" placeholder="เลือกช่วงวันที่...">
             </div>
-            <button onclick="resetFilters()" class="w-full md:w-auto px-5 py-2 bg-slate-100 rounded-lg font-bold text-sm hover:bg-slate-200">ล้างตัวกรอง</button>
+            <button onclick="resetFilters()" class="w-full md:w-auto px-5 py-2 bg-slate-100 rounded-lg font-bold text-sm hover:bg-slate-200 text-slate-600">ล้างตัวกรอง</button>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             <div class="card border-l-8 border-blue-500">
                 <div class="text-slate-500 font-bold text-[10px] uppercase">รายการในช่วงที่เลือก</div>
-                <div id="countFiltered" class="text-4xl md:text-5xl font-black text-blue-600 mt-1">0</div>
+                <div id="countFiltered" class="text-3xl md:text-4xl font-black text-blue-600 mt-1">0</div>
+            </div>
+            <div class="card border-l-8 border-purple-500">
+                <div class="text-slate-500 font-bold text-[10px] uppercase">เวลาทำงานเนื้อ ๆ รวมช่วงที่เลือก (Active Time)</div>
+                <div id="activeTimeTotal" class="text-3xl md:text-4xl font-black text-purple-600 mt-1">0 ชม. 0 นาที</div>
             </div>
             <div class="card border-l-8 border-emerald-500">
                 <div class="text-slate-500 font-bold text-[10px] uppercase">รายการสะสมทั้งหมดในระบบ</div>
-                <div id="countTotal" class="text-4xl md:text-5xl font-black text-emerald-600 mt-1">0</div>
+                <div id="countTotal" class="text-3xl md:text-4xl font-black text-emerald-600 mt-1">0</div>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             
             <div class="card lg:col-span-2">
                 <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
@@ -55,7 +62,6 @@
                         <button id="btn-day-7" data-days="7" onclick="updateChartRange(7)" class="flex-1 sm:flex-none px-3 py-1 rounded-lg text-[10px] md:text-xs font-bold border transition-all">7 วันย้อนหลัง</button>
                         <button id="btn-day-30" data-days="30" onclick="updateChartRange(30)" class="flex-1 sm:flex-none px-3 py-1 rounded-lg text-[10px] md:text-xs font-bold border transition-all">30 วันย้อนหลัง</button>
                     </div>
-
                 </div>
                 <div class="relative w-full h-[300px] md:h-[350px]">
                     <canvas id="trendChart"></canvas>
@@ -63,14 +69,33 @@
             </div>
 
             <div class="card lg:col-span-1 flex flex-col justify-between">
-                <div class="mb-4">
-                    <h3 class="font-bold text-slate-700 text-sm md:text-base">สัดส่วนผู้ใช้งาน (Pie Chart %)</h3>
+                <div class="mb-2">
+                    <h3 class="font-bold text-slate-700 text-sm md:text-base">สัดส่วนเวลาทำงานเนื้อ ๆ (Active Time %)</h3>
+                    <p class="text-[10px] text-slate-400">* คำนวณจากช่วงเวลากดต่อเนื่อง รอยต่อไม่เกิน 5 นาที</p>
                 </div>
                 <div class="relative w-full h-[280px] md:h-[320px] flex items-center justify-center m-auto">
                     <canvas id="pieChart"></canvas>
                 </div>
             </div>
+        </div>
 
+        <div class="card mb-8">
+            <h3 class="font-bold text-slate-700 text-sm md:text-base mb-4"><i class="fa-solid fa-users-gear text-slate-500 mr-1"></i> ตารางสรุปเวลาทำงานและประสิทธิภาพรายบุคคล</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200">
+                            <th class="p-3 text-xs font-bold text-slate-500 uppercase">ชื่อผู้ใช้งาน (User)</th>
+                            <th class="p-3 text-xs font-bold text-slate-500 uppercase text-center">จำนวนงานที่ทำได้ (ชิ้น)</th>
+                            <th class="p-3 text-xs font-bold text-slate-500 uppercase text-center">เวลาทำงานเนื้อ ๆ (Active Time)</th>
+                            <th class="p-3 text-xs font-bold text-slate-500 uppercase text-center">ความเร็วเฉลี่ยหน้างาน</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userTableBody" class="text-sm text-slate-600">
+                        <tr><td colspan="4" class="text-center py-6 text-slate-400">ไม่มีข้อมูลการทำงานในกลุ่มที่เลือก</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -105,12 +130,49 @@
                 
                 document.getElementById('countTotal').innerText = masterRecords.length;
                 
-                // เริ่มต้นหน้าแรก ย้อมสีปุ่ม วันนี้ (1 วัน) เป็นสีน้ำเงินอ่อนทันที
                 setActiveButton(1);
                 applyFilters();
             } catch (e) {
                 console.error("Error loading data:", e);
             }
+        }
+
+        // ฟังก์ชันหัวใจหลัก: คำนวณ Active Working Time ข้อมูลชุดปัจจุบันแยกตามรายคน
+        function calculateMetrics(data) {
+            const userMetrics = {};
+            
+            // กรองและคัดแยกจัดกลุ่มเวลาตาม User
+            data.forEach(r => {
+                if (!r.User || !r.Datemodified) return;
+                if (!userMetrics[r.User]) {
+                    userMetrics[r.User] = { count: 0, timestamps: [], activeMinutes: 0 };
+                }
+                userMetrics[r.User].count += 1;
+                userMetrics[r.User].timestamps.push(new Date(r.Datemodified));
+            });
+
+            let combinedTotalActiveMinutes = 0;
+
+            // ลูปคำนวณ Active Time รายบุคคล (ห่างไม่เกิน 5 นาที)
+            Object.keys(userMetrics).forEach(user => {
+                const times = userMetrics[user].timestamps.sort((a, b) => a - b);
+                let activeMinutes = 0;
+
+                for (let i = 1; i < times.length; i++) {
+                    const diffMins = (times[i] - times[i-1]) / (1000 * 60);
+                    if (diffMins <= 5) {
+                        activeMinutes += diffMins;
+                    }
+                }
+                
+                // ให้เวลาตั้งต้นขั้นต่ำสำหรับงานจำนวนน้อยๆ
+                if (times.length > 0 && activeMinutes === 0) activeMinutes = 5;
+
+                userMetrics[user].activeMinutes = Math.round(activeMinutes);
+                combinedTotalActiveMinutes += userMetrics[user].activeMinutes;
+            });
+
+            return { userMetrics, combinedTotalActiveMinutes };
         }
 
         function getFilteredData() {
@@ -132,32 +194,38 @@
         function applyFilters() {
             const filtered = getFilteredData();
             document.getElementById('countFiltered').innerText = filtered.length;
+            
+            // ประมวลผล Active Time และอัปเดตระบบ
+            const metricsResult = calculateMetrics(filtered);
+            
+            // อัปเดตการ์ดเวลารวมด้านบน
+            const totalHours = Math.floor(metricsResult.combinedTotalActiveMinutes / 60);
+            const totalMins = metricsResult.combinedTotalActiveMinutes % 60;
+            document.getElementById('activeTimeTotal').innerText = `${totalHours} ชม. ${totalMins} นาที`;
+
             renderChart(filtered);
-            renderPieChart(filtered); 
+            renderActiveTimePieChart(metricsResult.userMetrics); 
+            renderUserTable(metricsResult.userMetrics);
         }
 
-        // ฟังก์ชันสลับสีปุ่ม: ล็อกสีน้ำเงินอ่อน ขอบน้ำเงิน และตัวหนังสือสีน้ำเงินเข้มให้ปุ่มที่ถูกคลิกเลือกทำงาน
         function setActiveButton(activeDays) {
             const buttons = document.querySelectorAll('.filter-btn-group button');
             buttons.forEach(btn => {
                 const btnDays = parseInt(btn.getAttribute('data-days'));
                 if (btnDays === activeDays) {
-                    // ปุ่มที่โดนเลือก: เปลี่ยนเป็น สีน้ำเงินอ่อน ขอบน้ำเงิน ตัวหนังสือสีน้ำเงินเข้ม
-                    btn.style.setProperty('background-color', '#eff6ff', 'important'); // bg-blue-50
-                    btn.style.setProperty('color', '#1d4ed8', 'important');            // text-blue-700
-                    btn.style.setProperty('border-color', '#bfdbfe', 'important');     // border-blue-200
+                    btn.style.setProperty('background-color', '#eff6ff', 'important'); 
+                    btn.style.setProperty('color', '#1d4ed8', 'important');            
+                    btn.style.setProperty('border-color', '#bfdbfe', 'important');     
                     btn.style.setProperty('border-width', '1px', 'important');
                 } else {
-                    // ปุ่มที่ไม่ได้เลือก: กลับเป็น สีเทาอ่อนปกติ ไร้เส้นขอบ
-                    btn.style.setProperty('background-color', '#f1f5f9', 'important'); // bg-slate-100
-                    btn.style.setProperty('color', '#64748b', 'important');            // text-slate-500
+                    btn.style.setProperty('background-color', '#f1f5f9', 'important'); 
+                    btn.style.setProperty('color', '#64748b', 'important');            
                     btn.style.setProperty('border-color', 'transparent', 'important');
                     btn.style.setProperty('border-width', '1px', 'important');
                 }
             });
         }
 
-        // ฟังก์ชันเมื่อคลิกปุ่มลัด สั่งอัปเดตปฏิทิน และบังคับย้อมสีน้ำเงินสลับตามหลังทันทีป้องกันสไตล์หลุด
         function updateChartRange(days) {
             const today = new Date();
             const todayStr = today.toLocaleDateString("sv-SE");
@@ -170,8 +238,6 @@
                 const cutoffStr = cutoff.toLocaleDateString("sv-SE");
                 fp.setDate([cutoffStr, todayStr], true);
             }
-
-            // รันโค้ดย้อมสีน้ำเงินตรงนี้เพื่อให้มีผลทันทีหลังจากปฏิทินทำงานเสร็จสิ้น
             setActiveButton(days); 
         }
 
@@ -198,31 +264,22 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { display: false },
-                        datalabels: { anchor: 'end', align: 'top', color: '#1e293b', font: { size: 10, weight: 'bold' }, formatter: (v) => v > 0 ? v : null }
+                        datalabels: { anchor: 'end', align: 'top', color: '#475569', font: { size: 10, weight: 'bold' }, formatter: (v) => v > 0 ? v : null }
                     }
                 }
             });
         }
 
-        function renderPieChart(data) {
+        // ฟังก์ชันสร้างและวาด Pie Chart เฉพาะเวลา Active Working Time (%)
+        function renderActiveTimePieChart(userMetrics) {
             const ctx = document.getElementById('pieChart').getContext('2d');
             if (myPieChart) myPieChart.destroy();
 
-            const userGroups = data.reduce((acc, curr) => {
-                if (curr.User) {
-                    acc[curr.User] = (acc[curr.User] || 0) + 1;
-                }
-                return acc;
-            }, {});
+            const labels = Object.keys(userMetrics);
+            const minutesData = labels.map(u => userMetrics[u].activeMinutes);
+            const totalMinutesSum = minutesData.reduce((sum, val) => sum + val, 0);
 
-            const labels = Object.keys(userGroups);
-            const chartData = Object.values(userGroups);
-            const totalSum = chartData.reduce((sum, val) => sum + val, 0);
-
-            const colorPalette = [
-                '#3b82f6', '#10b981', '#f59e0b', '#ef4444', 
-                '#8b5cf6', '#ec4899', '#14b8a6', '#6366f1'
-            ];
+            const colorPalette = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#6366f1'];
 
             myPieChart = new Chart(ctx, {
                 type: 'pie',
@@ -230,10 +287,9 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        data: chartData,
+                        data: minutesData,
                         backgroundColor: colorPalette.slice(0, labels.length),
-                        borderWidth: 1,
-                        hoverOffset: 8
+                        borderWidth: 1
                     }]
                 },
                 options: {
@@ -241,22 +297,26 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            position: 'right', 
-                            align: 'center',    
-                            labels: {
-                                boxWidth: 12,   
-                                padding: 12,    
-                                font: { size: 11 },
-                                usePointStyle: false 
-                            }
+                            position: 'bottom',
+                            labels: { boxWidth: 10, padding: 8, font: { size: 11 } }
                         },
                         datalabels: {
                             color: '#ffffff',
                             font: { weight: 'bold', size: 11 },
                             formatter: (value) => {
-                                if (totalSum === 0) return null;
-                                const percentage = ((value / totalSum) * 100).toFixed(1);
+                                if (totalMinutesSum === 0) return null;
+                                const percentage = ((value / totalMinutesSum) * 100).toFixed(1);
                                 return `${percentage}%`;
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const mins = context.raw;
+                                    const h = Math.floor(mins / 60);
+                                    const m = mins % 60;
+                                    return ` ${context.label}: เวลาทำงานเนื้อๆ ${h > 0 ? h + ' ชม. ' : ''}${m} นาที`;
+                                }
                             }
                         }
                     }
@@ -264,10 +324,39 @@
             });
         }
 
+        // ฟังก์ชันเรนเดอร์ตารางสรุปผลประสิทธิภาพแนบท้ายรายงาน
+        function renderUserTable(userMetrics) {
+            const tbody = document.getElementById('userTableBody');
+            const users = Object.keys(userMetrics);
+
+            if (users.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-400">ไม่มีข้อมูลการทำงานในกลุ่มที่เลือก</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = users.map(user => {
+                const item = userMetrics[user];
+                const h = Math.floor(item.activeMinutes / 60);
+                const m = item.activeMinutes % 60;
+                const timeStr = `${h > 0 ? h + ' ชม. ' : ''}${m} นาที`;
+                
+                // คำนวณหาความเร็วเฉลี่ยหน้างานจริงต่อชิ้น
+                const speed = item.count > 0 ? (item.activeMinutes / item.count).toFixed(1) : 0;
+
+                return `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50 transition">
+                        <td class="p-3 font-semibold text-slate-700">${user}</td>
+                        <td class="p-3 text-center font-bold text-blue-600">${item.count} ชิ้น</td>
+                        <td class="p-3 text-center font-medium text-purple-600"><i class="fa-regular fa-clock mr-1 text-xs"></i>${timeStr}</td>
+                        <td class="p-3 text-center text-slate-500">1 ชิ้น ทุก ๆ <span class="text-emerald-600 font-bold">${speed}</span> นาที</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
         function resetFilters() {
             document.getElementById('userFilter').value = "ทั้งหมด";
             const todayStr = new Date().toLocaleDateString("sv-SE");
-            
             fp.setDate([todayStr, todayStr], true);
             setActiveButton(1);
         }
