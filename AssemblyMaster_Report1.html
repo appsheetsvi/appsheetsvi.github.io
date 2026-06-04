@@ -13,7 +13,6 @@
     <style>
         body { background-color: #f8fafc; font-family: 'Inter', sans-serif; }
         .card { background: white; border-radius: 16px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); border: 1px solid #e2e8f0; padding: 20px; }
-        /* สไตล์ Scrollbar ตารางให้ดูมินิมอล */
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
@@ -23,7 +22,7 @@
 
     <div class="max-w-6xl mx-auto">
         <h1 class="text-xl md:text-2xl font-bold mb-6 text-slate-800 flex items-center">
-            <i class="fa-solid fa-chart-pie text-blue-600 mr-3"></i>รายงานสรุปการคีย์ข้อมูล (Day by Day)
+            <i class="fa-solid fa-chart-pie text-blue-600 mr-3"></i>รายงานสรุปการคีย์ข้อมูล(Day by Day)
         </h1>
 
         <div class="card mb-6 flex flex-col md:flex-row gap-4 items-end">
@@ -93,8 +92,8 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <div class="card lg:col-span-2 flex flex-col justify-between">
                 <div>
-                    <h3 class="font-bold text-slate-700 text-sm md:text-base mb-4 flex items-center">
-                        <i class="fa-solid fa-users-gear text-purple-500 mr-2"></i>ตารางสรุปเวลาทำงานและประสิทธิภาพรายบุคคล
+                    <h3 class="font-bold text-slate-700 text-sm md:text-base mb-4 flex items-center text-emerald-600">
+                        <i class="fa-solid fa-bolt mr-2"></i>ตารางประสิทธิภาพเรียงตามความเร็วหน้างาน (เร็วที่สุดขึ้นก่อน)
                     </h3>
                     <div class="overflow-x-auto custom-scrollbar">
                         <table class="w-full text-left border-collapse">
@@ -103,7 +102,7 @@
                                     <th class="p-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider">ชื่อผู้ใช้งาน (User)</th>
                                     <th class="p-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">จำนวนงาน</th>
                                     <th class="p-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">เวลาทำงาน</th>
-                                    <th class="p-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center">ความเร็วเฉลี่ยหน้างาน</th>
+                                    <th class="p-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider text-center bg-emerald-50/50 text-emerald-700">ความเร็วเฉลี่ยหน้างาน</th>
                                 </tr>
                             </thead>
                             <tbody id="userTableBody" class="text-sm text-slate-600 divide-y divide-slate-100">
@@ -116,11 +115,11 @@
 
             <div class="card lg:col-span-1 flex flex-col justify-between">
                 <div>
-                    <h3 class="font-bold text-slate-700 text-sm md:text-base"><i class="fa-solid fa-hourglass-half mr-2 text-amber-500"></i>สัดส่วนเวลาทำงาน (Active Time %)</h3>
-                    <p class="text-[10px] text-slate-400">คำนวณจากเวลากดต่อเนื่อง (รอยต่อไม่เกิน 5 นาที)</p>
+                    <h3 class="font-bold text-slate-700 text-sm md:text-base flex items-center"><i class="fa-solid fa-gauge-high mr-2 text-purple-500"></i>อัตราผลงาน (รายการ / ชม.)</h3>
+                    <p class="text-[10px] text-slate-400">เปรียบเทียบ Productivity ต่อชั่วโมงการทำงานจริง</p>
                 </div>
                 <div class="relative w-full h-[260px] flex items-center justify-center m-auto">
-                    <canvas id="activeTimePieChart"></canvas>
+                    <canvas id="productivityBarChart"></canvas>
                 </div>
             </div>
         </div>
@@ -129,7 +128,7 @@
     <script>
         const appId = "ae5d7dce-1c12-4c53-b201-5a2d7c5b5411";
         const apiKey = "V2-b1wGR-Nj1SR-0MhEx-QWCHT-Mllly-cZnc9-PHCAK-r1f85";
-        let masterRecords = [], myChart, myPieChart, myActivePieChart, fp;
+        let masterRecords = [], myChart, myPieChart, myProductivityBarChart, fp;
         const colorPalette = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#64748b'];
 
         async function loadData() {
@@ -170,7 +169,7 @@
             data.forEach(r => {
                 if (!r.User || !r.Datemodified) return;
                 if (!userMetrics[r.User]) {
-                    userMetrics[r.User] = { count: 0, timestamps: [], activeMinutes: 0 };
+                    userMetrics[r.User] = { name: r.User, count: 0, timestamps: [], activeMinutes: 0 };
                 }
                 userMetrics[r.User].count += 1;
                 userMetrics[r.User].timestamps.push(new Date(r.Datemodified));
@@ -225,7 +224,7 @@
 
             renderChart(filtered);
             renderJobPieChart(metricsResult.userMetrics); 
-            renderActiveTimePieChart(metricsResult.userMetrics);
+            renderProductivityBarChart(metricsResult.userMetrics); 
             renderUserTable(metricsResult.userMetrics);
         }
 
@@ -277,7 +276,7 @@
             const chartData = sortedKeys.map(k => timeGroups[k] || 0);
 
             myChart = new Chart(ctx, {
-                type: 'line',
+                type: 'line', 
                 plugins: [ChartDataLabels],
                 data: { labels: sortedKeys, datasets: [{ label: 'จำนวนรายการ', data: chartData, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.06)', fill: true, tension: 0.25, pointRadius: 3, pointBackgroundColor: '#22c55e' }] },
                 options: {
@@ -295,7 +294,6 @@
             });
         }
 
-        // 1. กราฟวงกลมตัวบน: สัดส่วนชิ้นงาน (%) ตามเดิมของคุณ
         function renderJobPieChart(userMetrics) {
             const ctx = document.getElementById('pieChart').getContext('2d');
             if (myPieChart) myPieChart.destroy();
@@ -326,46 +324,79 @@
             });
         }
 
-        // 2. กราฟวงกลมตัวล่างขวา: สัดส่วนเวลาทำงาน (Active Time %) ย้ายลงมาตามที่สั่ง
-        function renderActiveTimePieChart(userMetrics) {
-            const ctx = document.getElementById('activeTimePieChart').getContext('2d');
-            if (myActivePieChart) myActivePieChart.destroy();
+        // ฟังก์ชันวาดกราฟแท่งเปรียบเทียบผลงาน/ชั่วโมง แบบแยกสีตามพนักงานแต่ละคน
+        function renderProductivityBarChart(userMetrics) {
+            const ctx = document.getElementById('productivityBarChart').getContext('2d');
+            if (myProductivityBarChart) myProductivityBarChart.destroy();
 
+            const allUsersInSystem = Object.keys(userMetrics);
             const labels = Object.keys(userMetrics);
-            const minutesData = labels.map(u => userMetrics[u].activeMinutes);
-            const totalMinutesSum = minutesData.reduce((sum, val) => sum + val, 0);
+            
+            const productivityData = labels.map(u => {
+                const minutes = userMetrics[u].activeMinutes;
+                const count = userMetrics[u].count;
+                if (minutes === 0) return 0;
+                return parseFloat(((count / minutes) * 60).toFixed(1));
+            });
 
-            myActivePieChart = new Chart(ctx, {
-                type: 'pie',
+            // แมปสีพนักงานแต่ละคนจาก colorPalette เพื่อให้ตรงกับสีสากลของระบบ
+            const barColors = labels.map(user => {
+                const index = allUsersInSystem.indexOf(user);
+                return colorPalette[index % colorPalette.length] + 'cc'; // ใส่ความโปร่งแสงเล็กน้อย
+            });
+
+            const borderColors = labels.map(user => {
+                const index = allUsersInSystem.indexOf(user);
+                return colorPalette[index % colorPalette.length];
+            });
+
+            myProductivityBarChart = new Chart(ctx, {
+                type: 'bar',
                 plugins: [ChartDataLabels],
                 data: {
                     labels: labels,
-                    datasets: [{ data: minutesData, backgroundColor: colorPalette.slice(0, labels.length), borderWidth: 2, borderColor: '#ffffff' }]
+                    datasets: [{
+                        data: productivityData,
+                        backgroundColor: barColors, // อัปเดตตัวแปรชุดสีแยกรายคน
+                        borderColor: borderColors,     // อัปเดตสีเส้นขอบแยกรายคน
+                        borderWidth: 1,
+                        borderRadius: 4,
+                        barPercentage: 0.4,       
+                        categoryPercentage: 0.8
+                    }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { position: 'bottom', labels: { boxWidth: 10, padding: 6, font: { size: 10, family: 'Inter' } } },
+                        legend: { display: false },
                         datalabels: {
-                            color: '#ffffff',
+                            anchor: 'end',
+                            align: 'top',
+                            color: '#475569',
                             font: { weight: 'bold', size: 10 },
-                            formatter: (value) => totalMinutesSum > 0 ? `${((value / totalMinutesSum) * 100).toFixed(1)}%` : null
+                            formatter: (value) => value > 0 ? `${value}` : '0'
                         },
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    const mins = context.raw;
-                                    return ` ${context.label}: เวลาเนื้อๆ ${Math.floor(mins / 60)} ชม. ${mins % 60} นาที`;
+                                    return ` อัตราเฉลี่ย: ${context.raw} รายการ / ชั่วโมง`;
                                 }
                             }
                         }
+                    },
+                    scales: {
+                        y: { 
+                            grid: { color: '#f1f5f9' }, 
+                            border: { display: false }, 
+                            beginAtZero: true
+                        },
+                        x: { grid: { display: false } }
                     }
                 }
             });
         }
 
-        // 3. ตารางดีไซน์ใหม่สไตล์พรีเมียม สวยงาม สแกนง่าย
         function renderUserTable(userMetrics) {
             const tbody = document.getElementById('userTableBody');
             const users = Object.keys(userMetrics);
@@ -375,34 +406,41 @@
                 return;
             }
 
-            tbody.innerHTML = users.map((user, index) => {
+            const userList = users.map(user => {
                 const item = userMetrics[user];
-                const h = Math.floor(item.activeMinutes / 60);
-                const m = item.activeMinutes % 60;
+                const speed = item.count > 0 ? parseFloat((item.activeMinutes / item.count).toFixed(2)) : 9999;
+                return { ...item, speed };
+            });
+
+            // เรียงลำดับความเร็วเฉลี่ยจาก น้อย -> มาก (เร็วที่สุดอยู่บนสุด)
+            userList.sort((a, b) => a.speed - b.speed);
+
+            tbody.innerHTML = userList.map((userObj) => {
+                const h = Math.floor(userObj.activeMinutes / 60);
+                const m = userObj.activeMinutes % 60;
                 const timeStr = `${h > 0 ? h + ' ชม. ' : ''}${m} นาที`;
-                const speed = item.count > 0 ? (item.activeMinutes / item.count).toFixed(1) : 0;
                 
-                // จับคู่สีประจำตัวของพนักงานให้ตรงกับแถบสีบนชาร์ต
-                const borderBadgeColor = colorPalette[index % colorPalette.length];
+                const originalIndex = users.indexOf(userObj.name);
+                const borderBadgeColor = colorPalette[originalIndex % colorPalette.length];
 
                 return `
                     <tr class="hover:bg-slate-50/80 transition duration-150 group">
                         <td class="p-3 font-semibold text-slate-700 flex items-center gap-2.5">
                             <span class="w-2.5 h-2.5 rounded-full" style="background-color: ${borderBadgeColor}"></span>
-                            ${user}
+                            ${userObj.name}
                         </td>
                         <td class="p-3 text-center">
                             <span class="bg-blue-50 text-blue-600 font-bold px-3 py-1 rounded-full text-xs border border-blue-100">
-                                ${item.count} ชิ้น
+                                ${userObj.count} 
                             </span>
                         </td>
                         <td class="p-3 text-center font-semibold text-slate-600">
                             <i class="fa-regular fa-clock mr-1.5 text-slate-400 text-xs"></i>${timeStr}
                         </td>
-                        <td class="p-3 text-center text-slate-500">
+                        <td class="p-3 text-center bg-emerald-50/20">
                             <span class="text-slate-400 text-xs font-medium">เฉลี่ยชิ้นละ</span> 
-                            <span class="text-emerald-600 font-extrabold text-base mx-0.5">${speed}</span> 
-                            <span class="text-slate-400 text-xs font-medium">นาที</span>
+                            <span class="text-emerald-600 font-extrabold text-base mx-0.5">${userObj.speed.toFixed(1)}</span> 
+                            <span class="text-emerald-700/80 text-xs font-bold">นาที</span>
                         </td>
                     </tr>
                 `;
