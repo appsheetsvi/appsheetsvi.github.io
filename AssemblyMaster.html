@@ -252,11 +252,20 @@
         const loc = locInput.value.trim();
         if (!name || !loc) { showMsg("❌ กรุณากรอกข้อมูลให้ครบทุกช่อง!", true); return; }
         
-        const foundRow = masterRecords.find(r => r.AssemblyMasterNew?.toLowerCase() === name.toLowerCase());
-        if (mode === 'add') {
-            if (!productCodes.includes(name)) { showMsg("❌ ไม่พบรหัสนี้ในฐานข้อมูล!", true); return; }
-            if (foundRow && foundRow.Location && foundRow.Location.trim() !== "") { showMsg("⚠️ รายการนี้มีข้อมูลแล้ว!", true); return; }
-        } else if (!foundRow) { showMsg("❌ ไม่พบรายการนี้เพื่อแก้ไข!", true); return; }
+       // ในฟังก์ชัน processAndSave ช่วงที่หา foundRow
+const cleanName = name.toLowerCase().replace(/\s+/g, '');
+const foundRow = masterRecords.find(r => 
+    r.AssemblyMasterNew && r.AssemblyMasterNew.toLowerCase().replace(/\s+/g, '') === cleanName
+);
+       // ในฟังก์ชัน processAndSave โหมด 'add'
+if (mode === 'add') {
+    const cleanName = name.toLowerCase().replace(/\s+/g, '');
+    // ตรวจสอบแบบไม่สนช่องว่าง
+    const isValidCode = productCodes.some(p => p && p.toLowerCase().replace(/\s+/g, '') === cleanName);
+    
+    if (!isValidCode) { showMsg("❌ ไม่พบรหัสนี้ในฐานข้อมูล!", true); return; }
+    if (foundRow && foundRow.Location && foundRow.Location.trim() !== "") { showMsg("⚠️ รายการนี้มีข้อมูลแล้ว!", true); return; }
+}
         
         isProcessing = true;
         showMsg("⏳ กำลังบันทึก...");
@@ -275,12 +284,21 @@
     }
 
     function selectItem(name) { 
-        const found = masterRecords.find(r => r.AssemblyMasterNew && r.AssemblyMasterNew.toLowerCase() === name.toLowerCase());
-        document.getElementById('assemblySearch').value = name;
-        document.getElementById('locationInput').value = found ? (found.Location || "") : "";
-        toggleDropdown(false); activeIndex = -1;
-        document.getElementById('locationInput').focus();
-    }
+    // ค้นหาโดยใช้การลบช่องว่างออกก่อนเปรียบเทียบเพื่อให้เจอข้อมูลแน่นอน
+    const cleanName = name.toLowerCase().replace(/\s+/g, '');
+    const found = masterRecords.find(r => 
+        r.AssemblyMasterNew && r.AssemblyMasterNew.toLowerCase().replace(/\s+/g, '') === cleanName
+    );
+
+    document.getElementById('assemblySearch').value = name;
+    document.getElementById('locationInput').value = found ? (found.Location || "") : "";
+    
+    // สั่งซ่อน Dropdown ทันที
+    toggleDropdown(false); 
+    activeIndex = -1;
+    
+    document.getElementById('locationInput').focus();
+}
 
     function checkLogin() {
         const name = document.getElementById('usernameInput').value.trim().toUpperCase();
@@ -314,15 +332,33 @@
         location.reload(); 
     }
     function setMode(m) { mode = m; document.getElementById('btnModeAdd').classList.toggle('active-add', m === 'add'); document.getElementById('btnModeEdit').classList.toggle('active-edit', m === 'edit'); document.getElementById('assemblySearch').value = ''; document.getElementById('locationInput').value = ''; }
-    function handleSearch(val) { const container = document.getElementById('dropdownContainer'); const source = (mode === 'add') ? productCodes : masterRecords.map(r => r.AssemblyMasterNew); const filtered = source.filter(i => i && i.toLowerCase().includes(val.toLowerCase())); container.innerHTML = filtered.map(i => `<div class="dropdown-item" onclick="selectItem('${i}')">${i}</div>`).join(''); container.style.display = filtered.length > 0 ? 'block' : 'none'; activeIndex = -1; }
-    function toggleDropdown(show) { document.getElementById('dropdownContainer').style.display = show ? 'block' : 'none'; }
-    function showMsg(text, isError = false) {
-        const msg = document.getElementById('message');
-        msg.innerText = text;
-        msg.className = `w-full py-3 rounded-xl font-bold text-center text-[12px] ${isError ? 'bg-red-50 text-red-600' : 'bg-emerald-50 text-emerald-600'}`;
-        msg.classList.remove('hidden');
-        setTimeout(() => { msg.classList.add('hidden'); msg.innerText = ''; }, 2000);
-    }
+    function handleSearch(val) {
+    const container = document.getElementById('dropdownContainer');
+    
+    // 1. แปลงคำค้นหาเป็นตัวพิมพ์เล็กและลบช่องว่างออกทั้งหมด
+    const searchTerm = val.toLowerCase().replace(/\s+/g, '');
+    
+    const source = (mode === 'add') ? productCodes : masterRecords.map(r => r.AssemblyMasterNew);
+    
+    // 2. กรองข้อมูล
+    const filtered = source.filter(i => {
+        if (!i) return false;
+        // ลบช่องว่างจากรายการในฐานข้อมูลก่อนเปรียบเทียบ
+        const cleanItem = i.toString().toLowerCase().replace(/\s+/g, '');
+        return cleanItem.includes(searchTerm);
+    });
+
+    // 3. แสดงผล (แสดงชื่อจริงที่ไม่ได้ตัดช่องว่าง)
+    container.innerHTML = filtered.map(i => 
+    `<div class="dropdown-item" onclick="selectItem(\`${i}\`)">${i}</div>`
+).join('');    container.style.display = filtered.length > 0 ? 'block' : 'none';
+    activeIndex = -1;
+}
+
+function toggleDropdown(show) {
+    const container = document.getElementById('dropdownContainer');
+    container.style.display = show ? 'block' : 'none';
+}
 </script>
 </body>
 </html>
